@@ -102,6 +102,11 @@ def etiquettes_file(filename):
     return send_from_directory(config.ETIQUETTES_DIR, filename)
 
 
+@app.route("/aide")
+def aide():
+    return send_from_directory(config.BASE_DIR, "Aide.html")
+
+
 if __name__ == "__main__":
     db.init_db()
     app.run(debug=True, port=5000)

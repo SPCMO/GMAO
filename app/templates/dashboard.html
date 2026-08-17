@@ -42,8 +42,10 @@
 </table>
 
 <p style="margin-top:1rem;">
+  <button type="button" class="btn btn-secondary" onclick="selectionnerTout(true)">Tout sélectionner</button>
+  <button type="button" class="btn btn-secondary" onclick="selectionnerTout(false)">Tout désélectionner</button>
   <button type="submit" class="btn">Générer les QR codes de la sélection</button>
-  <span class="muted">Génère uniquement les équipements cochés ci-dessus (respecte les filtres via "sélectionner tout ce qui est affiché").</span>
+  <br><span class="muted">Génère uniquement les équipements cochés ci-dessus (les deux boutons et la case en tête de tableau respectent les filtres en cours).</span>
 </p>
 </form>
 
@@ -61,11 +63,16 @@ function filtrer() {
 }
 
 function toggleTout(master) {
+  selectionnerTout(master.checked);
+}
+
+function selectionnerTout(etat) {
   document.querySelectorAll('#tableEquipements tbody tr').forEach(function(tr) {
     if (tr.style.display === 'none') return;
     const case_ = tr.querySelector('.case-equipement');
-    if (case_) case_.checked = master.checked;
+    if (case_) case_.checked = etat;
   });
+  document.getElementById('toutSelectionner').checked = etat;
 }
 </script>
 {% endblock %}

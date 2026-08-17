@@ -58,7 +58,7 @@
   <h3>Lancer l'application locale</h3>
   <p>L'appli sert à consulter/modifier la base (dashboard, formulaires). Elle utilise un environnement Python dédié (<code>venv</code>) où Flask est installé — <b>ne pas la lancer avec le Python système</b> (ça produit une erreur <code>ModuleNotFoundError: No module named 'flask'</code>, typique si on utilise le bouton "Run" d'un IDE comme Thonny au lieu du venv du projet).</p>
   <pre>"GMAO\venv\Scripts\python.exe" "GMAO\run.py"</pre>
-  <p>Puis ouvrir <code>http://localhost:5000</code> dans un navigateur.</p>
+  <p>Puis ouvrir <code>http://localhost:5000</code> dans un navigateur. Cette page d'aide est aussi accessible directement depuis l'appli via le lien <b>📖 Aide</b> en haut de chaque page.</p>
 
   <h3>Vue globale (dashboard)</h3>
   <p>Page d'accueil : liste de tous les équipements avec leur site actuel. Le menu déroulant filtre par site, le champ de recherche filtre par nom d'équipement (les deux se combinent).</p>
@@ -71,7 +71,7 @@
   <p>Depuis la fiche détail d'un équipement → <b>Changer l'affectation</b> : indiquer le nouveau site et la date de transfert. L'ancienne affectation est automatiquement clôturée (date de fin renseignée) et une nouvelle ligne d'historique est créée. L'historique n'est jamais réécrit, seulement complété.</p>
 
   <h3>Générer les QR codes d'une sélection</h3>
-  <p>Depuis le dashboard, cochez les équipements voulus (la case en tête de tableau sélectionne tout ce qui est <i>actuellement affiché</i> — donc respecte les filtres site/recherche en cours), puis cliquez sur <b>Générer les QR codes de la sélection</b>. La planche imprimable ne contiendra que ces équipements et s'ouvre directement dans un nouvel onglet, prête à imprimer.</p>
+  <p>Depuis le dashboard, cochez les équipements voulus, ou utilisez les boutons <b>Tout sélectionner</b> / <b>Tout désélectionner</b> (comme la case en tête de tableau, ils ne touchent que ce qui est <i>actuellement affiché</i> — donc respectent les filtres site/recherche en cours). Cliquez ensuite sur <b>Générer les QR codes de la sélection</b> : la planche imprimable ne contiendra que ces équipements et s'ouvre directement dans un nouvel onglet, prête à imprimer.</p>
 
   <h3>Publier les fiches et générer les QR codes (tous les équipements)</h3>
   <p>Après une ou plusieurs modifications, deux scripts régénèrent le contenu à publier :</p>
@@ -166,6 +166,16 @@
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">17 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Lien <b>📖 Aide</b> dans l'en-tête de chaque page, ouvrant cette documentation dans un nouvel onglet (route <code>/aide</code>).</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">17 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Boutons <b>Tout sélectionner</b> / <b>Tout désélectionner</b> sur le dashboard, à côté du bouton de génération des QR codes.</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">17 août 2026</div>
