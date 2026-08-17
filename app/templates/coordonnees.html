@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Coordonnées — {{ equipement.nom }}{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}">
+{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('detail_equipement', equipement_id=equipement.id) }}" class="muted">← Retour à {{ equipement.nom }}</a></p>
+<h1>Modifier les coordonnées — {{ equipement.nom }}</h1>
+
+<form class="card" method="post" style="max-width:520px;">
+  <label>Localisation</label>
+  <div style="display:flex; gap:.5rem; margin-top:.3rem;">
+    <input type="number" step="any" id="lat" name="lat" placeholder="Latitude" value="{{ equipement.lat if equipement.lat is not none else '' }}">
+    <input type="number" step="any" id="lon" name="lon" placeholder="Longitude" value="{{ equipement.lon if equipement.lon is not none else '' }}">
+  </div>
+  <p class="muted" style="margin-top:.3rem;">Cliquez sur la carte pour pointer l'emplacement, ou saisissez les coordonnées directement. Laissez vide pour effacer la localisation.</p>
+  <div id="mapPicker" style="height:320px; margin-top:.5rem; border-radius:6px; overflow:hidden;"></div>
+
+  <p style="margin-top:1.5rem;">
+    <button type="submit" class="btn">Enregistrer</button>
+    <a href="{{ url_for('detail_equipement', equipement_id=equipement.id) }}" class="btn btn-secondary">Annuler</a>
+  </p>
+</form>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
+<script src="{{ url_for('static', filename='leaflet/gmao-map.js') }}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    initMiniCarte('mapPicker', 'lat', 'lon');
+  });
+</script>
+{% endblock %}

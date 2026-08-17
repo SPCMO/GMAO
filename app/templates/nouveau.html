@@ -1,8 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Nouvel équipement{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}">
+{% endblock %}
 {% block content %}
 <h1>Nouvel équipement</h1>
-<form class="card" method="post">
+<form class="card" method="post" style="max-width:520px;">
   <label for="nom">Nom de l'équipement</label>
   <input type="text" id="nom" name="nom" required placeholder="ex: AquaCJ 9">
 
@@ -17,6 +20,14 @@
   <label for="date_installation">Date d'installation</label>
   <input type="date" id="date_installation" name="date_installation" required>
   <p class="muted" style="margin-top:.3rem;">La date d'affectation au site ci-dessus sera celle d'aujourd'hui ({{ aujourdhui }}), indépendamment de la date d'installation.</p>
+
+  <label>Localisation (optionnel)</label>
+  <div style="display:flex; gap:.5rem; margin-top:.3rem;">
+    <input type="number" step="any" id="lat" name="lat" placeholder="Latitude">
+    <input type="number" step="any" id="lon" name="lon" placeholder="Longitude">
+  </div>
+  <p class="muted" style="margin-top:.3rem;">Cliquez sur la carte pour pointer l'emplacement, ou saisissez les coordonnées directement.</p>
+  <div id="mapPicker" style="height:280px; margin-top:.5rem; border-radius:6px; overflow:hidden;"></div>
 
   <p style="margin-top:1.5rem;">
     <button type="submit" class="btn">Créer</button>
@@ -37,5 +48,14 @@ function toggleNouveauSite() {
     input.required = false;
   }
 }
+</script>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
+<script src="{{ url_for('static', filename='leaflet/gmao-map.js') }}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    initMiniCarte('mapPicker', 'lat', 'lon');
+  });
 </script>
 {% endblock %}

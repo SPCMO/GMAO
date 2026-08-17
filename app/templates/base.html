@@ -12,7 +12,7 @@
   .header-left { justify-self: start; }
   .header-title { justify-self: center; font-size: 1.05rem; white-space: nowrap; }
   .header-right { justify-self: end; display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }
-  main { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
+  main { max-width: 1300px; margin: 0 auto; padding: 1.5rem; }
   table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
   th, td { text-align: left; padding: .6rem .8rem; border-bottom: 1px solid #e5e7eb; }
   th { background: #eef1f5; font-size: .85rem; text-transform: uppercase; letter-spacing: .03em; }
@@ -29,6 +29,7 @@
   .badge { display: inline-block; background: #e0e7ff; color: #3730a3; padding: .15rem .5rem; border-radius: 999px; font-size: .78rem; }
   .muted { color: #6b7280; font-size: .85rem; }
 </style>
+{% block extra_head %}{% endblock %}
 </head>
 <body>
 <header>
@@ -50,5 +51,6 @@
   {% endwith %}
   {% block content %}{% endblock %}
 </main>
+{% block extra_scripts %}{% endblock %}
 </body>
 </html>

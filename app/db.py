@@ -32,9 +32,19 @@ def get_connection():
     return conn
 
 
+def _migrate(conn):
+    cols = [r["name"] for r in conn.execute("PRAGMA table_info(equipement)").fetchall()]
+    if "lat" not in cols:
+        conn.execute("ALTER TABLE equipement ADD COLUMN lat REAL")
+    if "lon" not in cols:
+        conn.execute("ALTER TABLE equipement ADD COLUMN lon REAL")
+
+
 def init_db():
     with get_connection() as conn:
         conn.executescript(SCHEMA)
+        _migrate(conn)
+        conn.commit()
 
 
 @contextmanager
@@ -51,11 +61,11 @@ def new_equipement_id():
     return uuid.uuid4().hex[:12]
 
 
-def create_equipement(conn, nom, date_installation, site, date_debut=None):
+def create_equipement(conn, nom, date_installation, site, date_debut=None, lat=None, lon=None):
     eq_id = new_equipement_id()
     conn.execute(
-        "INSERT INTO equipement (id, nom, date_installation) VALUES (?, ?, ?)",
-        (eq_id, nom, date_installation),
+        "INSERT INTO equipement (id, nom, date_installation, lat, lon) VALUES (?, ?, ?, ?, ?)",
+        (eq_id, nom, date_installation, lat, lon),
     )
     conn.execute(
         "INSERT INTO affectation (equipement_id, site, date_debut, date_fin) VALUES (?, ?, ?, NULL)",
@@ -78,7 +88,7 @@ def changer_affectation(conn, equipement_id, nouveau_site, date_transfert):
 def list_equipements(conn):
     rows = conn.execute(
         """
-        SELECT e.id, e.nom, e.date_installation,
+        SELECT e.id, e.nom, e.date_installation, e.lat, e.lon,
                a.site AS site_actuel, a.date_debut AS affecte_depuis
         FROM equipement e
         LEFT JOIN affectation a ON a.equipement_id = e.id AND a.date_fin IS NULL
@@ -86,6 +96,12 @@ def list_equipements(conn):
         """
     ).fetchall()
     return rows
+
+
+def set_coordonnees(conn, equipement_id, lat, lon):
+    conn.execute(
+        "UPDATE equipement SET lat = ?, lon = ? WHERE id = ?", (lat, lon, equipement_id)
+    )
 
 
 def get_equipement(conn, equipement_id):
@@ -118,7 +134,7 @@ def list_equipements_by_ids(conn, equipement_ids):
     placeholders = ",".join("?" for _ in equipement_ids)
     rows = conn.execute(
         f"""
-        SELECT e.id, e.nom, e.date_installation,
+        SELECT e.id, e.nom, e.date_installation, e.lat, e.lon,
                a.site AS site_actuel, a.date_debut AS affecte_depuis
         FROM equipement e
         LEFT JOIN affectation a ON a.equipement_id = e.id AND a.date_fin IS NULL

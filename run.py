@@ -19,6 +19,11 @@ def dashboard():
     return render_template("dashboard.html", equipements=equipements, sites=sites)
 
 
+def _parse_coord(valeur):
+    valeur = (valeur or "").strip()
+    return float(valeur) if valeur else None
+
+
 @app.route("/equipement/nouveau", methods=["GET", "POST"])
 def nouveau_equipement():
     with db.db_session() as conn:
@@ -29,8 +34,11 @@ def nouveau_equipement():
             if site == "__new__":
                 site = request.form.get("nouveau_site_nom", "").strip()
             date_installation = request.form["date_installation"]
+            lat = _parse_coord(request.form.get("lat"))
+            lon = _parse_coord(request.form.get("lon"))
             db.create_equipement(
-                conn, nom, date_installation, site, date_debut=date.today().isoformat()
+                conn, nom, date_installation, site,
+                date_debut=date.today().isoformat(), lat=lat, lon=lon,
             )
             flash(f"Équipement « {nom} » créé, affecté à « {site} » depuis aujourd'hui.")
             return redirect(url_for("dashboard"))
@@ -46,6 +54,19 @@ def detail_equipement(equipement_id):
     return render_template(
         "detail.html", equipement=equipement, site_actuel=site_actuel, historique=historique
     )
+
+
+@app.route("/equipement/<equipement_id>/coordonnees", methods=["GET", "POST"])
+def modifier_coordonnees(equipement_id):
+    with db.db_session() as conn:
+        equipement = db.get_equipement(conn, equipement_id)
+        if request.method == "POST":
+            lat = _parse_coord(request.form.get("lat"))
+            lon = _parse_coord(request.form.get("lon"))
+            db.set_coordonnees(conn, equipement_id, lat, lon)
+            flash("Coordonnées mises à jour.")
+            return redirect(url_for("detail_equipement", equipement_id=equipement_id))
+    return render_template("coordonnees.html", equipement=equipement)
 
 
 @app.route("/equipement/<equipement_id>/affecter", methods=["GET", "POST"])

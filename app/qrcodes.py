@@ -41,6 +41,7 @@ SHEET_HEAD = """<!doctype html>
 <h1>{titre}</h1>
 <p>Une étiquette par équipement : à découper et coller sur le matériel.</p>
 <div class="barre-actions">
+  <a href="/">🏠 Accueil</a>
   <button onclick="window.print()">🖨️ Imprimer</button>
   <a href="{pdf_filename}">📄 Télécharger en PDF</a>
 </div>

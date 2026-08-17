@@ -9,10 +9,21 @@
   <tr><th>Affecté depuis</th><td>{{ site_actuel.date_debut if site_actuel else '—' }}</td></tr>
   <tr><th>Date d'installation</th><td>{{ equipement.date_installation }}</td></tr>
   <tr><th>Identifiant (utilisé dans le QR code)</th><td><code>{{ equipement.id }}</code></td></tr>
+  <tr>
+    <th>Localisation</th>
+    <td>
+      {% if equipement.lat is not none and equipement.lon is not none %}
+        {{ "%.5f"|format(equipement.lat) }}, {{ "%.5f"|format(equipement.lon) }}
+      {% else %}
+        <span class="badge" style="background:#fef3c7; color:#92400e;">📍 non renseignée</span>
+      {% endif %}
+    </td>
+  </tr>
 </table>
 
 <p style="margin-top:1rem;">
   <a href="{{ url_for('affecter_equipement', equipement_id=equipement.id) }}" class="btn">Changer l'affectation</a>
+  <a href="{{ url_for('modifier_coordonnees', equipement_id=equipement.id) }}" class="btn btn-secondary">📍 Modifier les coordonnées</a>
   <a href="{{ url_for('fiche_publique', equipement_id=equipement.id) }}" class="btn btn-secondary" target="_blank">Voir la fiche publique</a>
 </p>
 
