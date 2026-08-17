@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GMAO — Aide</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; background: #f4f5f7; color: #1a1a1a; }
+  header { background: #14314f; color: #fff; padding: 1.2rem 1.5rem; }
+  header h1 { margin: 0; font-size: 1.3rem; }
+  header p { margin: .3rem 0 0; font-size: .85rem; opacity: .8; }
+  nav { display: flex; background: #1d4569; overflow-x: auto; }
+  nav button { background: none; border: none; color: #cbd5e1; padding: .8rem 1.2rem; font-size: .9rem; cursor: pointer; white-space: nowrap; border-bottom: 3px solid transparent; }
+  nav button:hover { color: #fff; }
+  nav button.active { color: #fff; border-bottom-color: #4dabf7; font-weight: 600; }
+  main { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+  section { display: none; background: #fff; border-radius: 10px; padding: 1.5rem 1.8rem; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  section.active { display: block; }
+  h2 { font-size: 1.15rem; margin-top: 0; color: #14314f; }
+  h3 { font-size: 1rem; color: #14314f; margin-bottom: .4rem; }
+  p, li { line-height: 1.55; font-size: .95rem; }
+  code, pre { font-family: "Cascadia Code", Consolas, monospace; font-size: .85rem; }
+  code { background: #eef1f5; padding: .15rem .4rem; border-radius: 4px; }
+  pre { background: #1d2733; color: #e6edf3; padding: .9rem 1rem; border-radius: 8px; overflow-x: auto; }
+  .arch { display: flex; flex-direction: column; gap: .6rem; margin: 1rem 0; }
+  .arch .box { background: #eef1f5; border: 1px solid #d9dde3; border-radius: 8px; padding: .7rem 1rem; }
+  .arch .box b { color: #14314f; }
+  .arch .arrow { text-align: center; color: #9ca3af; font-size: 1.1rem; }
+  table { width: 100%; border-collapse: collapse; margin: .8rem 0; }
+  th, td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid #e5e7eb; font-size: .88rem; }
+  th { background: #eef1f5; }
+  .tag { display: inline-block; font-size: .72rem; font-weight: 700; padding: .1rem .5rem; border-radius: 999px; margin-right: .4rem; }
+  .tag-fix { background: #fee2e2; color: #991b1b; }
+  .tag-feat { background: #dcfce7; color: #166534; }
+  .changelog-entry { border-left: 3px solid #d9dde3; padding: .3rem 0 .3rem 1rem; margin-bottom: 1rem; }
+  .changelog-date { font-size: .78rem; color: #6b7280; font-weight: 600; }
+  .warn { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: .8rem 1rem; font-size: .88rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>GMAO — Matériel hydrométrique</h1>
+  <p>Documentation d'utilisation, d'architecture et de suivi des évolutions</p>
+</header>
+<nav>
+  <button class="tab-btn active" data-tab="utilisation">Utilisation</button>
+  <button class="tab-btn" data-tab="architecture">Architecture</button>
+  <button class="tab-btn" data-tab="parametrage">Paramétrage</button>
+  <button class="tab-btn" data-tab="changelog">Correctifs &amp; nouveautés</button>
+</nav>
+<main>
+
+<section id="utilisation" class="active">
+  <h2>Utilisation</h2>
+
+  <h3>Lancer l'application locale</h3>
+  <p>L'appli sert à consulter/modifier la base (dashboard, formulaires). Elle utilise un environnement Python dédié (<code>venv</code>) où Flask est installé — <b>ne pas la lancer avec le Python système</b> (ça produit une erreur <code>ModuleNotFoundError: No module named 'flask'</code>, typique si on utilise le bouton "Run" d'un IDE comme Thonny au lieu du venv du projet).</p>
+  <pre>"GMAO\venv\Scripts\python.exe" "GMAO\run.py"</pre>
+  <p>Puis ouvrir <code>http://localhost:5000</code> dans un navigateur.</p>
+
+  <h3>Vue globale (dashboard)</h3>
+  <p>Page d'accueil : liste de tous les équipements avec leur site actuel. Le menu déroulant filtre par site, le champ de recherche filtre par nom d'équipement (les deux se combinent).</p>
+
+  <h3>Ajouter un équipement</h3>
+  <p>Bouton <b>+ Nouvel équipement</b> en haut de page : nom, site d'affectation initial, date d'installation. Un identifiant technique unique est généré automatiquement (utilisé plus tard dans l'URL du QR code).</p>
+
+  <h3>Changer l'affectation d'un équipement</h3>
+  <p>Depuis la fiche détail d'un équipement → <b>Changer l'affectation</b> : indiquer le nouveau site et la date de transfert. L'ancienne affectation est automatiquement clôturée (date de fin renseignée) et une nouvelle ligne d'historique est créée. L'historique n'est jamais réécrit, seulement complété.</p>
+
+  <h3>Publier les fiches et générer les QR codes</h3>
+  <p>Après une ou plusieurs modifications, deux scripts régénèrent le contenu à publier :</p>
+  <pre>"GMAO\venv\Scripts\python.exe" "GMAO\scripts\generate_site.py"
+"GMAO\venv\Scripts\python.exe" "GMAO\scripts\generate_qrcodes.py"</pre>
+  <p>Le premier régénère les fiches HTML (une par équipement) dans <code>docs/e/</code>. Le second régénère les QR codes individuels et la planche imprimable dans <code>etiquettes/</code> (fichier <code>planche_etiquettes.html</code> — à ouvrir dans un navigateur et imprimer). Il faut ensuite pousser les changements vers GitHub pour que les fiches en ligne soient à jour (<code>git add -A</code>, <code>git commit</code>, <code>git push</code>).</p>
+
+  <h3>Étiquettes</h3>
+  <p>Chaque étiquette imprimée porte le QR code <b>et</b> le nom de l'équipement en clair — utile si le réseau mobile est absent ou instable sur le site (cas fréquent pour du matériel isolé), pour au moins identifier visuellement le matériel sans avoir à scanner.</p>
+</section>
+
+<section id="architecture">
+  <h2>Architecture</h2>
+  <p>Le principe central : le QR code n'encode jamais les données du matériel directement (elles deviendraient fausses au premier changement d'affectation), mais un lien stable vers une fiche consultée en ligne, générée dynamiquement depuis la base.</p>
+
+  <div class="arch">
+    <div class="box"><b>1. Base SQLite</b> (<code>data/gmao.db</code>) — source de vérité unique : table <code>equipement</code> (nom, date d'installation) et table <code>affectation</code> (site, date de début, date de fin — <code>NULL</code> = affectation en cours). L'historique se déduit naturellement de cette seconde table.</div>
+    <div class="arrow">↓ édité via</div>
+    <div class="box"><b>2. Appli Flask locale</b> (<code>run.py</code> + <code>app/</code>) — dashboard, formulaires de création/changement d'affectation. Usage local uniquement, pas exposée sur Internet.</div>
+    <div class="arrow">↓ génère</div>
+    <div class="box"><b>3. Générateurs statiques</b> (<code>scripts/generate_site.py</code>, <code>scripts/generate_qrcodes.py</code>) — produisent une fiche HTML autonome par équipement (<code>docs/e/&lt;id&gt;.html</code>) et les QR codes correspondants (<code>etiquettes/</code>).</div>
+    <div class="arrow">↓ publié via git push</div>
+    <div class="box"><b>4. GitHub Pages</b> (<code>github.com/SPCMO/GMAO</code>, dossier <code>docs/</code>) — hébergement public gratuit des fiches, accessible depuis un smartphone en scannant le QR code, y compris hors réseau interne.</div>
+  </div>
+
+  <h3>Arborescence du projet</h3>
+  <pre>GMAO/
+├── run.py                  # appli Flask locale (dashboard + formulaires)
+├── config.py                # chemins et URL de base des fiches
+├── app/
+│   ├── db.py                 # accès base + logique métier (affectations)
+│   └── templates/            # pages HTML (dashboard, formulaires, fiche)
+├── scripts/
+│   ├── import_excel.py       # import initial depuis un classeur Excel
+│   ├── generate_site.py      # génère les fiches statiques (docs/e/)
+│   └── generate_qrcodes.py   # génère les QR codes + planche imprimable
+├── data/gmao.db              # base SQLite (source de vérité)
+├── docs/e/                   # fiches publiées (GitHub Pages)
+└── etiquettes/                # QR codes PNG + planche à imprimer</pre>
+
+  <h3>Modèle de données</h3>
+  <table>
+    <tr><th>Table</th><th>Champs</th><th>Rôle</th></tr>
+    <tr><td><code>equipement</code></td><td>id, nom, date_installation</td><td>identité du matériel</td></tr>
+    <tr><td><code>affectation</code></td><td>equipement_id, site, date_debut, date_fin</td><td>une ligne par période d'affectation ; <code>date_fin NULL</code> = affectation en cours</td></tr>
+  </table>
+</section>
+
+<section id="parametrage">
+  <h2>Paramétrage</h2>
+  <p>Le fichier <code>config.py</code>, à la racine du projet, centralise les réglages :</p>
+  <table>
+    <tr><th>Paramètre</th><th>Rôle</th></tr>
+    <tr><td><code>DB_PATH</code></td><td>Emplacement de la base SQLite</td></tr>
+    <tr><td><code>DOCS_DIR</code></td><td>Dossier des fiches statiques générées (publié via GitHub Pages)</td></tr>
+    <tr><td><code>ETIQUETTES_DIR</code></td><td>Dossier des QR codes et de la planche imprimable</td></tr>
+    <tr><td><code>FICHE_BASE_URL</code></td><td>URL publique de base des fiches — à modifier uniquement si le dépôt ou son adresse GitHub Pages change, puis relancer <code>generate_qrcodes.py</code> pour régénérer des QR codes à jour</td></tr>
+  </table>
+
+  <h3>Hébergement GitHub Pages</h3>
+  <p>Dépôt : <a href="https://github.com/SPCMO/GMAO" target="_blank">github.com/SPCMO/GMAO</a> (public). Publication activée sur la branche <code>main</code>, dossier <code>/docs</code>. Le fichier <code>docs/.nojekyll</code> désactive le traitement Jekyll (inutile pour du HTML statique, et source de lenteurs au déploiement sans lui).</p>
+
+  <div class="warn">
+    <b>Sécurité :</b> le dépôt étant public, son contenu reste techniquement consultable dans son intégralité (pas seulement les fiches individuelles) par quiconque connaît son adresse. Les identifiants d'équipement utilisés dans les URL sont volontairement opaques (non déductibles du nom) pour limiter la découverte, mais ce n'est pas une confidentialité stricte — à reconsidérer si les données venaient à être plus sensibles.
+  </div>
+
+  <h3>Authentification git</h3>
+  <p>Un token d'accès personnel GitHub (scope <code>Contents</code> uniquement) est enregistré dans la configuration git locale du dépôt pour permettre les <code>git push</code> sans ressaisie. En cas d'expiration ou de révocation, en régénérer un depuis GitHub (Settings → Developer settings → Personal access tokens) et mettre à jour l'URL du remote :</p>
+  <pre>git remote set-url origin "https://&lt;NOUVEAU_TOKEN&gt;@github.com/SPCMO/GMAO.git"</pre>
+</section>
+
+<section id="changelog">
+  <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">17 août 2026</div>
+    <p><span class="tag tag-fix">Correctif</span> Ajout de <code>docs/.nojekyll</code> : la première publication GitHub Pages restait bloquée en "building" à cause du traitement Jekyll appliqué par défaut, inutile pour des fiches HTML statiques.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">17 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Mise en ligne initiale : base SQLite, appli Flask locale (dashboard + formulaires), génération de fiches statiques et de QR codes, publication sur GitHub Pages (<code>github.com/SPCMO/GMAO</code>). Import des 8 équipements initiaux depuis le classeur Excel fourni.</p>
+  </div>
+</section>
+
+</main>
+
+<script>
+document.querySelectorAll('.tab-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('main > section').forEach(function(s) { s.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
