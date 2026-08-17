@@ -64,12 +64,16 @@
   <p>Page d'accueil : liste de tous les équipements avec leur site actuel. Le menu déroulant filtre par site, le champ de recherche filtre par nom d'équipement (les deux se combinent).</p>
 
   <h3>Ajouter un équipement</h3>
-  <p>Bouton <b>+ Nouvel équipement</b> en haut de page : nom, site d'affectation initial, date d'installation. Un identifiant technique unique est généré automatiquement (utilisé plus tard dans l'URL du QR code).</p>
+  <p>Bouton <b>+ Nouvel équipement</b> en haut de page : nom, site d'affectation (menu déroulant listant les sites déjà utilisés, avec une option <b>+ Nouveau site...</b> pour en créer un directement depuis le formulaire), date d'installation. Un identifiant technique unique est généré automatiquement (utilisé plus tard dans l'URL du QR code).</p>
+  <p class="muted">La date saisie dans ce formulaire est la date d'installation du matériel (qui peut être dans le passé). La date d'affectation au site choisi est toujours celle du jour de la création dans l'outil — les deux dates sont indépendantes.</p>
 
   <h3>Changer l'affectation d'un équipement</h3>
   <p>Depuis la fiche détail d'un équipement → <b>Changer l'affectation</b> : indiquer le nouveau site et la date de transfert. L'ancienne affectation est automatiquement clôturée (date de fin renseignée) et une nouvelle ligne d'historique est créée. L'historique n'est jamais réécrit, seulement complété.</p>
 
-  <h3>Publier les fiches et générer les QR codes</h3>
+  <h3>Générer les QR codes d'une sélection</h3>
+  <p>Depuis le dashboard, cochez les équipements voulus (la case en tête de tableau sélectionne tout ce qui est <i>actuellement affiché</i> — donc respecte les filtres site/recherche en cours), puis cliquez sur <b>Générer les QR codes de la sélection</b>. La planche imprimable ne contiendra que ces équipements et s'ouvre directement dans un nouvel onglet, prête à imprimer.</p>
+
+  <h3>Publier les fiches et générer les QR codes (tous les équipements)</h3>
   <p>Après une ou plusieurs modifications, deux scripts régénèrent le contenu à publier :</p>
   <pre>"GMAO\venv\Scripts\python.exe" "GMAO\scripts\generate_site.py"
 "GMAO\venv\Scripts\python.exe" "GMAO\scripts\generate_qrcodes.py"</pre>
@@ -99,12 +103,15 @@
 ├── config.py                # chemins et URL de base des fiches
 ├── app/
 │   ├── db.py                 # accès base + logique métier (affectations)
+│   ├── settings.py           # emplacement de la base, propre à ce poste (settings.json)
+│   ├── qrcodes.py            # génération des QR codes (tous ou une sélection)
 │   └── templates/            # pages HTML (dashboard, formulaires, fiche)
 ├── scripts/
 │   ├── import_excel.py       # import initial depuis un classeur Excel
 │   ├── generate_site.py      # génère les fiches statiques (docs/e/)
 │   └── generate_qrcodes.py   # génère les QR codes + planche imprimable
-├── data/gmao.db              # base SQLite (source de vérité)
+├── data/gmao.db              # base SQLite locale par défaut (voir Paramètres pour un chemin partagé)
+├── settings.json             # chemin de base choisi sur ce poste (non versionné, non publié)
 ├── docs/e/                   # fiches publiées (GitHub Pages)
 └── etiquettes/                # QR codes PNG + planche à imprimer</pre>
 
@@ -114,6 +121,10 @@
     <tr><td><code>equipement</code></td><td>id, nom, date_installation</td><td>identité du matériel</td></tr>
     <tr><td><code>affectation</code></td><td>equipement_id, site, date_debut, date_fin</td><td>une ligne par période d'affectation ; <code>date_fin NULL</code> = affectation en cours</td></tr>
   </table>
+
+  <h3>Usage multi-postes</h3>
+  <p>Chaque poste garde sa propre copie du code (son propre <code>.bat</code>), mais peut pointer vers une base SQLite <b>partagée</b> sur le réseau au lieu de sa base locale, via le menu <b>⚙️ Paramètres</b>. Tous les postes configurés sur le même chemin réseau voient alors les mêmes équipements et affectations. Le chemin choisi est propre à chaque poste (fichier <code>settings.json</code>, non versionné) — chacun le configure une fois.</p>
+  <div class="warn">SQLite sur un partage réseau tolère bien un usage occasionnel à quelques personnes, mais n'est pas conçu pour des écritures strictement simultanées par de nombreux utilisateurs. Si l'usage se développe fortement, un vrai serveur central (une seule instance de l'appli, accédée par navigateur) serait plus robuste.</div>
 </section>
 
 <section id="parametrage">
@@ -121,11 +132,25 @@
   <p>Le fichier <code>config.py</code>, à la racine du projet, centralise les réglages :</p>
   <table>
     <tr><th>Paramètre</th><th>Rôle</th></tr>
-    <tr><td><code>DB_PATH</code></td><td>Emplacement de la base SQLite</td></tr>
+    <tr><td><code>DB_PATH</code></td><td>Emplacement par défaut de la base SQLite (utilisé si aucun réglage n'est enregistré dans <code>settings.json</code>)</td></tr>
     <tr><td><code>DOCS_DIR</code></td><td>Dossier des fiches statiques générées (publié via GitHub Pages)</td></tr>
     <tr><td><code>ETIQUETTES_DIR</code></td><td>Dossier des QR codes et de la planche imprimable</td></tr>
     <tr><td><code>FICHE_BASE_URL</code></td><td>URL publique de base des fiches — à modifier uniquement si le dépôt ou son adresse GitHub Pages change, puis relancer <code>generate_qrcodes.py</code> pour régénérer des QR codes à jour</td></tr>
   </table>
+
+  <h3>Emplacement de la base (menu Paramètres)</h3>
+  <p>Le menu <b>⚙️ Paramètres</b> de l'appli permet de changer l'emplacement de la base SQLite sans toucher au code : local (par défaut) ou chemin réseau partagé, par exemple :</p>
+  <pre>\\10.11.208.239\suivi\Suivi_hydrométrie\00_Projets_en_cours\2026_GMAO\data\gmao.db</pre>
+  <p>Ce choix est enregistré dans <code>settings.json</code> à la racine du projet — un fichier propre à chaque poste, exclu du dépôt git (<code>.gitignore</code>), donc jamais publié sur GitHub. C'est ce qui permet de garder un chemin réseau interne hors du dépôt public.</p>
+
+  <h3>Trois destinations de déploiement</h3>
+  <p>Comme pour les autres outils du service, chaque modification du code est déployée vers trois emplacements :</p>
+  <ol>
+    <li><b>Dossier local</b> — là où le code est modifié</li>
+    <li><b>Réseau SPCMO</b> — <code>\\10.11.208.239\suivi\Suivi_hydrométrie\00_Projets_en_cours\2026_GMAO</code>, copie complète de l'outil (héberge aussi la base partagée pour l'usage multi-postes)</li>
+    <li><b>GitHub public</b> — <code>github.com/SPCMO/GMAO</code>, pour l'hébergement des fiches (GitHub Pages)</li>
+  </ol>
+  <div class="warn">La base de données du dossier réseau (<code>data/gmao.db</code>) n'est <b>jamais écrasée</b> par ces synchronisations de code — seuls les fichiers du programme sont mis à jour, pour ne pas perdre les données saisies par les utilisateurs.</div>
 
   <h3>Hébergement GitHub Pages</h3>
   <p>Dépôt : <a href="https://github.com/SPCMO/GMAO" target="_blank">github.com/SPCMO/GMAO</a> (public). Publication activée sur la branche <code>main</code>, dossier <code>/docs</code>. Le fichier <code>docs/.nojekyll</code> désactive le traitement Jekyll (inutile pour du HTML statique, et source de lenteurs au déploiement sans lui).</p>
@@ -141,6 +166,26 @@
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">17 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Menu <b>⚙️ Paramètres</b> pour choisir l'emplacement de la base (local ou réseau partagé), permettant à plusieurs postes de travailler sur les mêmes données. Copie complète de l'outil déployée sur le réseau SPCMO (<code>2026_GMAO</code>), avec la base partagée.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">17 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Sélection multiple sur le dashboard (avec respect des filtres) pour générer les QR codes et la planche imprimable d'un sous-ensemble d'équipements, plutôt que la totalité à chaque fois.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">17 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Formulaire "Nouvel équipement" : site d'affectation en menu déroulant (avec création d'un nouveau site à la volée) au lieu d'un champ texte libre.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">17 août 2026</div>
+    <p><span class="tag tag-fix">Correctif</span> La date saisie à la création d'un équipement est désormais uniquement la date d'installation ; la date d'affectation au site est automatiquement celle du jour (les deux étaient auparavant confondues).</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">17 août 2026</div>

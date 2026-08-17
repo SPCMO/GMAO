@@ -8,7 +8,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import openpyxl
-import config
+from app import settings
 from app.db import init_db, db_session, create_equipement
 
 
@@ -27,7 +27,7 @@ def main(xlsx_path):
             create_equipement(conn, nom, date_str, site, date_debut=date_str)
             imported += 1
 
-    print(f"{imported} équipement(s) importé(s) dans {config.DB_PATH}")
+    print(f"{imported} équipement(s) importé(s) dans {settings.get_db_path()}")
 
 
 if __name__ == "__main__":

@@ -13,9 +13,11 @@
   <input id="recherche" type="search" placeholder="Rechercher un équipement..." onkeyup="filtrer()">
 </div>
 
+<form method="post" action="{{ url_for('generer_qrcodes_selection') }}" target="_blank">
 <table id="tableEquipements">
   <thead>
     <tr>
+      <th style="width:2rem;"><input type="checkbox" id="toutSelectionner" onclick="toggleTout(this)" title="Sélectionner tout ce qui est affiché"></th>
       <th>Équipement</th>
       <th>Site d'affectation actuel</th>
       <th>Affecté depuis</th>
@@ -26,6 +28,7 @@
   <tbody>
     {% for e in equipements %}
     <tr data-site="{{ e.site_actuel }}" data-nom="{{ e.nom|lower }}">
+      <td><input type="checkbox" name="ids" value="{{ e.id }}" class="case-equipement"></td>
       <td><a href="{{ url_for('detail_equipement', equipement_id=e.id) }}">{{ e.nom }}</a></td>
       <td>{{ e.site_actuel or '—' }}</td>
       <td>{{ e.affecte_depuis or '—' }}</td>
@@ -33,10 +36,16 @@
       <td><a href="{{ url_for('detail_equipement', equipement_id=e.id) }}" class="muted">détail →</a></td>
     </tr>
     {% else %}
-    <tr><td colspan="5" class="muted">Aucun équipement enregistré.</td></tr>
+    <tr><td colspan="6" class="muted">Aucun équipement enregistré.</td></tr>
     {% endfor %}
   </tbody>
 </table>
+
+<p style="margin-top:1rem;">
+  <button type="submit" class="btn">Générer les QR codes de la sélection</button>
+  <span class="muted">Génère uniquement les équipements cochés ci-dessus (respecte les filtres via "sélectionner tout ce qui est affiché").</span>
+</p>
+</form>
 
 <script>
 function filtrer() {
@@ -47,6 +56,15 @@ function filtrer() {
     const matchSite = !site || tr.dataset.site === site;
     const matchRecherche = !recherche || tr.dataset.nom.includes(recherche);
     tr.style.display = (matchSite && matchRecherche) ? '' : 'none';
+  });
+  document.getElementById('toutSelectionner').checked = false;
+}
+
+function toggleTout(master) {
+  document.querySelectorAll('#tableEquipements tbody tr').forEach(function(tr) {
+    if (tr.style.display === 'none') return;
+    const case_ = tr.querySelector('.case-equipement');
+    if (case_) case_.checked = master.checked;
   });
 }
 </script>

@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from datetime import date
 
 import config
+from app import settings
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS equipement (
@@ -25,7 +26,7 @@ CREATE INDEX IF NOT EXISTS idx_affectation_equipement ON affectation(equipement_
 
 
 def get_connection():
-    conn = sqlite3.connect(config.DB_PATH)
+    conn = sqlite3.connect(settings.get_db_path())
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
@@ -109,6 +110,24 @@ def get_historique(conn, equipement_id):
         """,
         (equipement_id,),
     ).fetchall()
+
+
+def list_equipements_by_ids(conn, equipement_ids):
+    if not equipement_ids:
+        return []
+    placeholders = ",".join("?" for _ in equipement_ids)
+    rows = conn.execute(
+        f"""
+        SELECT e.id, e.nom, e.date_installation,
+               a.site AS site_actuel, a.date_debut AS affecte_depuis
+        FROM equipement e
+        LEFT JOIN affectation a ON a.equipement_id = e.id AND a.date_fin IS NULL
+        WHERE e.id IN ({placeholders})
+        ORDER BY e.nom
+        """,
+        equipement_ids,
+    ).fetchall()
+    return rows
 
 
 def list_sites(conn):

@@ -7,17 +7,35 @@
   <input type="text" id="nom" name="nom" required placeholder="ex: AquaCJ 9">
 
   <label for="site">Site d'affectation</label>
-  <input type="text" id="site" name="site" required list="sites" placeholder="ex: Carcassonne Pont Neuf">
-  <datalist id="sites">
-    {% for site in sites %}<option value="{{ site }}">{% endfor %}
-  </datalist>
+  <select id="site" name="site" required onchange="toggleNouveauSite()">
+    <option value="" disabled selected>Choisir un site...</option>
+    {% for site in sites %}<option value="{{ site }}">{{ site }}</option>{% endfor %}
+    <option value="__new__">+ Nouveau site...</option>
+  </select>
+  <input type="text" id="nouveau_site_nom" name="nouveau_site_nom" placeholder="Nom du nouveau site" style="display:none; margin-top:.5rem;">
 
   <label for="date_installation">Date d'installation</label>
   <input type="date" id="date_installation" name="date_installation" required>
+  <p class="muted" style="margin-top:.3rem;">La date d'affectation au site ci-dessus sera celle d'aujourd'hui ({{ aujourdhui }}), indépendamment de la date d'installation.</p>
 
   <p style="margin-top:1.5rem;">
     <button type="submit" class="btn">Créer</button>
     <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Annuler</a>
   </p>
 </form>
+
+<script>
+function toggleNouveauSite() {
+  var sel = document.getElementById('site');
+  var input = document.getElementById('nouveau_site_nom');
+  if (sel.value === '__new__') {
+    input.style.display = 'block';
+    input.required = true;
+    input.focus();
+  } else {
+    input.style.display = 'none';
+    input.required = false;
+  }
+}
+</script>
 {% endblock %}

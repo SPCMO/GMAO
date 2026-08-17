@@ -1,9 +1,11 @@
+import os
 from datetime import date
 
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
 
 import config
-from app import db
+from app import db, settings as app_settings
+from app import qrcodes
 
 app = Flask(__name__, template_folder="app/templates", static_folder="app/static")
 app.secret_key = "gmao-local-dev"
@@ -24,11 +26,15 @@ def nouveau_equipement():
         if request.method == "POST":
             nom = request.form["nom"].strip()
             site = request.form["site"].strip()
+            if site == "__new__":
+                site = request.form.get("nouveau_site_nom", "").strip()
             date_installation = request.form["date_installation"]
-            db.create_equipement(conn, nom, date_installation, site, date_debut=date_installation)
-            flash(f"Équipement « {nom} » créé.")
+            db.create_equipement(
+                conn, nom, date_installation, site, date_debut=date.today().isoformat()
+            )
+            flash(f"Équipement « {nom} » créé, affecté à « {site} » depuis aujourd'hui.")
             return redirect(url_for("dashboard"))
-    return render_template("nouveau.html", sites=sites)
+    return render_template("nouveau.html", sites=sites, aujourdhui=date.today().isoformat())
 
 
 @app.route("/equipement/<equipement_id>")
@@ -69,6 +75,31 @@ def fiche_publique(equipement_id):
     return render_template(
         "fiche.html", equipement=equipement, site_actuel=site_actuel, historique=historique
     )
+
+
+@app.route("/parametres", methods=["GET", "POST"])
+def parametres():
+    if request.method == "POST":
+        nouveau_chemin = request.form["db_path"].strip()
+        app_settings.set_db_path(nouveau_chemin)
+        flash("Emplacement de la base enregistré.")
+        return redirect(url_for("parametres"))
+    return render_template("parametres.html", db_path=app_settings.get_db_path())
+
+
+@app.route("/qrcodes/generer", methods=["POST"])
+def generer_qrcodes_selection():
+    ids = request.form.getlist("ids")
+    if not ids:
+        flash("Aucun équipement sélectionné.")
+        return redirect(url_for("dashboard"))
+    count, sheet_path = qrcodes.generate(ids)
+    return redirect(url_for("etiquettes_file", filename=os.path.basename(sheet_path)))
+
+
+@app.route("/etiquettes/<path:filename>")
+def etiquettes_file(filename):
+    return send_from_directory(config.ETIQUETTES_DIR, filename)
 
 
 if __name__ == "__main__":

@@ -30,7 +30,10 @@
 <body>
 <header>
   <a href="{{ url_for('dashboard') }}">GMAO — Matériel hydrométrique</a>
-  <a href="{{ url_for('nouveau_equipement') }}" class="btn">+ Nouvel équipement</a>
+  <div style="display:flex; gap:.6rem; align-items:center;">
+    <a href="{{ url_for('parametres') }}" class="btn btn-secondary" title="Paramètres">⚙️ Paramètres</a>
+    <a href="{{ url_for('nouveau_equipement') }}" class="btn">+ Nouvel équipement</a>
+  </div>
 </header>
 <main>
   {% with messages = get_flashed_messages() %}
