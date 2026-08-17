@@ -138,6 +138,17 @@
     <tr><td><code>FICHE_BASE_URL</code></td><td>URL publique de base des fiches — à modifier uniquement si le dépôt ou son adresse GitHub Pages change, puis relancer <code>generate_qrcodes.py</code> pour régénérer des QR codes à jour</td></tr>
   </table>
 
+  <h3>Installer l'appli sur un nouveau poste</h3>
+  <p>Le dossier réseau (<code>2026_GMAO</code>) sert de copie du code et de stockage de la base partagée — il ne contient volontairement <b>pas</b> d'environnement Python (<code>venv</code>), et <code>Lancer_GMAO.bat</code> ne peut pas s'exécuter directement dessus (Windows ne supporte pas un dossier réseau <code>\\...</code> comme répertoire de travail). Pour un nouveau poste :</p>
+  <ol>
+    <li>Copier tout le dossier <code>GMAO</code> (depuis le réseau ou <a href="https://github.com/SPCMO/GMAO" target="_blank">GitHub</a>) sur le disque local, par exemple <code>D:\GMAO</code></li>
+    <li>Ouvrir une invite de commande dans ce dossier et créer l'environnement :
+      <pre>python -m venv venv
+venv\Scripts\python.exe -m pip install -r requirements.txt</pre>
+    </li>
+    <li>Lancer <code>Lancer_GMAO.bat</code>, puis dans le menu <b>⚙️ Paramètres</b>, indiquer le chemin réseau de la base partagée (voir ci-dessous)</li>
+  </ol>
+
   <h3>Emplacement de la base (menu Paramètres)</h3>
   <p>Le menu <b>⚙️ Paramètres</b> de l'appli permet de changer l'emplacement de la base SQLite sans toucher au code : local (par défaut) ou chemin réseau partagé, par exemple :</p>
   <pre>\\10.11.208.239\suivi\Suivi_hydrométrie\00_Projets_en_cours\2026_GMAO\data\gmao.db</pre>
@@ -166,6 +177,11 @@
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">17 août 2026</div>
+    <p><span class="tag tag-fix">Correctif</span> <code>Lancer_GMAO.bat</code> affiche désormais un message clair (au lieu d'une erreur Windows cryptique) s'il est lancé directement depuis le dossier réseau — Windows ne supporte pas un chemin <code>\\...</code> comme répertoire de travail. Ajout d'une procédure d'installation pour un nouveau poste dans l'onglet Paramétrage.</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">17 août 2026</div>
