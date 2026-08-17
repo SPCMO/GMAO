@@ -4,3 +4,4 @@ __pycache__/
 .~lock.*
 settings.json
 data/gmao.db
+etiquettes/

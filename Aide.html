@@ -71,7 +71,7 @@
   <p>Depuis la fiche détail d'un équipement → <b>Changer l'affectation</b> : indiquer le nouveau site et la date de transfert. L'ancienne affectation est automatiquement clôturée (date de fin renseignée) et une nouvelle ligne d'historique est créée. L'historique n'est jamais réécrit, seulement complété.</p>
 
   <h3>Générer les QR codes d'une sélection</h3>
-  <p>Depuis le dashboard, cochez les équipements voulus, ou utilisez les boutons <b>Tout sélectionner</b> / <b>Tout désélectionner</b> (comme la case en tête de tableau, ils ne touchent que ce qui est <i>actuellement affiché</i> — donc respectent les filtres site/recherche en cours). Cliquez ensuite sur <b>Générer les QR codes de la sélection</b> : la planche imprimable ne contiendra que ces équipements et s'ouvre directement dans un nouvel onglet, prête à imprimer.</p>
+  <p>Depuis le dashboard, cochez les équipements voulus, ou utilisez les boutons <b>Tout sélectionner</b> / <b>Tout désélectionner</b> (comme la case en tête de tableau, ils ne touchent que ce qui est <i>actuellement affiché</i> — donc respectent les filtres site/recherche en cours). Cliquez ensuite sur <b>Générer les QR codes de la sélection</b> : la planche ne contiendra que ces équipements et s'ouvre directement dans un nouvel onglet, avec un bouton <b>🖨️ Imprimer</b> (impression directe) et un lien <b>📄 Télécharger en PDF</b>.</p>
 
   <h3>Publier les fiches et générer les QR codes (tous les équipements)</h3>
   <p>Après une ou plusieurs modifications, deux scripts régénèrent le contenu à publier :</p>
@@ -177,6 +177,16 @@ venv\Scripts\python.exe -m pip install -r requirements.txt</pre>
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">17 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Planche d'étiquettes : bouton <b>🖨️ Imprimer</b> (impression directe) et <b>📄 Télécharger en PDF</b> (fichier PDF prêt à imprimer, en plus de la version HTML).</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">17 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Bandeau réorganisé : bouton <b>🏠 Accueil</b> à gauche pour revenir au dashboard depuis n'importe quelle page, titre centré.</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">17 août 2026</div>

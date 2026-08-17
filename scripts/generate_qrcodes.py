@@ -12,9 +12,10 @@ from app.qrcodes import generate
 
 
 def main():
-    count, sheet_path = generate()
+    count, sheet_path, pdf_path = generate()
     print(f"{count} QR code(s) générés dans {config.ETIQUETTES_DIR}")
-    print(f"Planche : {sheet_path}")
+    print(f"Planche HTML : {sheet_path}")
+    print(f"Planche PDF : {pdf_path}")
 
 
 if __name__ == "__main__":

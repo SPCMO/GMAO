@@ -4,7 +4,7 @@ if "%SCRIPT_DIR:~0,2%"=="\\" (
   echo Ce lanceur ne peut pas s'executer directement depuis un dossier reseau ^(chemin \\...^).
   echo.
   echo Copiez d'abord tout le dossier GMAO sur votre disque local ^(ex: D:\GMAO^),
-  echo installez l'environnement Python local ^(voir Aide.html, section Paramétrage^),
+  echo installez l'environnement Python local ^(voir Aide.html, section Parametrage^),
   echo puis relancez ce fichier depuis cette copie locale.
   echo.
   echo Le dossier reseau sert de copie du code et de stockage de la base partagee,

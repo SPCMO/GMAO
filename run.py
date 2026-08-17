@@ -93,7 +93,7 @@ def generer_qrcodes_selection():
     if not ids:
         flash("Aucun équipement sélectionné.")
         return redirect(url_for("dashboard"))
-    count, sheet_path = qrcodes.generate(ids)
+    count, sheet_path, pdf_path = qrcodes.generate(ids)
     return redirect(url_for("etiquettes_file", filename=os.path.basename(sheet_path)))
 
 
