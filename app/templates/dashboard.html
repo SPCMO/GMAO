@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Vue globale{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <div>
+    <select id="filtreSite" onchange="filtrer()">
+      <option value="">Tous les sites ({{ equipements|length }})</option>
+      {% for site in sites %}
+        <option value="{{ site }}">{{ site }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <input id="recherche" type="search" placeholder="Rechercher un équipement..." onkeyup="filtrer()">
+</div>
+
+<table id="tableEquipements">
+  <thead>
+    <tr>
+      <th>Équipement</th>
+      <th>Site d'affectation actuel</th>
+      <th>Affecté depuis</th>
+      <th>Date d'installation</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for e in equipements %}
+    <tr data-site="{{ e.site_actuel }}" data-nom="{{ e.nom|lower }}">
+      <td><a href="{{ url_for('detail_equipement', equipement_id=e.id) }}">{{ e.nom }}</a></td>
+      <td>{{ e.site_actuel or '—' }}</td>
+      <td>{{ e.affecte_depuis or '—' }}</td>
+      <td>{{ e.date_installation }}</td>
+      <td><a href="{{ url_for('detail_equipement', equipement_id=e.id) }}" class="muted">détail →</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="muted">Aucun équipement enregistré.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script>
+function filtrer() {
+  const site = document.getElementById('filtreSite').value;
+  const recherche = document.getElementById('recherche').value.toLowerCase();
+  document.querySelectorAll('#tableEquipements tbody tr').forEach(function(tr) {
+    if (!tr.dataset.nom) return;
+    const matchSite = !site || tr.dataset.site === site;
+    const matchRecherche = !recherche || tr.dataset.nom.includes(recherche);
+    tr.style.display = (matchSite && matchRecherche) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

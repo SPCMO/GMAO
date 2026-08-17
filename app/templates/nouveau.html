@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Nouvel équipement{% endblock %}
+{% block content %}
+<h1>Nouvel équipement</h1>
+<form class="card" method="post">
+  <label for="nom">Nom de l'équipement</label>
+  <input type="text" id="nom" name="nom" required placeholder="ex: AquaCJ 9">
+
+  <label for="site">Site d'affectation</label>
+  <input type="text" id="site" name="site" required list="sites" placeholder="ex: Carcassonne Pont Neuf">
+  <datalist id="sites">
+    {% for site in sites %}<option value="{{ site }}">{% endfor %}
+  </datalist>
+
+  <label for="date_installation">Date d'installation</label>
+  <input type="date" id="date_installation" name="date_installation" required>
+
+  <p style="margin-top:1.5rem;">
+    <button type="submit" class="btn">Créer</button>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Annuler</a>
+  </p>
+</form>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Changer l'affectation{% endblock %}
+{% block content %}
+<h1>Changer l'affectation — {{ equipement.nom }}</h1>
+<p class="muted">Site actuel : {{ site_actuel.site if site_actuel else '—' }} (depuis le {{ site_actuel.date_debut if site_actuel else '—' }})</p>
+
+<form class="card" method="post">
+  <label for="nouveau_site">Nouveau site d'affectation</label>
+  <input type="text" id="nouveau_site" name="nouveau_site" required list="sites" placeholder="ex: Cassaignes">
+  <datalist id="sites">
+    {% for site in sites %}<option value="{{ site }}">{% endfor %}
+  </datalist>
+
+  <label for="date_transfert">Date de transfert</label>
+  <input type="date" id="date_transfert" name="date_transfert" required>
+
+  <p style="margin-top:1.5rem;">
+    <button type="submit" class="btn">Valider le transfert</button>
+    <a href="{{ url_for('detail_equipement', equipement_id=equipement.id) }}" class="btn btn-secondary">Annuler</a>
+  </p>
+</form>
+{% endblock %}

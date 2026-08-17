@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ equipement.nom }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('dashboard') }}" class="muted">← Retour à la vue globale</a></p>
+<h1>{{ equipement.nom }}</h1>
+
+<table>
+  <tr><th style="width:220px;">Site d'affectation actuel</th><td>{{ site_actuel.site if site_actuel else '—' }}</td></tr>
+  <tr><th>Affecté depuis</th><td>{{ site_actuel.date_debut if site_actuel else '—' }}</td></tr>
+  <tr><th>Date d'installation</th><td>{{ equipement.date_installation }}</td></tr>
+  <tr><th>Identifiant (utilisé dans le QR code)</th><td><code>{{ equipement.id }}</code></td></tr>
+</table>
+
+<p style="margin-top:1rem;">
+  <a href="{{ url_for('affecter_equipement', equipement_id=equipement.id) }}" class="btn">Changer l'affectation</a>
+  <a href="{{ url_for('fiche_publique', equipement_id=equipement.id) }}" class="btn btn-secondary" target="_blank">Voir la fiche publique</a>
+</p>
+
+<h2 style="margin-top:2rem;">Historique des affectations</h2>
+<table>
+  <thead>
+    <tr><th>Site</th><th>Début</th><th>Fin</th></tr>
+  </thead>
+  <tbody>
+    {% for a in historique %}
+    <tr>
+      <td>{{ a.site }}</td>
+      <td>{{ a.date_debut }}</td>
+      <td>{{ a.date_fin or 'en cours' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
