@@ -14,10 +14,16 @@
     {% for site in sites %}<option value="{{ site }}">{{ site }}</option>{% endfor %}
     <option value="__new__">+ Nouveau site...</option>
   </select>
-  <p class="muted" id="infoSiteExistant" style="display:none; margin-top:.3rem;">La localisation sera reprise automatiquement de ce site (voir 🏢 Sites).</p>
+  <p class="muted" id="infoSiteExistant" style="display:none; margin-top:.3rem;">La localisation et l'UH de gestion seront reprises automatiquement de ce site (voir 🏢 Sites).</p>
 
   <div id="blocNouveauSite" style="display:none;">
     <input type="text" id="nouveau_site_nom" name="nouveau_site_nom" placeholder="Nom du nouveau site" style="margin-top:.5rem;">
+
+    <label style="margin-top:1rem;">UH de gestion du nouveau site</label>
+    <select name="uh_gestion">
+      <option value="">—</option>
+      {% for uh in uh_valeurs %}<option value="{{ uh }}">{{ uh }}</option>{% endfor %}
+    </select>
 
     <label style="margin-top:1rem;">Localisation du nouveau site (optionnel)</label>
     <div style="display:flex; gap:.5rem; margin-top:.3rem;">
@@ -29,7 +35,8 @@
   </div>
 
   <label for="date_transfert" style="margin-top:1rem;">Date de transfert</label>
-  <input type="date" id="date_transfert" name="date_transfert" required>
+  <input type="date" id="date_transfert" name="date_transfert" required value="{{ aujourdhui }}">
+  <p class="muted" style="margin-top:.3rem;">Pré-remplie avec la date du jour ; modifiable via le calendrier pour une date antérieure.</p>
 
   <p style="margin-top:1.5rem;">
     <button type="submit" class="btn">Valider le transfert</button>

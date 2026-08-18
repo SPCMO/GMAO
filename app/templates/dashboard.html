@@ -65,13 +65,13 @@
         <tr class="{{ 'equip-retire' if e.date_retrait else '' }}"
             data-site="{{ e.site_actuel or '' }}" data-nom="{{ e.nom|lower }}"
             data-lat="{{ e.site_lat if e.site_lat is not none else '' }}" data-lon="{{ e.site_lon if e.site_lon is not none else '' }}"
-            data-type="{{ e.type or '' }}" data-uh="{{ e.uh_gestion or '' }}"
+            data-type="{{ e.type or '' }}" data-uh="{{ e.site_uh or '' }}"
             {% if l.couleur_fond and not e.date_retrait %}style="background-color: {{ l.couleur_fond }};"{% endif %}>
           <td><input type="checkbox" name="ids" value="{{ e.id }}" class="case-equipement"></td>
           <td data-tri="{{ e.nom|lower }}"><a href="{{ url_for('detail_equipement', equipement_id=e.id) }}">{{ e.nom }}</a></td>
           <td data-tri="{{ e.type or '' }}">{{ e.type or '—' }}</td>
           <td data-tri="{{ e.site_actuel or '' }}">{{ e.site_actuel or '—' }}</td>
-          <td data-tri="{{ e.uh_gestion or '' }}">{{ e.uh_gestion or '—' }}</td>
+          <td data-tri="{{ e.site_uh or '' }}">{{ e.site_uh or '—' }}</td>
           <td data-tri="{{ e.affecte_depuis or '' }}">{{ e.affecte_depuis or '—' }}</td>
           <td data-tri="{{ e.date_installation or '' }}">{{ e.date_installation }}</td>
           <td data-tri="{{ 2 if e.date_retrait else (1 if etat.active else 0) }}">

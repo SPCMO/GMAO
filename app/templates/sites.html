@@ -14,6 +14,7 @@
     <tr>
       <th>Site</th>
       <th>Équipements actuellement affectés</th>
+      <th>UH</th>
       <th>Maintenance</th>
       <th>Localisation</th>
       <th></th>
@@ -24,6 +25,7 @@
     <tr>
       <td>{{ s.nom }}</td>
       <td>{{ s.nb_equipements }}</td>
+      <td>{{ s.uh_gestion or '—' }}</td>
       <td>{% if s.maintenance %}<span class="badge" style="background:#e5e7eb; color:#374151;">🔧 maintenance</span>{% else %}—{% endif %}</td>
       <td>
         {% if s.lat is not none and s.lon is not none %}
@@ -35,7 +37,7 @@
       <td><a href="{{ url_for('modifier_site', nom=s.nom) }}" class="muted">✏️ Modifier →</a></td>
     </tr>
     {% else %}
-    <tr><td colspan="5" class="muted">Aucun site enregistré.</td></tr>
+    <tr><td colspan="6" class="muted">Aucun site enregistré.</td></tr>
     {% endfor %}
   </tbody>
 </table>

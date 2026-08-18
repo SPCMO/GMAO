@@ -83,11 +83,11 @@
   <p>Bouton <b>+ Nouvel équipement</b> en haut de page : nom, site d'affectation (menu déroulant listant les sites déjà utilisés, avec une option <b>+ Nouveau site...</b> pour en créer un directement depuis le formulaire), date d'installation. Un identifiant technique unique est généré automatiquement (utilisé plus tard dans l'URL du QR code).</p>
   <p class="muted">La date saisie dans ce formulaire est la date d'installation du matériel (qui peut être dans le passé). La date d'affectation au site choisi est toujours celle du jour de la création dans l'outil — les deux dates sont indépendantes.</p>
 
-  <h3>Localisation : la carte se règle par site, pas par équipement</h3>
-  <p>La localisation appartient au <b>site</b>, pas à l'équipement : tous les équipements affectés à un même site partagent automatiquement sa position. Quand un site existe déjà, le sélectionner suffit — sa localisation est reprise automatiquement (aucun encart carte à remplir). Quand on choisit <b>+ Nouveau site...</b>, un encart carte apparaît pour pointer l'emplacement du site (clic sur la carte ou saisie manuelle des coordonnées) ; c'est valable aussi bien depuis le formulaire de création d'équipement que depuis <b>Changer l'affectation</b>. Voir la section <b>🏢 Gestionnaire des sites</b> ci-dessous pour corriger ou compléter une localisation après coup.</p>
+  <h3>Localisation et UH de gestion : réglées par site, pas par équipement</h3>
+  <p>La localisation <b>et</b> l'UH de gestion appartiennent au <b>site</b>, pas à l'équipement : tous les équipements affectés à un même site partagent automatiquement sa position et son UH — donc les mêmes destinataires d'alerte (voir Paramétrage). Quand un site existe déjà, le sélectionner suffit — tout est repris automatiquement (aucun champ supplémentaire à remplir). Quand on choisit <b>+ Nouveau site...</b>, un encart carte et un menu UH apparaissent pour définir le site (clic sur la carte ou saisie manuelle des coordonnées) ; c'est valable aussi bien depuis le formulaire de création d'équipement que depuis <b>Changer l'affectation</b>. Voir la section <b>🏢 Gestionnaire des sites</b> ci-dessous pour corriger ou compléter ces informations après coup.</p>
 
   <h3>🏢 Gestionnaire des sites</h3>
-  <p>Accessible depuis le bouton <b>🏢 Sites</b> en haut de chaque page : liste tous les sites connus, le nombre d'équipements actuellement affectés à chacun, et leur localisation. Le lien <b>📍 modifier</b> ouvre un encart carte pour définir ou corriger la position d'un site (laisser les champs vides efface la localisation). C'est l'endroit central pour géolocaliser les sites créés avant cette fonctionnalité, ou pour corriger une position.</p>
+  <p>Accessible depuis le bouton <b>🏢 Sites</b> en haut de chaque page : liste tous les sites connus, le nombre d'équipements actuellement affectés à chacun, leur UH de gestion et leur localisation. Bouton <b>+ Site</b> pour en créer un directement (sans passer par un équipement) ; lien <b>✏️ Modifier</b> par ligne pour corriger la case <b>Site de maintenance</b>, l'UH de gestion ou la position (laisser les champs de coordonnées vides efface la localisation).</p>
 
   <h3>Changer l'affectation d'un équipement</h3>
   <p>Depuis la fiche détail d'un équipement → <b>Changer l'affectation</b> : indiquer le nouveau site et la date de transfert. L'ancienne affectation est automatiquement clôturée (date de fin renseignée) et une nouvelle ligne d'historique est créée. L'historique n'est jamais réécrit, seulement complété.</p>
@@ -111,7 +111,6 @@
   <p>Bouton <b>🔧 Équipements</b> en haut de page : liste de gestion (type, site, UH, statut) avec le bouton <b>+ Nouvel équipement</b> et un lien <b>✏️ modifier</b> par ligne. Le formulaire (création ou modification) couvre :</p>
   <ul>
     <li><b>Type / Sous-type</b> — menus déroulants en cascade (le choix du type détermine la liste des sous-types proposés) ;</li>
-    <li><b>UH de gestion</b> — 11, 34 ou 66 ;</li>
     <li><b>Date de création</b> et <b>Date de 1ère mise en service</b> — la seconde doit être postérieure ou égale à la première (contrôle de saisie automatique) ;</li>
     <li><b>Durée de vie</b>, <b>Rappel avant échéance</b> et <b>Rallonge post rappel</b> (en années) — utilisés pour calculer la péremption (voir ci-dessous) ;</li>
     <li><b>Retrait définitif</b> (uniquement en modification) — une fois une date de retrait renseignée, l'équipement s'affiche grisé et barré dans la liste d'accueil, avec la <b>raison du retrait</b> (menu déroulant : Usure normale / Vol / Détérioration / Vandalisme / Détérioration par crue / saisie libre).</li>
@@ -240,8 +239,8 @@
     <tr><th>Table</th><th>Champs</th><th>Rôle</th></tr>
     <tr><td><code>equipement</code></td><td>id, nom, type, sous_type, uh_gestion, date_creation, date_installation (= 1ère mise en service), duree_vie_ans, duree_vie_effective_ans, rappel_ans, rallonge_ans, date_retrait, raison_retrait, alerte_envoyee_le</td><td>identité, cycle de vie et suivi d'alerte du matériel</td></tr>
     <tr><td><code>affectation</code></td><td>equipement_id, site, date_debut, date_fin</td><td>une ligne par période d'affectation ; <code>date_fin NULL</code> = affectation en cours</td></tr>
-    <tr><td><code>site</code></td><td>nom, lat, lon, maintenance</td><td>localisation et statut (maintenance) d'un site — partagés par tous les équipements qui y sont affectés</td></tr>
-    <tr><td><code>type_equipement</code> / <code>sous_type_equipement</code></td><td>nom (+ type parent)</td><td>listes déroulantes gérables depuis Paramètres</td></tr>
+    <tr><td><code>site</code></td><td>nom, lat, lon, maintenance, uh_gestion</td><td>localisation, statut (maintenance) et UH de gestion d'un site — partagés par tous les équipements qui y sont affectés</td></tr>
+    <tr><td><code>type_equipement</code> / <code>sous_type_equipement</code></td><td>nom (+ type parent), ordre</td><td>listes déroulantes gérables depuis Paramètres, dans l'ordre choisi (boutons ▲▼)</td></tr>
     <tr><td><code>duree_vie_option</code> / <code>rappel_option</code> / <code>rallonge_option</code></td><td>annees</td><td>valeurs proposées dans les menus déroulants correspondants</td></tr>
     <tr><td><code>uh_email</code></td><td>uh, email</td><td>destinataires des mails d'alerte par UH de gestion</td></tr>
     <tr><td><code>couleur_config</code></td><td>cle, valeur</td><td>couleurs de fond (uh_11, uh_34, uh_66, maintenance)</td></tr>
@@ -280,6 +279,7 @@
 
   <h3>Listes déroulantes et couleurs (menu Paramètres)</h3>
   <p>Toujours dans <b>⚙️ Paramètres</b> : gestion des types/sous-types d'équipement, des valeurs proposées pour durée de vie/rappel/rallonge, des adresses mail par UH de gestion, et des couleurs de fond (UH 11/34/66, site de maintenance) utilisées dans la liste d'accueil et sur la carte. Chaque liste s'édite par simple ajout/suppression, sans toucher au code.</p>
+  <p class="muted">Types et sous-types se réordonnent librement avec les boutons <b>▲▼</b> — c'est cet ordre qui s'affiche dans tous les menus déroulants de l'application. Les durées de vie/rappel/rallonge, elles, s'insèrent toujours automatiquement par ordre croissant (pas de tri manuel nécessaire).</p>
   <div class="warn">Supprimer un <b>type</b> supprime aussi tous ses sous-types. Les équipements qui utilisaient déjà une valeur retirée d'une liste conservent cette valeur affichée (elle disparaît seulement des choix proposés pour les nouvelles saisies).</div>
 
   <h3>📧 Alertes de péremption par mail</h3>
@@ -326,6 +326,16 @@
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Boutons <b>▲▼</b> pour réordonner librement les types et sous-types d'équipement dans <b>⚙️ Paramètres</b> — c'est cet ordre qui s'affiche dans les menus déroulants de l'application.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-fix">Correctif</span> L'UH de gestion appartient désormais au <b>site</b> (comme la localisation) et non plus à chaque équipement : elle se règle une fois par site, tous les équipements qui y sont affectés en héritent automatiquement — plus besoin de la ressaisir équipement par équipement, et le routage des mails d'alerte reste cohérent avec le site réel du matériel.</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">18 août 2026</div>

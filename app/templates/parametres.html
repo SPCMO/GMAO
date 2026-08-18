@@ -59,18 +59,45 @@
 </div>
 
 <h2 class="section-param">🔧 Types et sous-types d'équipement</h2>
+<p class="muted">L'ordre choisi ici est celui utilisé dans tous les menus déroulants de l'application.</p>
 <div class="card" style="max-width:700px; padding:1.5rem;">
   {% for t in types %}
-  <h3 style="margin-top:{{ '0' if loop.first else '1.2rem' }};">{{ t }}</h3>
+  <h3 style="margin-top:{{ '0' if loop.first else '1.2rem' }}; display:flex; align-items:center; gap:.5rem;">
+    {{ t }}
+    <span class="ordre-actions">
+      <form method="post" action="{{ url_for('parametres_types_monter') }}" style="display:inline;">
+        <input type="hidden" name="nom" value="{{ t }}">
+        <button type="submit" class="btn-ordre" title="Monter" {{ "disabled" if loop.first }}>▲</button>
+      </form>
+      <form method="post" action="{{ url_for('parametres_types_descendre') }}" style="display:inline;">
+        <input type="hidden" name="nom" value="{{ t }}">
+        <button type="submit" class="btn-ordre" title="Descendre" {{ "disabled" if loop.last }}>▼</button>
+      </form>
+    </span>
+  </h3>
   <ul class="liste-gestion">
     {% for st in sous_types_json.get(t, []) %}
     <li>
-      {{ st }}
-      <form method="post" action="{{ url_for('parametres_sous_types_supprimer') }}">
-        <input type="hidden" name="type" value="{{ t }}">
-        <input type="hidden" name="nom" value="{{ st }}">
-        <button type="submit" class="lien-suppr">supprimer</button>
-      </form>
+      <span>{{ st }}</span>
+      <span style="display:flex; align-items:center;">
+        <span class="ordre-actions">
+          <form method="post" action="{{ url_for('parametres_sous_types_monter') }}" style="display:inline;">
+            <input type="hidden" name="type" value="{{ t }}">
+            <input type="hidden" name="nom" value="{{ st }}">
+            <button type="submit" class="btn-ordre" title="Monter" {{ "disabled" if loop.first }}>▲</button>
+          </form>
+          <form method="post" action="{{ url_for('parametres_sous_types_descendre') }}" style="display:inline;">
+            <input type="hidden" name="type" value="{{ t }}">
+            <input type="hidden" name="nom" value="{{ st }}">
+            <button type="submit" class="btn-ordre" title="Descendre" {{ "disabled" if loop.last }}>▼</button>
+          </form>
+        </span>
+        <form method="post" action="{{ url_for('parametres_sous_types_supprimer') }}" style="margin-left:.8rem;">
+          <input type="hidden" name="type" value="{{ t }}">
+          <input type="hidden" name="nom" value="{{ st }}">
+          <button type="submit" class="lien-suppr">supprimer</button>
+        </form>
+      </span>
     </li>
     {% else %}
     <li class="muted">Aucun sous-type</li>

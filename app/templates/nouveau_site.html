@@ -15,6 +15,13 @@
     <input type="checkbox" name="maintenance" style="width:auto; margin:0;"> Site de maintenance
   </label>
 
+  <label for="uh_gestion" style="margin-top:1rem;">UH de gestion</label>
+  <select id="uh_gestion" name="uh_gestion">
+    <option value="">—</option>
+    {% for uh in uh_valeurs %}<option value="{{ uh }}">{{ uh }}</option>{% endfor %}
+  </select>
+  <p class="muted" style="margin-top:.3rem;">Détermine les destinataires des alertes de péremption pour tous les équipements affectés à ce site (voir Paramètres).</p>
+
   <label style="margin-top:1rem;">Localisation (optionnel)</label>
   <div style="display:flex; gap:.5rem; margin-top:.3rem;">
     <input type="number" step="any" id="lat" name="lat" placeholder="Latitude">

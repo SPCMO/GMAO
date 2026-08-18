@@ -20,29 +20,29 @@
     <option value="">—</option>
   </select>
 
-  <label for="uh_gestion">UH de gestion</label>
-  <select id="uh_gestion" name="uh_gestion">
-    <option value="">—</option>
-    {% for uh in uh_valeurs %}<option value="{{ uh }}">{{ uh }}</option>{% endfor %}
-  </select>
-
   <label for="site" style="margin-top:1rem;">Site d'affectation</label>
   <select id="site" name="site" required onchange="toggleNouveauSite()">
     <option value="" disabled selected>Choisir un site...</option>
     {% for site in sites %}<option value="{{ site }}">{{ site }}</option>{% endfor %}
     <option value="__new__">+ Nouveau site...</option>
   </select>
-  <p class="muted" id="infoSiteExistant" style="display:none; margin-top:.3rem;">La localisation sera reprise automatiquement de ce site (voir 🏢 Sites).</p>
+  <p class="muted" id="infoSiteExistant" style="display:none; margin-top:.3rem;">La localisation et l'UH de gestion seront reprises automatiquement de ce site (voir 🏢 Sites).</p>
 
   <div id="blocNouveauSite" style="display:none;">
     <input type="text" id="nouveau_site_nom" name="nouveau_site_nom" placeholder="Nom du nouveau site" style="margin-top:.5rem;">
+
+    <label style="margin-top:1rem;">UH de gestion du nouveau site</label>
+    <select name="uh_gestion">
+      <option value="">—</option>
+      {% for uh in uh_valeurs %}<option value="{{ uh }}">{{ uh }}</option>{% endfor %}
+    </select>
 
     <label style="margin-top:1rem;">Localisation du nouveau site (optionnel)</label>
     <div style="display:flex; gap:.5rem; margin-top:.3rem;">
       <input type="number" step="any" id="lat" name="lat" placeholder="Latitude">
       <input type="number" step="any" id="lon" name="lon" placeholder="Longitude">
     </div>
-    <p class="muted" style="margin-top:.3rem;">Cliquez sur la carte pour pointer l'emplacement du site, ou saisissez les coordonnées directement. Tous les équipements affectés à ce site en hériteront.</p>
+    <p class="muted" style="margin-top:.3rem;">Cliquez sur la carte pour pointer l'emplacement du site, ou saisissez les coordonnées directement. Tous les équipements affectés à ce site en hériteront (localisation et UH).</p>
     <div id="mapPicker" style="height:280px; margin-top:.5rem; border-radius:6px; overflow:hidden;"></div>
   </div>
 

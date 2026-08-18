@@ -24,7 +24,7 @@
       <td><a href="{{ url_for('detail_equipement', equipement_id=e.id) }}">{{ e.nom }}</a></td>
       <td>{{ e.type or '—' }}{% if e.sous_type %} / {{ e.sous_type }}{% endif %}</td>
       <td>{{ e.site_actuel or '—' }}</td>
-      <td>{{ e.uh_gestion or '—' }}</td>
+      <td>{{ e.site_uh or '—' }}</td>
       <td>
         {% if e.date_retrait %}
           Retiré le {{ e.date_retrait }}{% if e.raison_retrait %} ({{ e.raison_retrait }}){% endif %}

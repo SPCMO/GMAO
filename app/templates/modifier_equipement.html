@@ -19,12 +19,6 @@
     <option value="">—</option>
   </select>
 
-  <label for="uh_gestion">UH de gestion</label>
-  <select id="uh_gestion" name="uh_gestion">
-    <option value="">—</option>
-    {% for uh in uh_valeurs %}<option value="{{ uh }}" {{ "selected" if uh == equipement.uh_gestion }}>{{ uh }}</option>{% endfor %}
-  </select>
-
   <label for="date_creation" style="margin-top:1rem;">Date de création</label>
   <input type="date" id="date_creation" name="date_creation" value="{{ equipement.date_creation or '' }}">
 

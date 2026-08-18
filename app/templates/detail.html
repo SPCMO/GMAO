@@ -25,7 +25,7 @@
 
     <table>
       <tr><th style="width:220px;">Type</th><td>{{ equipement.type or '—' }}{% if equipement.sous_type %} / {{ equipement.sous_type }}{% endif %}</td></tr>
-      <tr><th>UH de gestion</th><td>{{ equipement.uh_gestion or '—' }}</td></tr>
+      <tr><th>UH de gestion (héritée du site)</th><td>{{ (site_geo.uh_gestion if site_geo else none) or '—' }}</td></tr>
       <tr><th>Site d'affectation actuel</th><td>{{ site_actuel.site if site_actuel else '—' }}</td></tr>
       <tr><th>Affecté depuis</th><td>{{ site_actuel.date_debut if site_actuel else '—' }}</td></tr>
       <tr><th>Date de création</th><td>{{ equipement.date_creation or '—' }}</td></tr>

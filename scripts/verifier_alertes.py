@@ -26,9 +26,9 @@ def main():
             return
 
         for eq, etat in a_notifier:
-            destinataires = emails_par_uh.get(eq["uh_gestion"] or "", [])
+            destinataires = emails_par_uh.get(eq["site_uh"] or "", [])
             if not destinataires:
-                print(f"  [!!] {eq['nom']} : alerte active mais aucun destinataire pour l'UH « {eq['uh_gestion']} » — mail non envoyé, non marqué comme traité.")
+                print(f"  [!!] {eq['nom']} : alerte active mais aucun destinataire pour l'UH « {eq['site_uh']} » (site {eq['site_actuel']}) — mail non envoyé, non marqué comme traité.")
                 continue
 
             sujet, corps = mail.construire_message(eq, etat)

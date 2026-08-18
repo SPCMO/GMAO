@@ -29,7 +29,6 @@ def _equipement_form_fields(form):
         "duree_vie_ans": _parse_float(form.get("duree_vie_ans")),
         "rappel_ans": _parse_float(form.get("rappel_ans")),
         "rallonge_ans": _parse_float(form.get("rallonge_ans")),
-        "uh_gestion": form.get("uh_gestion") or None,
     }
 
 
@@ -56,8 +55,8 @@ def dashboard():
         etat = alertes.etat_alerte(e, aujourdhui)
         if e["site_maintenance"]:
             couleur_fond = couleurs.get("maintenance")
-        elif e["uh_gestion"] in db.UH_VALEURS:
-            couleur_fond = couleurs.get(f"uh_{e['uh_gestion']}")
+        elif e["site_uh"] in db.UH_VALEURS:
+            couleur_fond = couleurs.get(f"uh_{e['site_uh']}")
         else:
             couleur_fond = None
         lignes.append({"e": e, "etat": etat, "couleur_fond": couleur_fond})
@@ -97,8 +96,8 @@ def nouveau_equipement():
             if nouveau_site:
                 lat = _parse_coord(request.form.get("lat"))
                 lon = _parse_coord(request.form.get("lon"))
-                if lat is not None and lon is not None:
-                    db.set_site_coordonnees(conn, site, lat, lon)
+                uh = request.form.get("uh_gestion") or None
+                db.update_site(conn, site, maintenance=False, lat=lat, lon=lon, uh_gestion=uh)
             flash(f"Équipement « {nom} » créé, affecté à « {site} » depuis aujourd'hui.")
             return redirect(url_for("gestion_equipements"))
     return render_template(
@@ -170,13 +169,13 @@ def affecter_equipement(equipement_id):
             if est_nouveau_site:
                 lat = _parse_coord(request.form.get("lat"))
                 lon = _parse_coord(request.form.get("lon"))
-                if lat is not None and lon is not None:
-                    db.set_site_coordonnees(conn, nouveau_site, lat, lon)
+                uh = request.form.get("uh_gestion") or None
+                db.update_site(conn, nouveau_site, maintenance=False, lat=lat, lon=lon, uh_gestion=uh)
             flash(f"« {equipement['nom']} » réaffecté à {nouveau_site}.")
             return redirect(url_for("detail_equipement", equipement_id=equipement_id))
     return render_template(
         "affecter.html", equipement=equipement, site_actuel=site_actuel,
-        sites=sites, aujourdhui=date.today().isoformat(),
+        sites=sites, aujourdhui=date.today().isoformat(), uh_valeurs=db.UH_VALEURS,
     )
 
 
@@ -194,11 +193,12 @@ def nouveau_site():
         maintenance = request.form.get("maintenance") == "on"
         lat = _parse_coord(request.form.get("lat"))
         lon = _parse_coord(request.form.get("lon"))
+        uh = request.form.get("uh_gestion") or None
         with db.db_session() as conn:
-            db.create_site(conn, nom, maintenance=maintenance, lat=lat, lon=lon)
+            db.create_site(conn, nom, maintenance=maintenance, lat=lat, lon=lon, uh_gestion=uh)
         flash(f"Site « {nom} » créé.")
         return redirect(url_for("gestion_sites"))
-    return render_template("nouveau_site.html")
+    return render_template("nouveau_site.html", uh_valeurs=db.UH_VALEURS)
 
 
 @app.route("/sites/<nom>/modifier", methods=["GET", "POST"])
@@ -208,11 +208,12 @@ def modifier_site(nom):
             lat = _parse_coord(request.form.get("lat"))
             lon = _parse_coord(request.form.get("lon"))
             maintenance = request.form.get("maintenance") == "on"
-            db.update_site(conn, nom, maintenance, lat, lon)
+            uh = request.form.get("uh_gestion") or None
+            db.update_site(conn, nom, maintenance, lat, lon, uh_gestion=uh)
             flash(f"Site « {nom} » mis à jour.")
             return redirect(url_for("gestion_sites"))
         site = db.get_site(conn, nom)
-    return render_template("modifier_site.html", site=site)
+    return render_template("modifier_site.html", site=site, uh_valeurs=db.UH_VALEURS)
 
 
 @app.route("/equipement/<equipement_id>/fiche")
@@ -307,6 +308,20 @@ def parametres_types_supprimer():
     return redirect(url_for("parametres"))
 
 
+@app.route("/parametres/types/monter", methods=["POST"])
+def parametres_types_monter():
+    with db.db_session() as conn:
+        db.deplacer_type(conn, request.form["nom"], -1)
+    return redirect(url_for("parametres"))
+
+
+@app.route("/parametres/types/descendre", methods=["POST"])
+def parametres_types_descendre():
+    with db.db_session() as conn:
+        db.deplacer_type(conn, request.form["nom"], 1)
+    return redirect(url_for("parametres"))
+
+
 @app.route("/parametres/sous-types/ajouter", methods=["POST"])
 def parametres_sous_types_ajouter():
     type_nom = request.form["type"].strip()
@@ -325,6 +340,20 @@ def parametres_sous_types_supprimer():
     with db.db_session() as conn:
         db.delete_sous_type(conn, type_nom, nom)
     flash(f"Sous-type « {nom} » supprimé.")
+    return redirect(url_for("parametres"))
+
+
+@app.route("/parametres/sous-types/monter", methods=["POST"])
+def parametres_sous_types_monter():
+    with db.db_session() as conn:
+        db.deplacer_sous_type(conn, request.form["type"], request.form["nom"], -1)
+    return redirect(url_for("parametres"))
+
+
+@app.route("/parametres/sous-types/descendre", methods=["POST"])
+def parametres_sous_types_descendre():
+    with db.db_session() as conn:
+        db.deplacer_sous_type(conn, request.form["type"], request.form["nom"], 1)
     return redirect(url_for("parametres"))
 
 

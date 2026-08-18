@@ -24,16 +24,19 @@ CREATE TABLE IF NOT EXISTS affectation (
 CREATE TABLE IF NOT EXISTS site (
     nom TEXT PRIMARY KEY,
     lat REAL,
-    lon REAL
+    lon REAL,
+    uh_gestion TEXT
 );
 
 CREATE TABLE IF NOT EXISTS type_equipement (
-    nom TEXT PRIMARY KEY
+    nom TEXT PRIMARY KEY,
+    ordre INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS sous_type_equipement (
     type TEXT NOT NULL,
     nom TEXT NOT NULL,
+    ordre INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (type, nom)
 );
 
@@ -106,10 +109,30 @@ def _migrate(conn):
     _add_col_if_missing(conn, "equipement", "alerte_envoyee_le", "TEXT")
 
     _add_col_if_missing(conn, "site", "maintenance", "INTEGER DEFAULT 0")
+    _add_col_if_missing(conn, "site", "uh_gestion", "TEXT")
+
+    _add_col_if_missing(conn, "type_equipement", "ordre", "INTEGER NOT NULL DEFAULT 0")
+    _add_col_if_missing(conn, "sous_type_equipement", "ordre", "INTEGER NOT NULL DEFAULT 0")
 
     # Backfill : un site déjà utilisé dans l'historique mais absent de la table site
     conn.execute(
         "INSERT OR IGNORE INTO site (nom) SELECT DISTINCT site FROM affectation"
+    )
+
+    # Backfill : l'UH de gestion vivait auparavant sur l'équipement (version antérieure).
+    # Reprendre, pour chaque site sans UH encore renseignée, celle d'un équipement qui
+    # y est actuellement affecté et qui en avait une.
+    conn.execute(
+        """
+        UPDATE site SET uh_gestion = (
+            SELECT e.uh_gestion
+            FROM equipement e
+            JOIN affectation a ON a.equipement_id = e.id AND a.date_fin IS NULL
+            WHERE a.site = site.nom AND e.uh_gestion IS NOT NULL
+            LIMIT 1
+        )
+        WHERE uh_gestion IS NULL
+        """
     )
 
     for type_nom, sous_types in TYPES_SOUS_TYPES_PAR_DEFAUT.items():
@@ -127,6 +150,24 @@ def _migrate(conn):
         conn.execute("INSERT OR IGNORE INTO rallonge_option (annees) VALUES (?)", (v,))
     for cle, valeur in COULEURS_PAR_DEFAUT.items():
         conn.execute("INSERT OR IGNORE INTO couleur_config (cle, valeur) VALUES (?, ?)", (cle, valeur))
+
+    # Backfill ordre (ordre=0 = jamais numéroté) : numérote une fois par ordre alphabétique,
+    # devient un no-op dès que tout le monde a un ordre > 0. Les ajouts ultérieurs
+    # (add_type/add_sous_type) assignent directement un ordre en fin de liste.
+    a_numeroter = [r["nom"] for r in conn.execute(
+        "SELECT nom FROM type_equipement WHERE ordre = 0 ORDER BY nom"
+    ).fetchall()]
+    for i, nom in enumerate(a_numeroter, start=1):
+        conn.execute("UPDATE type_equipement SET ordre = ? WHERE nom = ?", (i, nom))
+
+    for type_nom in [r["type"] for r in conn.execute("SELECT DISTINCT type FROM sous_type_equipement").fetchall()]:
+        a_numeroter = [r["nom"] for r in conn.execute(
+            "SELECT nom FROM sous_type_equipement WHERE type = ? AND ordre = 0 ORDER BY nom", (type_nom,)
+        ).fetchall()]
+        for i, nom in enumerate(a_numeroter, start=1):
+            conn.execute(
+                "UPDATE sous_type_equipement SET ordre = ? WHERE type = ? AND nom = ?", (i, type_nom, nom)
+            )
 
 
 def init_db():
@@ -156,10 +197,10 @@ def ensure_site(conn, nom):
     conn.execute("INSERT OR IGNORE INTO site (nom) VALUES (?)", (nom,))
 
 
-def create_site(conn, nom, maintenance=False, lat=None, lon=None):
+def create_site(conn, nom, maintenance=False, lat=None, lon=None, uh_gestion=None):
     conn.execute(
-        "INSERT OR IGNORE INTO site (nom, lat, lon, maintenance) VALUES (?, ?, ?, ?)",
-        (nom, lat, lon, 1 if maintenance else 0),
+        "INSERT OR IGNORE INTO site (nom, lat, lon, maintenance, uh_gestion) VALUES (?, ?, ?, ?, ?)",
+        (nom, lat, lon, 1 if maintenance else 0, uh_gestion),
     )
 
 
@@ -172,10 +213,10 @@ def set_site_maintenance(conn, nom, maintenance):
     conn.execute("UPDATE site SET maintenance = ? WHERE nom = ?", (1 if maintenance else 0, nom))
 
 
-def update_site(conn, nom, maintenance, lat, lon):
+def update_site(conn, nom, maintenance, lat, lon, uh_gestion=None):
     conn.execute(
-        "UPDATE site SET lat = ?, lon = ?, maintenance = ? WHERE nom = ?",
-        (lat, lon, 1 if maintenance else 0, nom),
+        "UPDATE site SET lat = ?, lon = ?, maintenance = ?, uh_gestion = ? WHERE nom = ?",
+        (lat, lon, 1 if maintenance else 0, uh_gestion, nom),
     )
 
 
@@ -186,7 +227,7 @@ def get_site(conn, nom):
 def list_all_sites(conn):
     rows = conn.execute(
         """
-        SELECT s.nom, s.lat, s.lon, s.maintenance, COUNT(a.id) AS nb_equipements
+        SELECT s.nom, s.lat, s.lon, s.maintenance, s.uh_gestion, COUNT(a.id) AS nb_equipements
         FROM site s
         LEFT JOIN affectation a ON a.site = s.nom AND a.date_fin IS NULL
         GROUP BY s.nom
@@ -207,7 +248,7 @@ def list_sites(conn):
 
 _CHAMPS_EQUIPEMENT_OPTIONNELS = [
     "date_creation", "type", "sous_type",
-    "duree_vie_ans", "rappel_ans", "rallonge_ans", "uh_gestion",
+    "duree_vie_ans", "rappel_ans", "rallonge_ans",
 ]
 
 
@@ -220,12 +261,12 @@ def create_equipement(conn, nom, date_installation, site, date_debut=None, **cha
         """
         INSERT INTO equipement
             (id, nom, date_installation, date_creation, type, sous_type,
-             duree_vie_ans, duree_vie_effective_ans, rappel_ans, rallonge_ans, uh_gestion)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             duree_vie_ans, duree_vie_effective_ans, rappel_ans, rallonge_ans)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             eq_id, nom, date_installation, valeurs["date_creation"], valeurs["type"], valeurs["sous_type"],
-            duree_vie, duree_vie, valeurs["rappel_ans"], valeurs["rallonge_ans"], valeurs["uh_gestion"],
+            duree_vie, duree_vie, valeurs["rappel_ans"], valeurs["rallonge_ans"],
         ),
     )
     conn.execute(
@@ -237,11 +278,12 @@ def create_equipement(conn, nom, date_installation, site, date_debut=None, **cha
 
 def update_equipement(conn, equipement_id, **champs):
     """Met à jour les champs fournis (parmi nom, date_creation, date_installation, type,
-    sous_type, duree_vie_ans, rappel_ans, rallonge_ans, uh_gestion, date_retrait, raison_retrait).
-    Ne touche pas à duree_vie_effective_ans ni alerte_envoyee_le (voir prolonger_equipement)."""
+    sous_type, duree_vie_ans, rappel_ans, rallonge_ans, date_retrait, raison_retrait).
+    Ne touche pas à duree_vie_effective_ans ni alerte_envoyee_le (voir prolonger_equipement).
+    L'UH de gestion se règle désormais au niveau du site (voir update_site)."""
     autorises = {
         "nom", "date_creation", "date_installation", "type", "sous_type",
-        "duree_vie_ans", "rappel_ans", "rallonge_ans", "uh_gestion",
+        "duree_vie_ans", "rappel_ans", "rallonge_ans",
         "date_retrait", "raison_retrait",
     }
     a_mettre_a_jour = {k: v for k, v in champs.items() if k in autorises}
@@ -293,9 +335,9 @@ def changer_affectation(conn, equipement_id, nouveau_site, date_transfert):
 _COLONNES_EQUIPEMENT_LISTE = """
     e.id, e.nom, e.date_installation, e.date_creation, e.type, e.sous_type,
     e.duree_vie_ans, e.duree_vie_effective_ans, e.rappel_ans, e.rallonge_ans,
-    e.uh_gestion, e.date_retrait, e.raison_retrait, e.alerte_envoyee_le,
+    e.date_retrait, e.raison_retrait, e.alerte_envoyee_le,
     a.site AS site_actuel, a.date_debut AS affecte_depuis,
-    s.lat AS site_lat, s.lon AS site_lon, s.maintenance AS site_maintenance
+    s.lat AS site_lat, s.lon AS site_lon, s.maintenance AS site_maintenance, s.uh_gestion AS site_uh
 """
 
 
@@ -357,11 +399,12 @@ def get_historique(conn, equipement_id):
 # ── Listes de référence (types, sous-types, durées) ─────────────────────
 
 def list_types(conn):
-    return [r["nom"] for r in conn.execute("SELECT nom FROM type_equipement ORDER BY nom").fetchall()]
+    return [r["nom"] for r in conn.execute("SELECT nom FROM type_equipement ORDER BY ordre").fetchall()]
 
 
 def add_type(conn, nom):
-    conn.execute("INSERT OR IGNORE INTO type_equipement (nom) VALUES (?)", (nom,))
+    max_ordre = conn.execute("SELECT COALESCE(MAX(ordre), 0) FROM type_equipement").fetchone()[0]
+    conn.execute("INSERT OR IGNORE INTO type_equipement (nom, ordre) VALUES (?, ?)", (nom, max_ordre + 1))
 
 
 def delete_type(conn, nom):
@@ -369,10 +412,24 @@ def delete_type(conn, nom):
     conn.execute("DELETE FROM type_equipement WHERE nom = ?", (nom,))
 
 
+def deplacer_type(conn, nom, direction):
+    """direction : -1 pour monter, +1 pour descendre."""
+    rows = conn.execute("SELECT nom, ordre FROM type_equipement ORDER BY ordre").fetchall()
+    noms = [r["nom"] for r in rows]
+    if nom not in noms:
+        return
+    i = noms.index(nom)
+    j = i + direction
+    if j < 0 or j >= len(noms):
+        return
+    conn.execute("UPDATE type_equipement SET ordre = ? WHERE nom = ?", (rows[j]["ordre"], rows[i]["nom"]))
+    conn.execute("UPDATE type_equipement SET ordre = ? WHERE nom = ?", (rows[i]["ordre"], rows[j]["nom"]))
+
+
 def list_sous_types(conn, type_nom):
     return [
         r["nom"] for r in conn.execute(
-            "SELECT nom FROM sous_type_equipement WHERE type = ? ORDER BY nom", (type_nom,)
+            "SELECT nom FROM sous_type_equipement WHERE type = ? ORDER BY ordre", (type_nom,)
         ).fetchall()
     ]
 
@@ -380,17 +437,45 @@ def list_sous_types(conn, type_nom):
 def list_sous_types_tous(conn):
     """{type: [sous_types...]} pour tous les types, utilisé pour la cascade JS des formulaires."""
     resultat = {t: [] for t in list_types(conn)}
-    for r in conn.execute("SELECT type, nom FROM sous_type_equipement ORDER BY type, nom").fetchall():
+    for r in conn.execute("SELECT type, nom FROM sous_type_equipement ORDER BY type, ordre").fetchall():
         resultat.setdefault(r["type"], []).append(r["nom"])
     return resultat
 
 
 def add_sous_type(conn, type_nom, nom):
-    conn.execute("INSERT OR IGNORE INTO sous_type_equipement (type, nom) VALUES (?, ?)", (type_nom, nom))
+    max_ordre = conn.execute(
+        "SELECT COALESCE(MAX(ordre), 0) FROM sous_type_equipement WHERE type = ?", (type_nom,)
+    ).fetchone()[0]
+    conn.execute(
+        "INSERT OR IGNORE INTO sous_type_equipement (type, nom, ordre) VALUES (?, ?, ?)",
+        (type_nom, nom, max_ordre + 1),
+    )
 
 
 def delete_sous_type(conn, type_nom, nom):
     conn.execute("DELETE FROM sous_type_equipement WHERE type = ? AND nom = ?", (type_nom, nom))
+
+
+def deplacer_sous_type(conn, type_nom, nom, direction):
+    """direction : -1 pour monter, +1 pour descendre."""
+    rows = conn.execute(
+        "SELECT nom, ordre FROM sous_type_equipement WHERE type = ? ORDER BY ordre", (type_nom,)
+    ).fetchall()
+    noms = [r["nom"] for r in rows]
+    if nom not in noms:
+        return
+    i = noms.index(nom)
+    j = i + direction
+    if j < 0 or j >= len(noms):
+        return
+    conn.execute(
+        "UPDATE sous_type_equipement SET ordre = ? WHERE type = ? AND nom = ?",
+        (rows[j]["ordre"], type_nom, rows[i]["nom"]),
+    )
+    conn.execute(
+        "UPDATE sous_type_equipement SET ordre = ? WHERE type = ? AND nom = ?",
+        (rows[i]["ordre"], type_nom, rows[j]["nom"]),
+    )
 
 
 def _list_options(conn, table):
