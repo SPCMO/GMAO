@@ -298,7 +298,7 @@
   <p class="muted">Adapter les chemins si le script tourne depuis un autre poste. Vérifier ensuite dans le Planificateur de tâches Windows (recherche "Planificateur de tâches" dans le menu Démarrer) que la tâche apparaît bien, avec un test manuel via clic droit → Exécuter.</p>
 
   <h3>Comment le mail part réellement : relais Google Apps Script</h3>
-  <p>Le réseau SPCMO bloque le SMTP direct (587/465, testé et confirmé le 18 août 2026 — timeout avant même l'authentification), mais laisse passer le HTTPS classique (comme pour GitHub). Solution retenue : un script <b>Google Apps Script</b> (<code>apps_script/gmao_mail_relay.gs</code>), qui s'exécute côté serveur Google et envoie le mail via <code>GmailApp.sendEmail()</code> — GMAO le contacte simplement par une requête HTTPS, sans jamais ouvrir de connexion SMTP.</p>
+  <p>Le réseau SPCMO bloque le SMTP direct (587/465, testé et confirmé le 18 août 2026 — timeout avant même l'authentification). Solution retenue : un script <b>Google Apps Script</b> (<code>apps_script/gmao_mail_relay.gs</code>), qui s'exécute côté serveur Google et envoie le mail via <code>GmailApp.sendEmail()</code> — GMAO le contacte simplement par une requête HTTPS (voir « Proxy sortant du réseau RIE » ci-dessous), sans jamais ouvrir de connexion SMTP.</p>
   <p><b>Déploiement (une seule fois)</b> :</p>
   <ol>
     <li>Se connecter sur <a href="https://script.google.com" target="_blank">script.google.com</a> avec le compte <code>spcmo113466@gmail.com</code></li>
@@ -320,12 +320,20 @@
   <div class="warn">La base de données du dossier réseau (<code>data/gmao.db</code>) n'est <b>jamais écrasée</b> par ces synchronisations de code — seuls les fichiers du programme sont mis à jour, pour ne pas perdre les données saisies par les utilisateurs.</div>
 
   <h3>Publication automatique des fiches</h3>
-  <p>Depuis le 18 août 2026, GMAO régénère et republie automatiquement les fiches statiques (<code>docs/e/*.html</code>) sur GitHub à chaque création, modification ou changement d'affectation d'un équipement — plus besoin de lancer <code>scripts/generate_site.py</code> ni de pousser sur GitHub à la main. Un message apparaît en bas à droite de l'écran (visible sur la page suivante consultée) pour confirmer le résultat :</p>
+  <p>Depuis le 18 août 2026, GMAO régénère et republie automatiquement les fiches statiques (<code>docs/e/*.html</code>) sur GitHub à chaque création, modification ou changement d'affectation d'un équipement, et à chaque création de site — plus besoin de lancer <code>scripts/generate_site.py</code> ni de pousser sur GitHub à la main. Un message apparaît en bas à droite de l'écran (visible sur la page suivante consultée) pour confirmer le résultat :</p>
   <ul>
     <li>✅ <b>fond vert</b> — fiches publiées avec succès sur GitHub Pages ;</li>
-    <li>⚠️ <b>fond orange</b> — les fiches sont à jour et enregistrées localement (rien n'est perdu), mais l'envoi vers GitHub a échoué.</li>
+    <li>⚠️ <b>fond orange</b> — les fiches sont à jour et enregistrées localement (rien n'est perdu), mais l'envoi vers GitHub a échoué (voir « Proxy sortant du réseau RIE » ci-dessous : normalement résolu depuis le 18 août 2026, un ⚠️ persistant est à signaler).</li>
   </ul>
-  <div class="warn">Le réseau SPCMO bloque les connexions sortantes de <code>git.exe</code> depuis les postes utilisateurs (même restriction que pour un <code>git push</code> manuel — voir Authentification git ci-dessous). En pratique, l'échec ⚠️ est donc l'issue la plus fréquente sur ce réseau : les fiches restent correctement enregistrées et commitées localement, prêtes à partir dès qu'un push réussira (réseau différent, ou en le demandant explicitement).</div>
+
+  <h3>Proxy sortant du réseau RIE (git, relais mail)</h3>
+  <p>Constaté le 18 août 2026 : le réseau RIE/SPCMO impose un <b>proxy sortant obligatoire</b> pour toute connexion internet générale — le navigateur l'applique automatiquement (fichier de configuration PAC du poste), mais ni <code>git</code>, ni <code>curl</code>, ni Python (<code>urllib</code>) ne le détectent seuls. Résultat avant correctif : timeout systématique (~21s) sur tout `git push`/appel HTTPS lancé en ligne de commande ou depuis l'appli, alors que la navigation web fonctionnait normalement — ce qui pouvait faussement ressembler à un blocage ciblé de GitHub ou de Google.</p>
+  <p><b>Correctif</b> : l'adresse du proxy (<code>pfrie-std.proxy.e2.rie.gouv.fr:8080</code>, trouvée dans le fichier PAC du poste) est configurée en dur dans <code>config.PROXY_RIE</code>, utilisée automatiquement par :</p>
+  <ul>
+    <li><code>app/publication.py</code> — chaque appel <code>git</code> est passé avec <code>-c http.proxy=...</code>, sans dépendre de la configuration git personnelle de qui lance l'appli ;</li>
+    <li><code>app/mail.py</code> — un <code>ProxyHandler</code> urllib explicite (la détection automatique de <code>urlopen()</code> s'est montrée peu fiable même variable d'environnement définie), avec 3 tentatives en cas de lenteur ponctuelle du proxy.</li>
+  </ul>
+  <p class="muted">Fonctionne donc directement sur le poste d'un collègue sans configuration préalable. Une variable d'environnement <code>HTTPS_PROXY</code>, si définie sur un poste, reste prioritaire sur cette valeur en dur (utile si un poste n'est pas sur ce même réseau).</p>
 
   <h3>Hébergement GitHub Pages</h3>
   <p>Dépôt : <a href="https://github.com/SPCMO/GMAO" target="_blank">github.com/SPCMO/GMAO</a> (public). Publication activée sur la branche <code>main</code>, dossier <code>/docs</code>. Le fichier <code>docs/.nojekyll</code> désactive le traitement Jekyll (inutile pour du HTML statique, et source de lenteurs au déploiement sans lui).</p>
@@ -337,10 +345,18 @@
   <h3>Authentification git</h3>
   <p>Un token d'accès personnel GitHub (scope <code>Contents</code> uniquement) est enregistré dans la configuration git locale du dépôt pour permettre les <code>git push</code> sans ressaisie. En cas d'expiration ou de révocation, en régénérer un depuis GitHub (Settings → Developer settings → Personal access tokens) et mettre à jour l'URL du remote :</p>
   <pre>git remote set-url origin "https://&lt;NOUVEAU_TOKEN&gt;@github.com/SPCMO/GMAO.git"</pre>
+  <p class="muted">Pour un <code>git push</code>/<code>git fetch</code> manuel depuis un terminal (hors appli GMAO), le proxy RIE doit aussi être configuré une fois côté poste — voir « Proxy sortant du réseau RIE » ci-dessus pour l'adresse, à définir avec :</p>
+  <pre>git config --global http.proxy http://pfrie-std.proxy.e2.rie.gouv.fr:8080
+git config --global https.proxy http://pfrie-std.proxy.e2.rie.gouv.fr:8080</pre>
 </section>
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-fix">Correctif</span> Cause racine trouvée et corrigée pour les échecs de publication automatique et de relais mail : le réseau RIE impose un proxy sortant que seul le navigateur détectait automatiquement. Adresse du proxy en dur dans <code>config.PROXY_RIE</code>, utilisée par <code>app/publication.py</code> (git) et <code>app/mail.py</code> (3 tentatives en cas de lenteur ponctuelle du proxy) — fonctionne sans configuration préalable sur le poste des collègues. Voir « Proxy sortant du réseau RIE » dans ce même onglet.</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">18 août 2026</div>
