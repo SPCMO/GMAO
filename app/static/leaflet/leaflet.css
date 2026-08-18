@@ -659,3 +659,20 @@ svg.leaflet-image-layer.leaflet-interactive path {
 		print-color-adjust: exact;
 		}
 	}
+
+/* ===== Surcharges GMAO (pas du vendor Leaflet — à reporter si ce fichier est
+   re-vendorisé). Contrôle Plan/Satellite déplié en permanence (voir gmao-map.js,
+   collapsed:false) mais réduit visuellement pour ne pas prendre toute la carte. */
+.leaflet-control-layers {
+	font-size: .75rem;
+	}
+.leaflet-control-layers-toggle {
+	width: 26px;
+	height: 26px;
+	}
+.leaflet-control-layers label {
+	margin-bottom: 2px;
+	}
+.leaflet-control-layers-selector {
+	margin-top: 1px;
+	}

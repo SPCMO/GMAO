@@ -5,7 +5,8 @@
 <style>
   main { max-width: 1600px; }
   .dashboard-layout { display: flex; gap: 1.5rem; align-items: flex-start; }
-  .dashboard-carte { flex: 0 0 34%; min-width: 320px; height: 640px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.1); position: sticky; top: calc(var(--header-h) + 1.5rem); }
+  .dashboard-carte-bloc { flex: 0 0 34%; min-width: 320px; position: sticky; top: calc(var(--header-h) + 1.5rem); }
+  .dashboard-carte { height: 640px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
   .dashboard-table { flex: 1; min-width: 0; }
   .dashboard-table table { min-width: 760px; font-size: .8rem; }
   .dashboard-table th, .dashboard-table td { padding: .35rem .45rem; }
@@ -16,7 +17,7 @@
   .table-scroll thead th { position: sticky; top: 0; z-index: 5; box-shadow: 0 1px 0 #e5e7eb; }
   @media (max-width: 900px) {
     .dashboard-layout { flex-direction: column; }
-    .dashboard-carte { position: static; width: 100%; flex-basis: auto; }
+    .dashboard-carte-bloc { position: static; width: 100%; flex-basis: auto; }
   }
   .icone-alerte { font-size: 1.1rem; cursor: pointer; text-decoration: none; }
   .th-triable { white-space: normal; }
@@ -30,7 +31,13 @@
 {% endblock %}
 {% block content %}
 <div class="dashboard-layout">
-  <div id="carteDashboard" class="dashboard-carte"></div>
+  <div class="dashboard-carte-bloc">
+    <label class="muted" style="display:flex; align-items:center; gap:.4rem; margin-bottom:.4rem; cursor:pointer;">
+      <input type="checkbox" id="masquerSitesFermes" onchange="toggleSitesFermes(carteDashboardMap, this.checked)">
+      Masquer les sites fermés sur la carte
+    </label>
+    <div id="carteDashboard" class="dashboard-carte"></div>
+  </div>
 
   <div class="dashboard-table">
     <div class="toolbar">
@@ -60,7 +67,7 @@
       <thead>
         <tr>
           <th style="width:2rem;"><input type="checkbox" id="toutSelectionner" onclick="toggleTout(this)" title="Sélectionner tout ce qui est affiché"></th>
-          {% for libelle, idx, classe in [("Équipement",1,""), ("Type",2,""), ("Sous-type",3,""), ("Site",4,""), ("UH",5,""), ("Affecté depuis",6,"col-date-compact"), ("1ère mise en service",7,"col-date-compact"), ("Statut",8,""), ("Durée de vie prolongée",9,"")] %}
+          {% for libelle, idx, classe in [("Équipement",1,""), ("Type",2,""), ("Sous-type",3,""), ("Site",4,""), ("UH",5,""), ("Affecté depuis",6,"col-date-compact"), ("1ère mise en service",7,"col-date-compact"), ("Statut",8,""), ("Tps restant (j)",9,""), ("Durée de vie prolongée",10,"")] %}
           <th class="th-triable {{ classe }}">
             <span class="th-triable-inner">
               <span class="th-libelle">{{ libelle }}</span>
@@ -95,6 +102,9 @@
           <td data-tri="{{ 2 if e.date_retrait else (1 if etat.active else 0) }}">
             {% if e.date_retrait %}Retiré{% elif etat.active %}Alerte{% else %}En fonction{% endif %}
           </td>
+          <td data-tri="{{ l.jours_restants_vie if l.jours_restants_vie is not none else '' }}"{% if l.jours_restants_vie is not none and l.jours_restants_vie < 0 %} style="color:#b91c1c; font-weight:600;"{% endif %}>
+            {{ l.jours_restants_vie if l.jours_restants_vie is not none else '—' }}
+          </td>
           <td data-tri="{{ e.duree_vie_effective_ans if (e.duree_vie_effective_ans and e.duree_vie_ans and e.duree_vie_effective_ans > e.duree_vie_ans) else '' }}">
             {% if e.duree_vie_effective_ans and e.duree_vie_ans and e.duree_vie_effective_ans > e.duree_vie_ans %}{{ e.duree_vie_effective_ans }} ans{% else %}—{% endif %}
           </td>
@@ -108,7 +118,7 @@
           <td class="col-actions"><a href="{{ url_for('equipements.detail_equipement', equipement_id=e.id) }}" class="muted">détail →</a></td>
         </tr>
         {% else %}
-        <tr><td colspan="11" class="muted">Aucun équipement enregistré.</td></tr>
+        <tr><td colspan="13" class="muted">Aucun équipement enregistré.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -201,9 +211,10 @@ function trierPar(index, direction) {
 <script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
 <script src="{{ url_for('static', filename='leaflet/gmao-map.js') }}"></script>
 <script>
+  var carteDashboardMap = null;
   document.addEventListener('DOMContentLoaded', function () {
     var sitesCarte = {{ sites_carte|tojson }};
-    initDashboardCarte('carteDashboard', sitesCarte, function (bounds) {
+    carteDashboardMap = initDashboardCarte('carteDashboard', sitesCarte, function (bounds) {
       carteBounds = bounds;
       document.getElementById('infoFiltreCarte').style.display = 'block';
       filtrer();

@@ -16,6 +16,10 @@
   .statut-mini { font-size: .72rem; color: #9fb3cc; white-space: nowrap; font-family: ui-monospace, "Cascadia Code", Consolas, monospace; }
   .statut-mini.ok { color: #86efac; }
   .statut-mini.err { color: #fca5a5; }
+  .btn-synchro { background: none; border: none; color: #9fb3cc; cursor: pointer; font-size: .78rem; padding: 0; line-height: 1; }
+  .btn-synchro:hover:not(:disabled) { color: #fff; }
+  .btn-synchro:disabled { cursor: default; animation: synchro-spin 1s linear infinite; }
+  @keyframes synchro-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .header-title { justify-self: center; font-size: 1.05rem; white-space: nowrap; }
   .header-right { justify-self: end; display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }
   main { max-width: 1300px; margin: 0 auto; padding: 1.5rem; }
@@ -87,6 +91,7 @@
       <div class="statut-ligne">
         <span id="statutConnexion" class="statut-mini">⏳ Base…</span>
         <span id="statutPublicationMini" class="statut-mini">⏳ GitHub…</span>
+        <button type="button" id="btnForcerSynchro" class="btn-synchro" title="Forcer une synchro (base + GitHub)" onclick="forcerSynchro()">🔄</button>
       </div>
     </div>
   </div>
@@ -128,29 +133,53 @@
     setTimeout(function () { toast.style.display = 'none'; }, 9000);
   }).catch(function () {});
 
-  fetch('/api/statut-connexion').then(function (r) { return r.ok ? r.json() : null; }).then(function (s) {
-    var el = document.getElementById('statutConnexion');
-    if (!s || !s.derniere_reussite) { el.textContent = '⚪ Base : —'; return; }
-    el.textContent = (s.ok ? '🟢' : '🔴') + ' Base ' + formatHeure(s.derniere_reussite);
-    el.className = 'statut-mini ' + (s.ok ? 'ok' : 'err');
-    el.title = s.ok
-      ? 'Connexion à la base réussie à ' + formatHeure(s.derniere_reussite)
-      : 'Base injoignable depuis, dernière connexion réussie à ' + formatHeure(s.derniere_reussite) + (s.erreur ? ' — ' + s.erreur : '');
-  }).catch(function () {
-    var el = document.getElementById('statutConnexion');
-    if (el) el.textContent = '⚪ Base : —';
-  });
+  function rafraichirStatutConnexion() {
+    return fetch('/api/statut-connexion').then(function (r) { return r.ok ? r.json() : null; }).then(function (s) {
+      var el = document.getElementById('statutConnexion');
+      if (!s || !s.derniere_reussite) { el.textContent = '⚪ Base : —'; return; }
+      el.textContent = (s.ok ? '🟢' : '🔴') + ' Base ' + formatHeure(s.derniere_reussite);
+      el.className = 'statut-mini ' + (s.ok ? 'ok' : 'err');
+      el.title = s.ok
+        ? 'Connexion à la base réussie à ' + formatHeure(s.derniere_reussite)
+        : 'Base injoignable depuis, dernière connexion réussie à ' + formatHeure(s.derniere_reussite) + (s.erreur ? ' — ' + s.erreur : '');
+    }).catch(function () {
+      var el = document.getElementById('statutConnexion');
+      if (el) el.textContent = '⚪ Base : —';
+    });
+  }
 
-  fetch('/api/statut-publication').then(function (r) { return r.ok ? r.json() : null; }).then(function (s) {
-    var el = document.getElementById('statutPublicationMini');
-    if (!s || !s.quand) { el.textContent = '⚪ GitHub : —'; return; }
-    el.textContent = (s.ok ? '🟢' : '🟠') + ' GitHub ' + formatHeure(s.quand);
-    el.className = 'statut-mini ' + (s.ok ? 'ok' : 'err');
-    el.title = s.message || '';
-  }).catch(function () {
-    var el = document.getElementById('statutPublicationMini');
-    if (el) el.textContent = '⚪ GitHub : —';
-  });
+  function rafraichirStatutPublication() {
+    return fetch('/api/statut-publication').then(function (r) { return r.ok ? r.json() : null; }).then(function (s) {
+      var el = document.getElementById('statutPublicationMini');
+      if (!s || !s.quand) { el.textContent = '⚪ GitHub : —'; return; }
+      el.textContent = (s.ok ? '🟢' : '🟠') + ' GitHub ' + formatHeure(s.quand);
+      el.className = 'statut-mini ' + (s.ok ? 'ok' : 'err');
+      el.title = s.message || '';
+    }).catch(function () {
+      var el = document.getElementById('statutPublicationMini');
+      if (el) el.textContent = '⚪ GitHub : —';
+    });
+  }
+
+  rafraichirStatutConnexion();
+  rafraichirStatutPublication();
+
+  window.forcerSynchro = function () {
+    var btn = document.getElementById('btnForcerSynchro');
+    btn.disabled = true;
+    fetch('/api/forcer-synchro', { method: 'POST' }).then(function () {
+      // La publication GitHub tourne en tâche de fond côté serveur (commit + push,
+      // quelques secondes) : on relit les statuts une fois le délai probable écoulé.
+      return rafraichirStatutConnexion();
+    }).then(function () {
+      setTimeout(function () {
+        rafraichirStatutPublication();
+        btn.disabled = false;
+      }, 4000);
+    }).catch(function () {
+      btn.disabled = false;
+    });
+  };
 })();
 </script>
 {% block extra_scripts %}{% endblock %}

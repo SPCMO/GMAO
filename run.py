@@ -28,6 +28,10 @@ def dashboard():
     equip_par_site = {}
     for e in equipements:
         etat = alertes.etat_alerte(e, aujourdhui)
+        # Jours restants avant péremption, indépendamment du rappel (calculé même si le
+        # rappel n'est pas configuré, contrairement à etat["jours_restants"]).
+        peremption = alertes.date_peremption(e)
+        jours_restants_vie = (peremption - aujourdhui).days if peremption and not e["date_retrait"] else None
         if e["site_maintenance"]:
             couleur_fond = couleurs.get("maintenance")
         elif e["site_uh"] in db.UH_VALEURS:
@@ -35,7 +39,10 @@ def dashboard():
         else:
             couleur_fond = None
         site_ferme = bool(e["site_date_fermeture"])
-        lignes.append({"e": e, "etat": etat, "couleur_fond": couleur_fond, "site_ferme": site_ferme})
+        lignes.append({
+            "e": e, "etat": etat, "couleur_fond": couleur_fond, "site_ferme": site_ferme,
+            "jours_restants_vie": jours_restants_vie,
+        })
         if e["site_actuel"] and not e["date_retrait"]:
             equip_par_site.setdefault(e["site_actuel"], []).append({"id": e["id"], "nom": e["nom"]})
     types = sorted({l["e"]["type"] for l in lignes if l["e"]["type"]})
@@ -86,6 +93,15 @@ def api_statut_publication():
 @app.route("/api/statut-connexion")
 def api_statut_connexion():
     return jsonify(sante.verifier_connexion())
+
+
+@app.route("/api/forcer-synchro", methods=["POST"])
+def api_forcer_synchro():
+    # Vérification base synchrone (rapide) + publication GitHub en tâche de fond
+    # (peut prendre plusieurs secondes) : le bandeau reste utilisable pendant ce temps.
+    connexion = sante.verifier_connexion()
+    publication.publier_en_tache_de_fond()
+    return jsonify({"connexion": connexion})
 
 
 if __name__ == "__main__":

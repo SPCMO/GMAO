@@ -19,10 +19,12 @@ function creerFondsDeCarte() {
   return { "Plan": plan, "Satellite": satellite };
 }
 
-/** Ajoute le sélecteur de fond de carte + l'échelle dynamique (bas gauche). */
+/** Ajoute le sélecteur de fond de carte + l'échelle dynamique (bas gauche).
+ * collapsed:false : le sélecteur Plan/Satellite reste déplié en permanence
+ * (replié, on ne devine pas qu'il est cliquable) — taille réduite en CSS. */
 function ajouterControlesCommuns(map, fonds) {
   fonds["Plan"].addTo(map);
-  L.control.layers(fonds, null, { position: 'topright' }).addTo(map);
+  L.control.layers(fonds, null, { position: 'topright', collapsed: false }).addTo(map);
   L.control.scale({ position: 'bottomleft', imperial: false }).addTo(map);
 }
 
@@ -145,13 +147,16 @@ function initDashboardCarte(mapId, sitesCarte, onBoundsChange) {
   ajouterControlesCommuns(map, creerFondsDeCarte());
 
   var group = L.featureGroup();
+  var marqueursFermes = [];
   sitesCarte.forEach(function (s) {
     if (s.lat !== null && s.lon !== null) {
       var icon = s.ferme ? creerPastilleFermee() : creerPastille(s.couleur, s.maintenance);
-      L.marker([s.lat, s.lon], { icon: icon }).addTo(group).bindPopup(construirePopupSite(s));
+      var marker = L.marker([s.lat, s.lon], { icon: icon }).addTo(group).bindPopup(construirePopupSite(s));
+      if (s.ferme) marqueursFermes.push(marker);
     }
   });
   group.addTo(map);
+  map.gmaoMarqueursFermes = marqueursFermes;
 
   if (group.getLayers().length > 0) {
     map.fitBounds(group.getBounds().pad(0.2));
@@ -164,4 +169,17 @@ function initDashboardCarte(mapId, sitesCarte, onBoundsChange) {
   });
 
   return map;
+}
+
+/** Affiche/masque les sites fermés sur la carte du dashboard (checkbox dédiée) —
+ * seule la suppression complète d'un site (Gestionnaire des sites) le retire
+ * définitivement de la carte, ceci n'est qu'un allègement visuel temporaire. */
+function toggleSitesFermes(map, masquer) {
+  (map.gmaoMarqueursFermes || []).forEach(function (marker) {
+    if (masquer) {
+      map.removeLayer(marker);
+    } else if (!map.hasLayer(marker)) {
+      marker.addTo(map);
+    }
+  });
 }

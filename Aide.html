@@ -76,8 +76,10 @@
   <p>Puis ouvrir <code>http://localhost:5000</code> dans un navigateur. Cette page d'aide est aussi accessible directement depuis l'appli via le lien <b>📖 Aide</b> en haut de chaque page.</p>
 
   <h3>Vue globale (dashboard)</h3>
-  <p>Page d'accueil en deux parties : une <b>carte</b> à gauche (un marqueur par équipement dont la localisation est renseignée) et le <b>tableau</b> à droite. Le menu déroulant filtre par site, le champ de recherche filtre par nom d'équipement. Déplacer ou zoomer la carte filtre également le tableau sur la zone visible (les équipements sans coordonnées restent toujours affichés, puisqu'ils n'ont pas de position à comparer) — un bandeau <i>« Le tableau est filtré sur la zone visible de la carte »</i> apparaît, avec un lien pour réinitialiser.</p>
-  <p class="muted">La carte affiche une échelle dynamique en bas à gauche, et un sélecteur en haut à droite permet de basculer entre le fond <b>Plan</b> (OpenStreetMap) et <b>Satellite</b> (imagerie Esri) — disponible aussi sur les mini-cartes de pointage d'un nouveau site.</p>
+  <p>Page d'accueil en deux parties : une <b>carte</b> à gauche (un marqueur par <b>site</b> géolocalisé — pas par équipement — coloré selon l'UH de gestion ou le statut du site, avec au clic le nom du site et la liste cliquable des équipements qui y sont actuellement affectés) et le <b>tableau</b> à droite. Le menu déroulant filtre par site, le champ de recherche filtre par nom d'équipement. Déplacer ou zoomer la carte filtre également le tableau sur la zone visible (les équipements sans coordonnées restent toujours affichés, puisqu'ils n'ont pas de position à comparer) — un bandeau <i>« Le tableau est filtré sur la zone visible de la carte »</i> apparaît, avec un lien pour réinitialiser.</p>
+  <p class="muted">Une pastille grisée avec une icône 🔧 signale un site de maintenance, une pastille gris foncé un site sans aucun équipement affecté, une pastille blanche à croix rouge semi-transparente un site fermé. Une case <b>« Masquer les sites fermés sur la carte »</b> au-dessus de la carte permet de les cacher temporairement sans les faire disparaître de la liste des sites — seule leur <b>suppression complète</b> depuis le Gestionnaire des sites les retire définitivement de la carte.</p>
+  <p class="muted">La carte affiche une échelle dynamique en bas à gauche, et un sélecteur en haut à droite permet de basculer entre le fond <b>Plan</b> (OpenStreetMap) et <b>Satellite</b> (imagerie Esri) — toujours déplié (et réduit en taille) pour qu'il reste visible sans avoir à deviner qu'il est cliquable ; disponible aussi sur les mini-cartes de pointage d'un nouveau site.</p>
+  <p class="muted">Dans le tableau, la colonne <b>Tps restant (j)</b> indique le nombre de jours restants avant la date de péremption calculée (durée de vie + date de 1ère mise en service), en rouge si déjà dépassée — triable comme les autres colonnes, y compris quand le rappel n'est pas configuré.</p>
 
   <h3>Ajouter un équipement</h3>
   <p>Bouton <b>+ Nouvel équipement</b> en haut de page : nom, site d'affectation (menu déroulant listant les sites déjà utilisés, avec une option <b>+ Nouveau site...</b> pour en créer un directement depuis le formulaire), date d'installation. Un identifiant technique unique est généré automatiquement (utilisé plus tard dans l'URL du QR code).</p>
@@ -285,7 +287,7 @@
   <p>Ce choix est enregistré dans <code>settings.json</code> à la racine du projet — un fichier propre à chaque poste, exclu du dépôt git (<code>.gitignore</code>), donc jamais publié sur GitHub. C'est ce qui permet de garder un chemin réseau interne hors du dépôt public.</p>
 
   <h3>Listes déroulantes et couleurs (menu Paramètres)</h3>
-  <p>Toujours dans <b>⚙️ Paramètres</b> : gestion des types/sous-types d'équipement, des valeurs proposées pour durée de vie/rappel/rallonge, des adresses mail par UH de gestion, et des couleurs de fond (UH 11/34/66, site de maintenance) utilisées dans la liste d'accueil et sur la carte. Chaque liste s'édite par simple ajout/suppression, sans toucher au code.</p>
+  <p>La page <b>⚙️ Paramètres</b> est organisée en 5 onglets pour limiter le défilement : <b>🗄️ Général</b> (emplacement de la base), <b>📧 Notifications</b> (SMTP + relais mail), <b>🔧 Équipements</b> (types/sous-types, durée de vie/rappel/rallonge), <b>🏢 Sites</b> (raisons de fermeture) et <b>🚨 Alertes &amp; couleurs</b> (destinataires par UH, couleurs de fond). L'onglet ouvert est mémorisé le temps de la session : après un ajout/suppression dans une liste, on reste sur le même onglet plutôt que de revenir à « Général ». Chaque liste s'édite par simple ajout/suppression, sans toucher au code.</p>
   <p class="muted">Types et sous-types se réordonnent librement avec les boutons <b>▲▼</b> — c'est cet ordre qui s'affiche dans tous les menus déroulants de l'application. Les durées de vie/rappel/rallonge, elles, s'insèrent toujours automatiquement par ordre croissant (pas de tri manuel nécessaire).</p>
   <div class="warn">Supprimer un <b>type</b> supprime aussi tous ses sous-types. Les équipements qui utilisaient déjà une valeur retirée d'une liste conservent cette valeur affichée (elle disparaît seulement des choix proposés pour les nouvelles saisies).</div>
 
@@ -352,6 +354,26 @@ git config --global https.proxy http://pfrie-std.proxy.e2.rie.gouv.fr:8080</pre>
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Accueil : nouvelle colonne <i>Tps restant (j)</i> indiquant le nombre de jours restants avant la péremption calculée d'un équipement (en rouge si déjà dépassée), triable comme les autres colonnes, calculée même sans rappel configuré.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Bandeau : icône 🔄 à droite des indicateurs Base/GitHub pour forcer une synchronisation immédiate (revérifie la connexion à la base et relance une publication GitHub) sans attendre une prochaine modification.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Page <b>⚙️ Paramètres</b> réorganisée en 5 onglets (Général, Notifications, Équipements, Sites, Alertes &amp; couleurs) pour réduire le défilement — l'onglet ouvert est conservé après un ajout/suppression dans une liste.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Carte du dashboard : case à cocher pour masquer temporairement les sites fermés (toujours semi-transparents avec leur croix rouge quand affichés) ; seule la suppression complète d'un site le retire définitivement de la carte. Sélecteur Plan/Satellite désormais toujours déplié (et réduit visuellement) pour qu'il reste repérable.</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">18 août 2026</div>
