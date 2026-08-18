@@ -36,7 +36,14 @@
           En fonction
         {% endif %}
       </td>
-      <td class="col-actions"><a href="{{ url_for('equipements.modifier_equipement', equipement_id=e.id) }}" class="muted">✏️ modifier →</a></td>
+      <td class="col-actions">
+        <div style="display:flex; flex-direction:column; gap:.35rem; min-width:120px;">
+          <a href="{{ url_for('equipements.modifier_equipement', equipement_id=e.id) }}" class="btn btn-secondary" style="text-align:center;">✏️ Modifier</a>
+          <form method="post" action="{{ url_for('equipements.supprimer_equipement', equipement_id=e.id) }}" onsubmit="return confirm('Supprimer définitivement « {{ e.nom }} » ?\n\nCette action efface aussi tout son historique d\'affectations et ne peut pas être annulée.{% if not e.date_retrait %}\n\nCet équipement est actuellement en fonction — pense au retrait définitif si tu veux seulement l\'archiver.{% endif %}');">
+            <button type="submit" class="btn btn-danger w-full">🗑️ Supprimer</button>
+          </form>
+        </div>
+      </td>
     </tr>
     {% else %}
     <tr><td colspan="6" class="muted">Aucun équipement enregistré.</td></tr>

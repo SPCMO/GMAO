@@ -97,6 +97,16 @@ def modifier_equipement(equipement_id):
     )
 
 
+@equipements_bp.route("/equipement/<equipement_id>/supprimer", methods=["POST"])
+def supprimer_equipement(equipement_id):
+    with db.db_session() as conn:
+        equipement = db.get_equipement(conn, equipement_id)
+        nom = equipement["nom"] if equipement else equipement_id
+        db.delete_equipement(conn, equipement_id)
+    flash(f"Équipement « {nom} » supprimé définitivement.")
+    return redirect(url_for("equipements.gestion_equipements"))
+
+
 @equipements_bp.route("/equipement/<equipement_id>/prolonger", methods=["POST"])
 def prolonger_equipement(equipement_id):
     with db.db_session() as conn:

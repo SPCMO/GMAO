@@ -372,6 +372,14 @@ def annuler_prolongation(conn, equipement_id):
     return True
 
 
+def delete_equipement(conn, equipement_id):
+    """Supprime définitivement un équipement et tout son historique d'affectations
+    (irréversible). Contrairement aux sites, pas de garde-fou métier ici : un équipement
+    n'a pas de dépendants, seul son propre historique disparaît avec lui."""
+    conn.execute("DELETE FROM affectation WHERE equipement_id = ?", (equipement_id,))
+    conn.execute("DELETE FROM equipement WHERE id = ?", (equipement_id,))
+
+
 def changer_affectation(conn, equipement_id, nouveau_site, date_transfert):
     ensure_site(conn, nouveau_site)
     conn.execute(
