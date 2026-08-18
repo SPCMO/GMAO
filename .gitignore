@@ -5,6 +5,7 @@ __pycache__/
 settings.json
 data/gmao.db
 data/publication_statut.json
+data/connexion_statut.json
 etiquettes/
 .claude/
 Guides.html

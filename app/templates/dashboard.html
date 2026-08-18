@@ -10,7 +10,8 @@
   .dashboard-table table { min-width: 760px; font-size: .8rem; }
   .dashboard-table th, .dashboard-table td { padding: .35rem .45rem; }
   .dashboard-table th { text-transform: none; letter-spacing: 0; font-size: .72rem; font-weight: 700; vertical-align: bottom; }
-  .table-scroll { max-height: 640px; overflow: auto; border: 1px solid #e5e7eb; border-radius: 6px; }
+  .table-scroll { max-height: 640px; overflow-x: auto; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 6px; }
+  .col-date-compact { font-size: .65rem; }
   .table-scroll table { box-shadow: none; }
   .table-scroll thead th { position: sticky; top: 0; z-index: 5; box-shadow: 0 1px 0 #e5e7eb; }
   @media (max-width: 900px) {
@@ -59,8 +60,8 @@
       <thead>
         <tr>
           <th style="width:2rem;"><input type="checkbox" id="toutSelectionner" onclick="toggleTout(this)" title="Sélectionner tout ce qui est affiché"></th>
-          {% for libelle, idx in [("Équipement",1), ("Type",2), ("Sous-type",3), ("Site",4), ("UH",5), ("Affecté depuis",6), ("1ère mise en service",7), ("Statut",8), ("Durée de vie prolongée",9)] %}
-          <th class="th-triable">
+          {% for libelle, idx, classe in [("Équipement",1,""), ("Type",2,""), ("Sous-type",3,""), ("Site",4,""), ("UH",5,""), ("Affecté depuis",6,"col-date-compact"), ("1ère mise en service",7,"col-date-compact"), ("Statut",8,""), ("Durée de vie prolongée",9,"")] %}
+          <th class="th-triable {{ classe }}">
             <span class="th-triable-inner">
               <span class="th-libelle">{{ libelle }}</span>
               <span class="ordre-actions">
@@ -89,8 +90,8 @@
           <td data-tri="{{ e.sous_type or '' }}">{{ e.sous_type or '—' }}</td>
           <td data-tri="{{ e.site_actuel or '' }}">{{ e.site_actuel or '—' }}</td>
           <td data-tri="{{ e.site_uh or '' }}">{{ e.site_uh or '—' }}</td>
-          <td data-tri="{{ e.affecte_depuis or '' }}">{{ e.affecte_depuis or '—' }}</td>
-          <td data-tri="{{ e.date_installation or '' }}">{{ e.date_installation }}</td>
+          <td class="col-date-compact" data-tri="{{ e.affecte_depuis or '' }}">{{ e.affecte_depuis or '—' }}</td>
+          <td class="col-date-compact" data-tri="{{ e.date_installation or '' }}">{{ e.date_installation }}</td>
           <td data-tri="{{ 2 if e.date_retrait else (1 if etat.active else 0) }}">
             {% if e.date_retrait %}Retiré{% elif etat.active %}Alerte{% else %}En fonction{% endif %}
           </td>

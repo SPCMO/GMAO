@@ -3,7 +3,7 @@ from datetime import date
 from flask import Flask, render_template, jsonify, send_from_directory
 
 import config
-from app import db, alertes, publication
+from app import db, alertes, publication, sante
 from app.routes.equipements import equipements_bp
 from app.routes.sites import sites_bp
 from app.routes.parametres import parametres_bp
@@ -54,6 +54,11 @@ def aide():
 @app.route("/api/statut-publication")
 def api_statut_publication():
     return jsonify(publication.lire_statut() or {})
+
+
+@app.route("/api/statut-connexion")
+def api_statut_connexion():
+    return jsonify(sante.verifier_connexion())
 
 
 if __name__ == "__main__":

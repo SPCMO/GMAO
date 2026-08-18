@@ -9,7 +9,10 @@
   body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; background: #f4f5f7; color: #1a1a1a; }
   header { background: #14314f; color: #fff; padding: 1rem 1.5rem; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; position: sticky; top: 0; z-index: 200; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
   header a { color: #fff; text-decoration: none; font-weight: 600; }
-  .header-left { justify-self: start; }
+  .header-left { justify-self: start; display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; }
+  .statut-mini { font-size: .72rem; color: #9fb3cc; white-space: nowrap; font-family: ui-monospace, "Cascadia Code", Consolas, monospace; }
+  .statut-mini.ok { color: #86efac; }
+  .statut-mini.err { color: #fca5a5; }
   .header-title { justify-self: center; font-size: 1.05rem; white-space: nowrap; }
   .header-right { justify-self: end; display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }
   main { max-width: 1300px; margin: 0 auto; padding: 1.5rem; }
@@ -76,6 +79,8 @@
 <header>
   <div class="header-left">
     <a href="{{ url_for('dashboard') }}" class="btn btn-secondary" title="Accueil">🏠 Accueil</a>
+    <span id="statutConnexion" class="statut-mini">⏳ Base…</span>
+    <span id="statutPublicationMini" class="statut-mini">⏳ GitHub…</span>
   </div>
   <div class="header-title">GMAO — Matériel hydrométrique</div>
   <div class="header-right">
@@ -96,6 +101,13 @@
 <div id="toastPublication" class="toast-publication" style="display:none;"></div>
 <script>
 (function () {
+  function formatHeure(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    if (isNaN(d)) return '—';
+    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
   fetch('/api/statut-publication').then(function (r) { return r.ok ? r.json() : null; }).then(function (statut) {
     if (!statut || !statut.quand) return;
     var dernierVu = localStorage.getItem('gmaoPublicationVu');
@@ -107,6 +119,30 @@
     toast.style.display = 'block';
     setTimeout(function () { toast.style.display = 'none'; }, 9000);
   }).catch(function () {});
+
+  fetch('/api/statut-connexion').then(function (r) { return r.ok ? r.json() : null; }).then(function (s) {
+    var el = document.getElementById('statutConnexion');
+    if (!s || !s.derniere_reussite) { el.textContent = '⚪ Base : —'; return; }
+    el.textContent = (s.ok ? '🟢' : '🔴') + ' Base ' + formatHeure(s.derniere_reussite);
+    el.className = 'statut-mini ' + (s.ok ? 'ok' : 'err');
+    el.title = s.ok
+      ? 'Connexion à la base réussie à ' + formatHeure(s.derniere_reussite)
+      : 'Base injoignable depuis, dernière connexion réussie à ' + formatHeure(s.derniere_reussite) + (s.erreur ? ' — ' + s.erreur : '');
+  }).catch(function () {
+    var el = document.getElementById('statutConnexion');
+    if (el) el.textContent = '⚪ Base : —';
+  });
+
+  fetch('/api/statut-publication').then(function (r) { return r.ok ? r.json() : null; }).then(function (s) {
+    var el = document.getElementById('statutPublicationMini');
+    if (!s || !s.quand) { el.textContent = '⚪ GitHub : —'; return; }
+    el.textContent = (s.ok ? '🟢' : '🟠') + ' GitHub ' + formatHeure(s.quand);
+    el.className = 'statut-mini ' + (s.ok ? 'ok' : 'err');
+    el.title = s.message || '';
+  }).catch(function () {
+    var el = document.getElementById('statutPublicationMini');
+    if (el) el.textContent = '⚪ GitHub : —';
+  });
 })();
 </script>
 {% block extra_scripts %}{% endblock %}
