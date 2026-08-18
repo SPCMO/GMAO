@@ -346,6 +346,16 @@
 
   <div class="changelog-entry">
     <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Suppression d'un site depuis <b>🏢 Sites</b> (avec confirmation), possible uniquement si plus aucun équipement n'y est actuellement affecté — sinon GMAO l'indique clairement plutôt que de bloquer silencieusement le bouton.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-fix">Correctif</span> Un site fraîchement créé via <b>+ Site</b> n'apparaissait pas dans les menus déroulants de création/réaffectation d'équipement tant qu'aucun équipement n'y avait jamais été affecté (la liste se basait par erreur sur l'historique des affectations plutôt que sur la liste réelle des sites).</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
     <p><span class="tag tag-fix">Correctif</span> Les 7 défauts mineurs relevés par l'audit de code interne ont été corrigés : confirmation de suppression cohérente dans Paramètres (sous-types, durées/rappel/rallonge, emails UH, raisons de fermeture) ; bouton « annuler la prolongation » sur la fiche équipement ; badge « ⚙️ non configuré » distinct de « En fonction » quand durée de vie/rappel ne sont pas renseignés ; la fiche équipement ne régénère plus son QR/PDF à chaque consultation (bouton « 🔄 Régénérer l'étiquette » si besoin, ex. après un renommage) ; <code>run.py</code> découpé en Blueprints Flask (<code>app/routes/equipements.py</code>, <code>sites.py</code>, <code>parametres.py</code>) ; commentaires ajoutés sur la logique métier des routes ; classes CSS utilitaires pour réduire les styles inline répétés.</p>
   </div>
 

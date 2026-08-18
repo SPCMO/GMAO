@@ -239,6 +239,20 @@ def get_site(conn, nom):
     return conn.execute("SELECT * FROM site WHERE nom = ?", (nom,)).fetchone()
 
 
+def delete_site(conn, nom):
+    """Supprime un site uniquement si plus aucun équipement n'y est actuellement affecté
+    (même définition que la colonne "Équipements actuellement affectés" de sites.html).
+    Retourne True si supprimé, False sinon (l'appelant doit alors en informer l'utilisateur) ;
+    l'historique des affectations passées vers ce site n'est pas touché."""
+    nb_affectes = conn.execute(
+        "SELECT COUNT(*) FROM affectation WHERE site = ? AND date_fin IS NULL", (nom,)
+    ).fetchone()[0]
+    if nb_affectes > 0:
+        return False
+    conn.execute("DELETE FROM site WHERE nom = ?", (nom,))
+    return True
+
+
 def list_all_sites(conn):
     rows = conn.execute(
         """

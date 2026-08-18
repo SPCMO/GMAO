@@ -30,6 +30,17 @@ def nouveau_site():
     return render_template("nouveau_site.html", uh_valeurs=db.UH_VALEURS)
 
 
+@sites_bp.route("/sites/<nom>/supprimer", methods=["POST"])
+def supprimer_site(nom):
+    with db.db_session() as conn:
+        supprime = db.delete_site(conn, nom)
+    if supprime:
+        flash(f"Site « {nom} » supprimé.")
+    else:
+        flash(f"Impossible de supprimer « {nom} » : au moins un équipement y est encore affecté.")
+    return redirect(url_for("sites.gestion_sites"))
+
+
 @sites_bp.route("/sites/<nom>/modifier", methods=["GET", "POST"])
 def modifier_site(nom):
     with db.db_session() as conn:

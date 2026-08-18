@@ -203,12 +203,19 @@
   <h3>Et ensuite ?</h3>
   <p>Une fois le relais testé avec succès, passer à l'onglet <b>🗓️ Planificateur de tâches</b> pour automatiser la vérification quotidienne à 7h — sans cette tâche planifiée, les alertes ne sont visibles que si quelqu'un ouvre GMAO dans son navigateur.</p>
 
+  <div class="warn">
+    <span class="tag tag-attention">Limite réseau connue (constatée le 18 août 2026)</span>
+    Sur ce poste (réseau SPCMO/DREAL-OC), le clic <b>✉️ Envoyer un test</b> dans GMAO se solde parfois par <code>Relais Apps Script injoignable : &lt;urlopen error timed out&gt;</code> — alors que le relais lui-même fonctionne (vérifié indépendamment : réponse en 2 à 4 secondes, mails bien reçus). La cause est la même passerelle de sécurité qui bloque déjà les <code>git push</code> depuis ce poste (voir Aide.html, onglet Paramétrage, section « Authentification git ») : elle semble filtrer les connexions HTTPS sortantes par processus, et laisse passer un navigateur web mais pas un script Python lancé nativement (via l'appli GMAO ou une tâche planifiée). Conséquence concrète : la tâche planifiée quotidienne (onglet précédent) risque de rencontrer le même blocage et de ne <b>jamais réussir à envoyer les mails d'alerte</b>, silencieusement (le script se termine simplement en erreur, sans qu'un humain le remarque tant que personne ne regarde le journal — voir l'astuce de journalisation dans l'onglet précédent).<br><br>
+    À faire : tester une fois <b>✉️ Envoyer un test</b> depuis GMAO ; si l'échec se reproduit, ce n'est pas un problème de configuration côté GMAO ou Apps Script — contacter le support informatique (DREAL-OC / assistance RIE) pour demander une exception de pare-feu sortant sur <code>venv\Scripts\python.exe</code> du dossier GMAO (le même exécutable est aussi concerné par le blocage <code>git push</code>).
+  </div>
+
   <h3>Dépannage</h3>
   <table>
     <tr><th>Symptôme</th><th>Cause probable</th></tr>
     <tr><td><code>Token invalide</code></td><td>Le jeton saisi dans GMAO ne correspond pas exactement à <code>TOKEN_SECRET</code> dans le script (espace en trop, casse différente).</td></tr>
-    <tr><td><code>Relais Apps Script injoignable</code></td><td>URL mal collée (doit se terminer par <code>/exec</code>, pas <code>/dev</code>), ou déploiement supprimé — recommencer l'étape 6 avec <b>Gérer les déploiements</b> pour vérifier qu'il existe toujours.</td></tr>
-    <tr><td>Le mail de test n'arrive jamais</td><td>Vérifier les indésirables ; vérifier que <code>FROM_EMAIL</code> dans le script correspond bien au compte Google connecté à l'étape 1.</td></tr>
+    <tr><td><code>Relais Apps Script injoignable : urlopen error timed out</code></td><td>Voir l'encart ci-dessus — blocage réseau du poste, pas un problème de configuration. Le relais lui-même fonctionne.</td></tr>
+    <tr><td><code>Relais Apps Script injoignable</code> (autre message)</td><td>URL mal collée (doit se terminer par <code>/exec</code>, pas <code>/dev</code>), ou déploiement supprimé — recommencer l'étape 6 avec <b>Gérer les déploiements</b> pour vérifier qu'il existe toujours.</td></tr>
+    <tr><td>Le mail de test n'arrive jamais (mais pas d'erreur affichée)</td><td>Vérifier les indésirables — les messageries professionnelles (gouv.fr) filtrent parfois les mails relayés par un compte Gmail externe ; vérifier aussi que <code>FROM_EMAIL</code> dans le script correspond bien au compte Google connecté à l'étape 1.</td></tr>
     <tr><td>Ça marchait puis ça s'arrête</td><td>Quota Gmail gratuit d'environ 100 mails/jour dépassé (peu probable en usage normal) ; ou l'autorisation Google a été révoquée — redéployer une nouvelle version (étape 6) et réautoriser (étape 7).</td></tr>
   </table>
 </section>
