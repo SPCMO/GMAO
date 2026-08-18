@@ -78,8 +78,9 @@
   <h3>Vue globale (dashboard)</h3>
   <p>Page d'accueil en deux parties : une <b>carte</b> à gauche (un marqueur par <b>site</b> géolocalisé — pas par équipement — coloré selon l'UH de gestion ou le statut du site, avec au clic le nom du site et la liste cliquable des équipements qui y sont actuellement affectés) et le <b>tableau</b> à droite. Le menu déroulant filtre par site, le champ de recherche filtre par nom d'équipement. Déplacer ou zoomer la carte filtre également le tableau sur la zone visible (les équipements sans coordonnées restent toujours affichés, puisqu'ils n'ont pas de position à comparer) — un bandeau <i>« Le tableau est filtré sur la zone visible de la carte »</i> apparaît, avec un lien pour réinitialiser.</p>
   <p class="muted">Une pastille grisée avec une icône 🔧 signale un site de maintenance, une pastille gris foncé un site sans aucun équipement affecté, une pastille blanche à croix rouge semi-transparente un site fermé. Une case <b>« Masquer les sites fermés sur la carte »</b> au-dessus de la carte permet de les cacher temporairement sans les faire disparaître de la liste des sites — seule leur <b>suppression complète</b> depuis le Gestionnaire des sites les retire définitivement de la carte.</p>
-  <p class="muted">La carte affiche une échelle dynamique en bas à gauche, et un sélecteur en haut à droite permet de basculer entre le fond <b>Plan</b> (OpenStreetMap) et <b>Satellite</b> (imagerie Esri) — toujours déplié (et réduit en taille) pour qu'il reste visible sans avoir à deviner qu'il est cliquable ; disponible aussi sur les mini-cartes de pointage d'un nouveau site.</p>
+  <p class="muted">La carte affiche une échelle dynamique en bas à gauche, et un sélecteur en haut à droite permet de basculer entre le fond <b>Plan</b> (OpenStreetMap) et <b>Satellite</b> (imagerie Esri) — toujours déplié (et réduit en taille) pour qu'il reste visible sans avoir à deviner qu'il est cliquable ; disponible aussi sur les mini-cartes de pointage d'un nouveau site. Une légende repliable (bouton <b>🗺️ Légende</b>) en bas à droite de la carte rappelle la signification de chaque couleur/icône.</p>
   <p class="muted">Dans le tableau, la colonne <b>Tps restant (j)</b> indique le nombre de jours restants avant la date de péremption calculée (durée de vie + date de 1ère mise en service), en rouge si déjà dépassée — triable comme les autres colonnes, y compris quand le rappel n'est pas configuré.</p>
+  <p class="muted">Le tri par défaut de cette liste (retirés en bas, puis par UH/type/sous-type/nom) est configurable dans <b>⚙️ Paramètres</b> → onglet <b>🔀 Tri par défaut</b>. Chaque en-tête de colonne reste triable manuellement à tout moment via ses boutons ▲▼.</p>
 
   <h3>Ajouter un équipement</h3>
   <p>Bouton <b>+ Nouvel équipement</b> en haut de page : nom, site d'affectation (menu déroulant listant les sites déjà utilisés, avec une option <b>+ Nouveau site...</b> pour en créer un directement depuis le formulaire), date d'installation. Un identifiant technique unique est généré automatiquement (utilisé plus tard dans l'URL du QR code).</p>
@@ -90,6 +91,7 @@
 
   <h3>🏢 Gestionnaire des sites</h3>
   <p>Accessible depuis le bouton <b>🏢 Sites</b> en haut de chaque page : liste tous les sites connus, le nombre d'équipements actuellement affectés à chacun, leur UH de gestion et leur localisation. Bouton <b>+ Site</b> pour en créer un directement (sans passer par un équipement) ; lien <b>✏️ Modifier</b> par ligne pour corriger la case <b>Site de maintenance</b>, l'UH de gestion ou la position (laisser les champs de coordonnées vides efface la localisation).</p>
+  <p class="muted">Triée par défaut par <b>Statut</b> puis <b>Site</b> (sites fermés en bas) ; chaque en-tête de colonne est triable manuellement (▲▼), et le tri par défaut se règle dans <b>⚙️ Paramètres</b> → <b>🔀 Tri par défaut</b>.</p>
 
   <h3>Changer l'affectation d'un équipement</h3>
   <p>Depuis la fiche détail d'un équipement → <b>Changer l'affectation</b> : indiquer le nouveau site et la date de transfert. L'ancienne affectation est automatiquement clôturée (date de fin renseignée) et une nouvelle ligne d'historique est créée. L'historique n'est jamais réécrit, seulement complété.</p>
@@ -110,7 +112,7 @@
   <p>Chaque étiquette imprimée porte le QR code <b>et</b> le nom de l'équipement en clair — utile si le réseau mobile est absent ou instable sur le site (cas fréquent pour du matériel isolé), pour au moins identifier visuellement le matériel sans avoir à scanner.</p>
 
   <h3>🔧 Gestion des équipements</h3>
-  <p>Bouton <b>🔧 Équipements</b> en haut de page : liste de gestion (type, site, UH, statut) avec le bouton <b>+ Nouvel équipement</b> et un lien <b>✏️ modifier</b> par ligne. Le formulaire (création ou modification) couvre :</p>
+  <p>Bouton <b>🔧 Équipements</b> en haut de page : liste de gestion (type, site, UH, statut) avec le bouton <b>+ Nouvel équipement</b> et un lien <b>✏️ modifier</b> par ligne — triée par défaut par <b>Statut</b>, <b>Type</b> puis <b>Équipement</b> (retirés en bas), chaque en-tête restant triable manuellement (▲▼) ; le tri par défaut se règle dans <b>⚙️ Paramètres</b> → <b>🔀 Tri par défaut</b>. Le formulaire (création ou modification) couvre :</p>
   <ul>
     <li><b>Type / Sous-type</b> — menus déroulants en cascade (le choix du type détermine la liste des sous-types proposés) ;</li>
     <li><b>Date de création</b> et <b>Date de 1ère mise en service</b> — la seconde doit être postérieure ou égale à la première (contrôle de saisie automatique) ;</li>
@@ -287,7 +289,8 @@
   <p>Ce choix est enregistré dans <code>settings.json</code> à la racine du projet — un fichier propre à chaque poste, exclu du dépôt git (<code>.gitignore</code>), donc jamais publié sur GitHub. C'est ce qui permet de garder un chemin réseau interne hors du dépôt public.</p>
 
   <h3>Listes déroulantes et couleurs (menu Paramètres)</h3>
-  <p>La page <b>⚙️ Paramètres</b> est organisée en 5 onglets pour limiter le défilement : <b>🗄️ Général</b> (emplacement de la base), <b>📧 Notifications</b> (SMTP + relais mail), <b>🔧 Équipements</b> (types/sous-types, durée de vie/rappel/rallonge), <b>🏢 Sites</b> (raisons de fermeture) et <b>🚨 Alertes &amp; couleurs</b> (destinataires par UH, couleurs de fond). L'onglet ouvert est mémorisé le temps de la session : après un ajout/suppression dans une liste, on reste sur le même onglet plutôt que de revenir à « Général ». Chaque liste s'édite par simple ajout/suppression, sans toucher au code.</p>
+  <p>La page <b>⚙️ Paramètres</b> est organisée en 6 onglets pour limiter le défilement : <b>🗄️ Général</b> (emplacement de la base), <b>🚨 Alertes mail</b> (SMTP + relais mail + destinataires par UH), <b>🔧 Équipements</b> (types/sous-types, durée de vie/rappel/rallonge), <b>🏢 Sites</b> (raisons de fermeture), <b>🖌️ Couleurs</b> (couleurs de fond) et <b>🔀 Tri par défaut</b> (voir ci-dessous). L'onglet ouvert est mémorisé le temps de la session : après un ajout/suppression dans une liste, on reste sur le même onglet plutôt que de revenir à « Général ». Chaque liste s'édite par simple ajout/suppression, sans toucher au code.</p>
+  <p class="muted">L'onglet <b>🔀 Tri par défaut</b> règle, pour l'accueil, le Gestionnaire des sites et le Gestionnaire des équipements, jusqu'à 3 niveaux de tri appliqués au chargement de la page (une colonne non couverte garde son ordre habituel). Ce réglage est partagé (stocké en base, comme les couleurs) — il s'applique donc à tous les utilisateurs de l'outil, pas seulement à ce poste.</p>
   <p class="muted">Types et sous-types se réordonnent librement avec les boutons <b>▲▼</b> — c'est cet ordre qui s'affiche dans tous les menus déroulants de l'application. Les durées de vie/rappel/rallonge, elles, s'insèrent toujours automatiquement par ordre croissant (pas de tri manuel nécessaire).</p>
   <div class="warn">Supprimer un <b>type</b> supprime aussi tous ses sous-types. Les équipements qui utilisaient déjà une valeur retirée d'une liste conservent cette valeur affichée (elle disparaît seulement des choix proposés pour les nouvelles saisies).</div>
 
@@ -354,6 +357,26 @@ git config --global https.proxy http://pfrie-std.proxy.e2.rie.gouv.fr:8080</pre>
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Paramètres : onglet <b>🚨 Alertes mail</b> (ex-Notifications, désormais avec les destinataires par UH) et onglet <b>🖌️ Couleurs</b> (ex-Alertes &amp; couleurs, recentré sur les couleurs de fond) — renommés pour mieux refléter leur contenu.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Paramètres : nouvel onglet <b>🔀 Tri par défaut</b> pour régler, jusqu'à 3 niveaux, l'ordre de tri appliqué au chargement de l'accueil, du Gestionnaire des sites et du Gestionnaire des équipements (réglage partagé entre tous les utilisateurs, comme les couleurs).</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Gestionnaire des sites et Gestionnaire des équipements : colonnes triables (▲▼) comme sur l'accueil, avec un tri par défaut au chargement (Statut puis Site pour les sites ; Statut, Type puis Équipement pour les équipements), configurable dans Paramètres.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Carte du dashboard : légende repliable (bouton <b>🗺️ Légende</b>) en bas à droite, rappelant la signification des couleurs par UH et des pastilles maintenance/site vide/site fermé.</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">18 août 2026</div>

@@ -7,12 +7,22 @@ from app.forms import parse_coord
 
 sites_bp = Blueprint("sites", __name__)
 
+# Correspondance nom de colonne (Paramètres > Tri par défaut) -> index de cellule dans
+# la ligne du tableau (voir sites.html, même ordre que le tableau th-triable).
+COLONNE_INDEX_SITES = {
+    "site": 0, "nb_equipements": 1, "uh": 2, "maintenance": 3, "statut": 4, "localisation": 5,
+}
+
 
 @sites_bp.route("/sites")
 def gestion_sites():
     with db.db_session() as conn:
         sites = db.list_all_sites(conn)
-    return render_template("sites.html", sites=sites)
+        tri_defaut = [
+            [COLONNE_INDEX_SITES[c], 1]
+            for c in db.get_tri_config(conn, "sites") if c in COLONNE_INDEX_SITES
+        ]
+    return render_template("sites.html", sites=sites, tri_defaut=tri_defaut)
 
 
 @sites_bp.route("/sites/nouveau", methods=["GET", "POST"])

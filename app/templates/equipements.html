@@ -6,14 +6,20 @@
   <a href="{{ url_for('equipements.nouveau_equipement') }}" class="btn">+ Nouvel équipement</a>
 </div>
 
-<table>
+<table id="tableGestionEquipements">
   <thead>
     <tr>
-      <th>Équipement</th>
-      <th>Type</th>
-      <th>Site actuel</th>
-      <th>UH</th>
-      <th>Statut</th>
+      {% for libelle, idx in [("Équipement",0), ("Type",1), ("Site actuel",2), ("UH",3), ("Statut",4)] %}
+      <th class="th-triable">
+        <span class="th-triable-inner">
+          <span class="th-libelle">{{ libelle }}</span>
+          <span class="ordre-actions">
+            <button type="button" class="btn-ordre" onclick="trierTable('tableGestionEquipements', {{ idx }}, 1)" title="Trier {{ libelle }} croissant" data-col="{{ idx }}" data-dir="1">▲</button>
+            <button type="button" class="btn-ordre" onclick="trierTable('tableGestionEquipements', {{ idx }}, -1)" title="Trier {{ libelle }} décroissant" data-col="{{ idx }}" data-dir="-1">▼</button>
+          </span>
+        </span>
+      </th>
+      {% endfor %}
       <th></th>
     </tr>
   </thead>
@@ -21,11 +27,11 @@
     {% for l in lignes %}
     {% set e = l.e %}
     <tr class="{{ 'equip-retire' if e.date_retrait else '' }}">
-      <td><a href="{{ url_for('equipements.detail_equipement', equipement_id=e.id) }}">{{ e.nom }}</a></td>
-      <td>{{ e.type or '—' }}{% if e.sous_type %} / {{ e.sous_type }}{% endif %}</td>
-      <td>{{ e.site_actuel or '—' }}</td>
-      <td>{{ e.site_uh or '—' }}</td>
-      <td>
+      <td data-tri="{{ e.nom|lower }}"><a href="{{ url_for('equipements.detail_equipement', equipement_id=e.id) }}">{{ e.nom }}</a></td>
+      <td data-tri="{{ e.type or '' }}">{{ e.type or '—' }}{% if e.sous_type %} / {{ e.sous_type }}{% endif %}</td>
+      <td data-tri="{{ e.site_actuel or '' }}">{{ e.site_actuel or '—' }}</td>
+      <td data-tri="{{ e.site_uh or '' }}">{{ e.site_uh or '—' }}</td>
+      <td data-tri="{{ 2 if e.date_retrait else (1 if l.etat.active else 0) }}">
         {% if e.date_retrait %}
           Retiré le {{ e.date_retrait }}{% if e.raison_retrait %} ({{ e.raison_retrait }}){% endif %}
         {% elif l.etat.active %}
@@ -50,4 +56,12 @@
     {% endfor %}
   </tbody>
 </table>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='gmao-common.js') }}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    appliquerTriInitial('tableGestionEquipements', {{ tri_defaut|tojson }});
+  });
+</script>
 {% endblock %}

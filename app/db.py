@@ -60,6 +60,11 @@ CREATE TABLE IF NOT EXISTS couleur_config (
     valeur TEXT
 );
 
+CREATE TABLE IF NOT EXISTS tri_config (
+    cle TEXT PRIMARY KEY,
+    valeur TEXT
+);
+
 CREATE INDEX IF NOT EXISTS idx_affectation_equipement ON affectation(equipement_id);
 """
 
@@ -80,6 +85,33 @@ COULEURS_PAR_DEFAUT = {
     "uh_34": "#dcfce7",
     "uh_66": "#fef3c7",
     "maintenance": "#e5e7eb",
+}
+
+# Tri par défaut (jusqu'à 3 niveaux) appliqué au chargement de chaque liste, en plus de
+# l'ordre déjà renvoyé par la requête SQL (qui sert de dernier niveau de tri implicite,
+# grâce à la stabilité du tri JS — voir gmao-tri.js). "" pour l'accueil = on ne touche
+# pas à l'ordre SQL existant (rétro-compatible avec le comportement historique).
+TRI_PAR_DEFAUT = {
+    "accueil": "",
+    "sites": "statut,site",
+    "equipements": "statut,type,equipement",
+}
+# Colonnes proposées dans Paramètres > Tri par défaut, par écran (valeur -> libellé).
+TRI_COLONNES = {
+    "accueil": [
+        ("equipement", "Équipement"), ("type", "Type"), ("sous_type", "Sous-type"),
+        ("site", "Site"), ("uh", "UH"), ("affecte_depuis", "Affecté depuis"),
+        ("installation", "1ère mise en service"), ("statut", "Statut"),
+        ("tps_restant", "Tps restant (j)"), ("duree_prolongee", "Durée de vie prolongée"),
+    ],
+    "sites": [
+        ("site", "Site"), ("nb_equipements", "Équipements affectés"), ("uh", "UH"),
+        ("maintenance", "Maintenance"), ("statut", "Statut"), ("localisation", "Localisation"),
+    ],
+    "equipements": [
+        ("equipement", "Équipement"), ("type", "Type"), ("site", "Site actuel"),
+        ("uh", "UH"), ("statut", "Statut"),
+    ],
 }
 
 
@@ -158,6 +190,8 @@ def _migrate(conn):
         conn.execute("INSERT OR IGNORE INTO rallonge_option (annees) VALUES (?)", (v,))
     for cle, valeur in COULEURS_PAR_DEFAUT.items():
         conn.execute("INSERT OR IGNORE INTO couleur_config (cle, valeur) VALUES (?, ?)", (cle, valeur))
+    for cle, valeur in TRI_PAR_DEFAUT.items():
+        conn.execute("INSERT OR IGNORE INTO tri_config (cle, valeur) VALUES (?, ?)", (cle, valeur))
     for i, nom in enumerate(RAISONS_FERMETURE_PAR_DEFAUT, start=1):
         conn.execute(
             "INSERT OR IGNORE INTO raison_fermeture_option (nom, ordre) VALUES (?, ?)", (nom, i)
@@ -625,6 +659,25 @@ def list_couleurs(conn):
 def set_couleur(conn, cle, valeur):
     conn.execute(
         "INSERT INTO couleur_config (cle, valeur) VALUES (?, ?) "
+        "ON CONFLICT(cle) DO UPDATE SET valeur = excluded.valeur",
+        (cle, valeur),
+    )
+
+
+# ── Tri par défaut (accueil / sites / equipements) ──────────────────────
+
+def get_tri_config(conn, cle):
+    """Liste des colonnes (dans l'ordre de priorité) à appliquer par-dessus l'ordre SQL
+    existant. [] si non configuré (= on garde l'ordre SQL tel quel, voir TRI_PAR_DEFAUT)."""
+    r = conn.execute("SELECT valeur FROM tri_config WHERE cle = ?", (cle,)).fetchone()
+    valeur = r["valeur"] if r else TRI_PAR_DEFAUT.get(cle, "")
+    return [c for c in valeur.split(",") if c]
+
+
+def set_tri_config(conn, cle, colonnes):
+    valeur = ",".join(c for c in colonnes if c)
+    conn.execute(
+        "INSERT INTO tri_config (cle, valeur) VALUES (?, ?) "
         "ON CONFLICT(cle) DO UPDATE SET valeur = excluded.valeur",
         (cle, valeur),
     )

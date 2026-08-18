@@ -16,10 +16,11 @@
 
 <div class="onglets-param">
   <button type="button" class="onglet-btn actif" data-onglet="general" onclick="afficherOnglet('general')">🗄️ Général</button>
-  <button type="button" class="onglet-btn" data-onglet="notifications" onclick="afficherOnglet('notifications')">📧 Notifications</button>
+  <button type="button" class="onglet-btn" data-onglet="notifications" onclick="afficherOnglet('notifications')">🚨 Alertes mail</button>
   <button type="button" class="onglet-btn" data-onglet="equipements" onclick="afficherOnglet('equipements')">🔧 Équipements</button>
   <button type="button" class="onglet-btn" data-onglet="sites" onclick="afficherOnglet('sites')">🏢 Sites</button>
-  <button type="button" class="onglet-btn" data-onglet="alertes" onclick="afficherOnglet('alertes')">🚨 Alertes &amp; couleurs</button>
+  <button type="button" class="onglet-btn" data-onglet="alertes" onclick="afficherOnglet('alertes')">🖌️ Couleurs</button>
+  <button type="button" class="onglet-btn" data-onglet="tri" onclick="afficherOnglet('tri')">🔀 Tri par défaut</button>
 </div>
 
 <div class="onglet-contenu actif" data-onglet="general">
@@ -78,6 +79,33 @@
       <input type="email" name="destinataire_test" placeholder="adresse@test.fr pour un envoi test" required style="flex:1;">
       <button type="submit" class="btn btn-secondary">✉️ Envoyer un test</button>
     </form>
+  </div>
+
+  <h2 class="section-param">📬 Destinataires des alertes par UH de gestion</h2>
+  <div class="card" style="max-width:700px; padding:1.5rem; display:flex; gap:1.5rem; flex-wrap:wrap;">
+    {% for uh in uh_valeurs %}
+    <div style="flex:1; min-width:180px;">
+      <h3 style="margin-top:0;">UH {{ uh }}</h3>
+      <ul class="liste-gestion">
+        {% for email in uh_emails.get(uh, []) %}
+        <li>{{ email }}
+          <form method="post" action="{{ url_for('parametres.parametres_uh_emails_supprimer') }}" onsubmit="return confirm('Supprimer « {{ email }} » des destinataires d\'alerte de l\'UH {{ uh }} ?');">
+            <input type="hidden" name="uh" value="{{ uh }}">
+            <input type="hidden" name="email" value="{{ email }}">
+            <button type="submit" class="lien-suppr">×</button>
+          </form>
+        </li>
+        {% else %}
+        <li class="muted">Aucun destinataire</li>
+        {% endfor %}
+      </ul>
+      <form class="form-inline" method="post" action="{{ url_for('parametres.parametres_uh_emails_ajouter') }}">
+        <input type="hidden" name="uh" value="{{ uh }}">
+        <input type="email" name="email" placeholder="adresse@spcmo.fr" required style="width:100%;">
+        <button type="submit" class="btn btn-secondary">+</button>
+      </form>
+    </div>
+    {% endfor %}
   </div>
 </div>
 
@@ -238,33 +266,6 @@
 </div>
 
 <div class="onglet-contenu" data-onglet="alertes">
-  <h2 class="section-param">📬 Destinataires des alertes par UH de gestion</h2>
-  <div class="card" style="max-width:700px; padding:1.5rem; display:flex; gap:1.5rem; flex-wrap:wrap;">
-    {% for uh in uh_valeurs %}
-    <div style="flex:1; min-width:180px;">
-      <h3 style="margin-top:0;">UH {{ uh }}</h3>
-      <ul class="liste-gestion">
-        {% for email in uh_emails.get(uh, []) %}
-        <li>{{ email }}
-          <form method="post" action="{{ url_for('parametres.parametres_uh_emails_supprimer') }}" onsubmit="return confirm('Supprimer « {{ email }} » des destinataires d\'alerte de l\'UH {{ uh }} ?');">
-            <input type="hidden" name="uh" value="{{ uh }}">
-            <input type="hidden" name="email" value="{{ email }}">
-            <button type="submit" class="lien-suppr">×</button>
-          </form>
-        </li>
-        {% else %}
-        <li class="muted">Aucun destinataire</li>
-        {% endfor %}
-      </ul>
-      <form class="form-inline" method="post" action="{{ url_for('parametres.parametres_uh_emails_ajouter') }}">
-        <input type="hidden" name="uh" value="{{ uh }}">
-        <input type="email" name="email" placeholder="adresse@spcmo.fr" required style="width:100%;">
-        <button type="submit" class="btn btn-secondary">+</button>
-      </form>
-    </div>
-    {% endfor %}
-  </div>
-
   <h2 class="section-param">🎨 Couleurs de fond (liste des équipements et carte)</h2>
   <form class="card" method="post" action="{{ url_for('parametres.parametres_couleurs') }}" style="max-width:700px;">
     <div style="display:flex; gap:1.5rem; flex-wrap:wrap; align-items:flex-end;">
@@ -280,6 +281,30 @@
       <button type="submit" class="btn">Enregistrer</button>
     </p>
   </form>
+</div>
+
+<div class="onglet-contenu" data-onglet="tri">
+  <h2 class="section-param">🔀 Tri par défaut</h2>
+  <p class="muted">Ordre appliqué au chargement de chaque liste (jusqu'à 3 niveaux) ; les colonnes non couvertes gardent leur ordre habituel. Chaque liste reste triable manuellement à tout moment via les boutons ▲▼ de ses en-têtes.</p>
+  <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
+    {% for cle, titre in [("accueil", "Accueil (liste des équipements)"), ("sites", "Gestionnaire des sites"), ("equipements", "Gestionnaire des équipements")] %}
+    <form class="card" method="post" action="{{ url_for('parametres.parametres_tri', cle=cle) }}" style="flex:1; min-width:260px; max-width:340px;">
+      <h3 style="margin-top:0;">{{ titre }}</h3>
+      {% for i in (1, 2, 3) %}
+      <label for="tri_{{ cle }}_{{ i }}">Niveau {{ i }}</label>
+      <select id="tri_{{ cle }}_{{ i }}" name="niveau{{ i }}">
+        <option value=""{{ " selected" if not tri_actuel[cle][i-1] }}>— (aucun) —</option>
+        {% for valeur, libelle in tri_colonnes[cle] %}
+        <option value="{{ valeur }}"{{ " selected" if tri_actuel[cle][i-1] == valeur }}>{{ libelle }}</option>
+        {% endfor %}
+      </select>
+      {% endfor %}
+      <p style="margin-top:1.5rem;">
+        <button type="submit" class="btn">Enregistrer</button>
+      </p>
+    </form>
+    {% endfor %}
+  </div>
 </div>
 
 <script>

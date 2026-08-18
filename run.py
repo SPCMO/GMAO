@@ -15,6 +15,14 @@ app.register_blueprint(equipements_bp)
 app.register_blueprint(sites_bp)
 app.register_blueprint(parametres_bp)
 
+# Correspondance nom de colonne (Paramètres > Tri par défaut) -> index réel de la
+# cellule dans la ligne du tableau accueil (voir dashboard.html, même ordre que le
+# tableau th-triable) ; utilisée pour traduire db.get_tri_config() en tri JS initial.
+COLONNE_INDEX_ACCUEIL = {
+    "equipement": 1, "type": 2, "sous_type": 3, "site": 4, "uh": 5,
+    "affecte_depuis": 6, "installation": 7, "statut": 8, "tps_restant": 9, "duree_prolongee": 10,
+}
+
 
 @app.route("/")
 def dashboard():
@@ -23,6 +31,10 @@ def dashboard():
         sites = db.list_sites(conn)
         couleurs = db.list_couleurs(conn)
         sites_geo = db.list_all_sites(conn)
+        tri_defaut_accueil = [
+            [COLONNE_INDEX_ACCUEIL[c], 1]
+            for c in db.get_tri_config(conn, "accueil") if c in COLONNE_INDEX_ACCUEIL
+        ]
     aujourdhui = date.today()
     lignes = []
     equip_par_site = {}
@@ -72,6 +84,7 @@ def dashboard():
     return render_template(
         "dashboard.html", lignes=lignes, sites=sites, couleurs=couleurs,
         uh_valeurs=db.UH_VALEURS, types=types, sites_carte=sites_carte,
+        tri_defaut_accueil=tri_defaut_accueil,
     )
 
 

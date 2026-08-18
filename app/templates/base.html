@@ -53,9 +53,13 @@
   .form-inline { display: flex; gap: .5rem; margin-top: .5rem; align-items: center; flex-wrap: wrap; }
   .form-inline input, .form-inline select { padding: .4rem .5rem; border: 1px solid #d1d5db; border-radius: 6px; }
   h3.section-param { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; }
-  th.triable { cursor: pointer; user-select: none; }
-  th.triable:hover { background: #e5e9ef; }
-  th.triable .fleche { opacity: .5; font-size: .75rem; margin-left: .2rem; }
+  /* En-têtes de colonne triables (accueil, Gestionnaire des sites/équipements) : deux
+     petits boutons ▲▼ empilés, l'actif surligné — voir trierTable() dans gmao-common.js. */
+  .th-triable { white-space: normal; }
+  .th-triable-inner { display: flex; align-items: flex-start; justify-content: space-between; gap: .25rem; }
+  .th-triable .th-libelle { line-height: 1.2; }
+  .th-triable .ordre-actions { display: flex; flex-direction: column; gap: 1px; flex-shrink: 0; }
+  .th-triable .btn-ordre { width: .85rem; height: .85rem; font-size: .48rem; padding: 0; line-height: 1; }
   tr.equip-retire { opacity: .5; }
   tr.equip-retire td:not(.col-actions) { text-decoration: line-through; }
 

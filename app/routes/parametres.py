@@ -30,6 +30,11 @@ def parametres():
             uh_emails=db.list_uh_emails_tous(conn),
             couleurs=db.list_couleurs(conn),
             raisons_fermeture=db.list_raisons_fermeture(conn),
+            tri_colonnes=db.TRI_COLONNES,
+            tri_actuel={
+                cle: (db.get_tri_config(conn, cle) + ["", "", ""])[:3]
+                for cle in db.TRI_COLONNES
+            },
         )
     return render_template("parametres.html", **contexte)
 
@@ -235,4 +240,16 @@ def parametres_couleurs():
             if valeur:
                 db.set_couleur(conn, cle, valeur)
     flash("Couleurs enregistrées.")
+    return redirect(url_for("parametres.parametres"))
+
+
+@parametres_bp.route("/parametres/tri/<cle>", methods=["POST"])
+def parametres_tri(cle):
+    if cle not in db.TRI_COLONNES:
+        flash("Liste de tri inconnue.")
+        return redirect(url_for("parametres.parametres"))
+    colonnes = [request.form.get(f"niveau{i}", "").strip() for i in (1, 2, 3)]
+    with db.db_session() as conn:
+        db.set_tri_config(conn, cle, colonnes)
+    flash("Tri par défaut enregistré.")
     return redirect(url_for("parametres.parametres"))

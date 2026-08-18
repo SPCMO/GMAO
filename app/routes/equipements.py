@@ -10,14 +10,22 @@ from app.forms import parse_coord, equipement_form_fields, listes_reference
 
 equipements_bp = Blueprint("equipements", __name__)
 
+# Correspondance nom de colonne (Paramètres > Tri par défaut) -> index de cellule dans
+# la ligne du tableau (voir equipements.html, même ordre que le tableau th-triable).
+COLONNE_INDEX_EQUIPEMENTS = {"equipement": 0, "type": 1, "site": 2, "uh": 3, "statut": 4}
+
 
 @equipements_bp.route("/equipements")
 def gestion_equipements():
     with db.db_session() as conn:
         equipements = db.list_equipements(conn)
+        tri_defaut = [
+            [COLONNE_INDEX_EQUIPEMENTS[c], 1]
+            for c in db.get_tri_config(conn, "equipements") if c in COLONNE_INDEX_EQUIPEMENTS
+        ]
     aujourdhui = date.today()
     lignes = [{"e": e, "etat": alertes.etat_alerte(e, aujourdhui)} for e in equipements]
-    return render_template("equipements.html", lignes=lignes)
+    return render_template("equipements.html", lignes=lignes, tri_defaut=tri_defaut)
 
 
 @equipements_bp.route("/equipement/nouveau", methods=["GET", "POST"])

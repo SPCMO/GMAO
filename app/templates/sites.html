@@ -9,33 +9,38 @@
   <a href="{{ url_for('sites.nouveau_site') }}" class="btn">+ Site</a>
 </div>
 
-<table>
+<table id="tableSites">
   <thead>
     <tr>
-      <th>Site</th>
-      <th>Équipements actuellement affectés</th>
-      <th>UH</th>
-      <th>Maintenance</th>
-      <th>Statut</th>
-      <th>Localisation</th>
+      {% for libelle, idx in [("Site",0), ("Équipements actuellement affectés",1), ("UH",2), ("Maintenance",3), ("Statut",4), ("Localisation",5)] %}
+      <th class="th-triable">
+        <span class="th-triable-inner">
+          <span class="th-libelle">{{ libelle }}</span>
+          <span class="ordre-actions">
+            <button type="button" class="btn-ordre" onclick="trierTable('tableSites', {{ idx }}, 1)" title="Trier {{ libelle }} croissant" data-col="{{ idx }}" data-dir="1">▲</button>
+            <button type="button" class="btn-ordre" onclick="trierTable('tableSites', {{ idx }}, -1)" title="Trier {{ libelle }} décroissant" data-col="{{ idx }}" data-dir="-1">▼</button>
+          </span>
+        </span>
+      </th>
+      {% endfor %}
       <th></th>
     </tr>
   </thead>
   <tbody>
     {% for s in sites %}
     <tr>
-      <td>{{ s.nom }}</td>
-      <td>{{ s.nb_equipements }}</td>
-      <td>{{ s.uh_gestion or '—' }}</td>
-      <td>{% if s.maintenance %}<span class="badge badge-gray">🔧 maintenance</span>{% else %}—{% endif %}</td>
-      <td>
+      <td data-tri="{{ s.nom|lower }}">{{ s.nom }}</td>
+      <td data-tri="{{ s.nb_equipements }}">{{ s.nb_equipements }}</td>
+      <td data-tri="{{ s.uh_gestion or '' }}">{{ s.uh_gestion or '—' }}</td>
+      <td data-tri="{{ 1 if s.maintenance else 0 }}">{% if s.maintenance %}<span class="badge badge-gray">🔧 maintenance</span>{% else %}—{% endif %}</td>
+      <td data-tri="{{ 1 if s.date_fermeture else 0 }}">
         {% if s.date_fermeture %}
           <span class="badge badge-muted">Fermé le {{ s.date_fermeture }}{% if s.raison_fermeture %} — {{ s.raison_fermeture }}{% endif %}</span>
         {% else %}
           <span class="badge badge-ok">En fonction</span>
         {% endif %}
       </td>
-      <td>
+      <td data-tri="{{ 0 if s.lat is not none else 1 }}">
         {% if s.lat is not none and s.lon is not none %}
           {{ "%.5f"|format(s.lat) }}, {{ "%.5f"|format(s.lon) }}
         {% else %}
@@ -56,4 +61,12 @@
     {% endfor %}
   </tbody>
 </table>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='gmao-common.js') }}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    appliquerTriInitial('tableSites', {{ tri_defaut|tojson }});
+  });
+</script>
 {% endblock %}
