@@ -83,46 +83,72 @@ function initMiniCarte(mapId, latInputId, lonInputId) {
 }
 
 /**
- * Carte du dashboard : place une pastille colorée par équipement géolocalisé (couleur du
- * site : UH de gestion ou maintenance, voir Paramètres) et notifie onBoundsChange(bounds|null)
- * à chaque déplacement/zoom (null si zoom arrière-plan par défaut, pour ne pas filtrer).
+ * Carte du dashboard : place une pastille colorée par SITE géolocalisé (pas par
+ * équipement — plusieurs équipements peuvent partager un même site/marqueur) et notifie
+ * onBoundsChange(bounds|null) à chaque déplacement/zoom (null si zoom arrière-plan par
+ * défaut, pour ne pas filtrer). Couleur : voir la priorité calculée côté serveur
+ * (run.py) — fermé > maintenance > sans équipement affecté (gris foncé) > UH > défaut.
  */
 var GMAO_COULEUR_PASTILLE_DEFAUT = '#3388ff';
 
-function creerPastille(couleur) {
+function creerPastille(couleur, maintenance) {
+  var fond = couleur || GMAO_COULEUR_PASTILLE_DEFAUT;
+  var contenu = maintenance ? '🔧' : '';
   return L.divIcon({
     className: 'gmao-pastille',
-    html: '<div style="width:20px;height:20px;border-radius:50%;background:' + couleur +
-      ';border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.5);"></div>',
+    html: '<div style="width:20px;height:20px;border-radius:50%;background:' + fond +
+      ';border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.5);display:flex;' +
+      'align-items:center;justify-content:center;font-size:10px;line-height:1;">' + contenu + '</div>',
     iconSize: [20, 20],
     iconAnchor: [10, 10],
     popupAnchor: [0, -10],
   });
 }
 
-/** Site fermé : pastille blanche à croix rouge (prioritaire sur la couleur UH/maintenance). */
+/** Site fermé : pastille blanche à croix rouge, semi-transparente (prioritaire sur tout le reste). */
 function creerPastilleFermee() {
   return L.divIcon({
     className: 'gmao-pastille',
     html: '<div style="width:20px;height:20px;border-radius:50%;background:#fff;' +
       'border:2px solid #dc2626;box-shadow:0 1px 3px rgba(0,0,0,.5);display:flex;' +
-      'align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#dc2626;line-height:1;">&#10005;</div>',
+      'align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#dc2626;' +
+      'line-height:1;opacity:.55;">&#10005;</div>',
     iconSize: [20, 20],
     iconAnchor: [10, 10],
     popupAnchor: [0, -10],
   });
 }
 
-function initDashboardCarte(mapId, equipements, onBoundsChange) {
+/** Contenu de la bulle d'un site : son nom, son statut, puis la liste cliquable des
+ * équipements qui y sont actuellement affectés (ou un message si aucun). */
+function construirePopupSite(s) {
+  var html = '<b>' + s.nom + '</b>';
+  if (s.ferme) {
+    html += ' <span style="color:#dc2626;">(site fermé)</span>';
+  } else if (s.maintenance) {
+    html += ' <span style="color:#4b5563;">(site de maintenance)</span>';
+  }
+  if (s.equipements && s.equipements.length) {
+    html += '<ul style="margin:.4rem 0 0; padding-left:1.1rem;">';
+    s.equipements.forEach(function (e) {
+      html += '<li><a href="/equipement/' + e.id + '" style="color:#14314f; text-decoration:underline;">' + e.nom + '</a></li>';
+    });
+    html += '</ul>';
+  } else {
+    html += '<div style="color:#6b7280; font-size:.85rem; margin-top:.3rem;">Aucun équipement affecté</div>';
+  }
+  return html;
+}
+
+function initDashboardCarte(mapId, sitesCarte, onBoundsChange) {
   var map = L.map(mapId).setView(GMAO_CENTRE_DEFAUT, GMAO_ZOOM_DEFAUT);
   ajouterControlesCommuns(map, creerFondsDeCarte());
 
   var group = L.featureGroup();
-  equipements.forEach(function (e) {
-    if (e.lat !== null && e.lon !== null) {
-      var icon = e.ferme ? creerPastilleFermee() : creerPastille(e.couleur || GMAO_COULEUR_PASTILLE_DEFAUT);
-      var libelle = e.nom + (e.ferme ? ' (site fermé)' : (e.maintenance ? ' (site de maintenance)' : ''));
-      L.marker([e.lat, e.lon], { icon: icon }).addTo(group).bindPopup(libelle);
+  sitesCarte.forEach(function (s) {
+    if (s.lat !== null && s.lon !== null) {
+      var icon = s.ferme ? creerPastilleFermee() : creerPastille(s.couleur, s.maintenance);
+      L.marker([s.lat, s.lon], { icon: icon }).addTo(group).bindPopup(construirePopupSite(s));
     }
   });
   group.addTo(map);

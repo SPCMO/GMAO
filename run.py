@@ -22,8 +22,10 @@ def dashboard():
         equipements = db.list_equipements(conn)
         sites = db.list_sites(conn)
         couleurs = db.list_couleurs(conn)
+        sites_geo = db.list_all_sites(conn)
     aujourdhui = date.today()
     lignes = []
+    equip_par_site = {}
     for e in equipements:
         etat = alertes.etat_alerte(e, aujourdhui)
         if e["site_maintenance"]:
@@ -34,10 +36,35 @@ def dashboard():
             couleur_fond = None
         site_ferme = bool(e["site_date_fermeture"])
         lignes.append({"e": e, "etat": etat, "couleur_fond": couleur_fond, "site_ferme": site_ferme})
+        if e["site_actuel"] and not e["date_retrait"]:
+            equip_par_site.setdefault(e["site_actuel"], []).append({"id": e["id"], "nom": e["nom"]})
     types = sorted({l["e"]["type"] for l in lignes if l["e"]["type"]})
+
+    # Carte : un marqueur par site (pas par équipement), coloré selon — dans cet ordre de
+    # priorité — fermé (blanc/croix, géré côté JS) > maintenance > sans équipement affecté
+    # (gris foncé, pour repérer d'un coup d'œil un site désormais inutilisé) > UH > défaut.
+    sites_carte = []
+    for s in sites_geo:
+        if s["lat"] is None or s["lon"] is None:
+            continue
+        equip_ici = equip_par_site.get(s["nom"], [])
+        if s["maintenance"]:
+            couleur = couleurs.get("maintenance")
+        elif not equip_ici:
+            couleur = "#374151"
+        elif s["uh_gestion"] in db.UH_VALEURS:
+            couleur = couleurs.get(f"uh_{s['uh_gestion']}")
+        else:
+            couleur = None
+        sites_carte.append({
+            "nom": s["nom"], "lat": s["lat"], "lon": s["lon"], "couleur": couleur,
+            "maintenance": bool(s["maintenance"]), "ferme": bool(s["date_fermeture"]),
+            "equipements": equip_ici,
+        })
+
     return render_template(
         "dashboard.html", lignes=lignes, sites=sites, couleurs=couleurs,
-        uh_valeurs=db.UH_VALEURS, types=types,
+        uh_valeurs=db.UH_VALEURS, types=types, sites_carte=sites_carte,
     )
 
 

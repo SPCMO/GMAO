@@ -101,6 +101,8 @@
           <td>
             {% if etat.active and not e.date_retrait %}
               <a href="{{ url_for('equipements.modifier_equipement', equipement_id=e.id) }}?depuis_alerte=1" class="icone-alerte" title="Alerte en cours — cliquer pour gérer">⚠️</a>
+            {% elif not e.date_retrait and (not e.duree_vie_ans or not e.rappel_ans) %}
+              <a href="{{ url_for('equipements.modifier_equipement', equipement_id=e.id) }}" class="icone-alerte" title="Durée de vie et/ou rappel non renseignés — cliquer pour compléter">📝</a>
             {% endif %}
           </td>
           <td class="col-actions"><a href="{{ url_for('equipements.detail_equipement', equipement_id=e.id) }}" class="muted">détail →</a></td>
@@ -200,13 +202,8 @@ function trierPar(index, direction) {
 <script src="{{ url_for('static', filename='leaflet/gmao-map.js') }}"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    var equipements = [
-      {% for l in lignes %}
-      {% set e = l.e %}
-      { id: "{{ e.id }}", nom: {{ e.nom|tojson }}, lat: {{ e.site_lat if e.site_lat is not none else 'null' }}, lon: {{ e.site_lon if e.site_lon is not none else 'null' }}, couleur: {{ l.couleur_fond|tojson }}, maintenance: {{ 'true' if e.site_maintenance else 'false' }}, ferme: {{ 'true' if l.site_ferme else 'false' }} }{{ "," if not loop.last }}
-      {% endfor %}
-    ];
-    initDashboardCarte('carteDashboard', equipements, function (bounds) {
+    var sitesCarte = {{ sites_carte|tojson }};
+    initDashboardCarte('carteDashboard', sitesCarte, function (bounds) {
       carteBounds = bounds;
       document.getElementById('infoFiltreCarte').style.display = 'block';
       filtrer();
