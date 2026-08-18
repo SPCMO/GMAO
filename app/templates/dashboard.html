@@ -3,15 +3,24 @@
 {% block extra_head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}">
 <style>
+  main { max-width: 1600px; }
   .dashboard-layout { display: flex; gap: 1.5rem; align-items: flex-start; }
-  .dashboard-carte { flex: 0 0 42%; min-width: 320px; height: 640px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.1); position: sticky; top: 1.5rem; }
-  .dashboard-table { flex: 1; min-width: 0; overflow-x: auto; }
-  .dashboard-table table { min-width: 900px; }
+  .dashboard-carte { flex: 0 0 34%; min-width: 320px; height: 640px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.1); position: sticky; top: calc(var(--header-h) + 1.5rem); }
+  .dashboard-table { flex: 1; min-width: 0; }
+  .dashboard-table table { min-width: 900px; font-size: .82rem; }
+  .dashboard-table th, .dashboard-table td { padding: .4rem .55rem; }
+  .table-scroll { max-height: 640px; overflow: auto; border: 1px solid #e5e7eb; border-radius: 6px; }
+  .table-scroll table { box-shadow: none; }
+  .table-scroll thead th { position: sticky; top: 0; z-index: 5; box-shadow: 0 1px 0 #e5e7eb; }
   @media (max-width: 900px) {
     .dashboard-layout { flex-direction: column; }
     .dashboard-carte { position: static; width: 100%; flex-basis: auto; }
   }
   .icone-alerte { font-size: 1.1rem; cursor: pointer; text-decoration: none; }
+  .th-triable { white-space: nowrap; }
+  .th-triable .th-libelle { margin-right: .35rem; }
+  .th-triable .ordre-actions { display: inline-flex; gap: .15rem; vertical-align: middle; margin: 0; }
+  .th-triable .btn-ordre { width: 1.15rem; height: 1.15rem; font-size: .6rem; padding: 0; }
 </style>
 {% endblock %}
 {% block content %}
@@ -20,6 +29,7 @@
 
   <div class="dashboard-table">
     <div class="toolbar">
+      <input id="recherche" type="search" placeholder="Rechercher un équipement..." onkeyup="filtrer()">
       <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
         <select id="filtreSite" onchange="filtrer()">
           <option value="">Tous les sites ({{ lignes|length }})</option>
@@ -36,23 +46,24 @@
           {% for uh in uh_valeurs %}<option value="{{ uh }}">UH {{ uh }}</option>{% endfor %}
         </select>
       </div>
-      <input id="recherche" type="search" placeholder="Rechercher un équipement..." onkeyup="filtrer()">
     </div>
     <p class="muted" id="infoFiltreCarte" style="display:none;">🗺️ Le tableau est filtré sur la zone actuellement visible de la carte. <a href="#" onclick="reinitialiserFiltreCarte(); return false;">Réinitialiser</a></p>
 
     <form method="post" action="{{ url_for('equipements.generer_qrcodes_selection') }}" target="_blank" onsubmit="return validerSelection()">
+    <div class="table-scroll">
     <table id="tableEquipements">
       <thead>
         <tr>
           <th style="width:2rem;"><input type="checkbox" id="toutSelectionner" onclick="toggleTout(this)" title="Sélectionner tout ce qui est affiché"></th>
-          <th class="triable" onclick="trierPar(1)">Équipement <span class="fleche"></span></th>
-          <th class="triable" onclick="trierPar(2)">Type <span class="fleche"></span></th>
-          <th class="triable" onclick="trierPar(3)">Site <span class="fleche"></span></th>
-          <th class="triable" onclick="trierPar(4)">UH <span class="fleche"></span></th>
-          <th class="triable" onclick="trierPar(5)">Affecté depuis <span class="fleche"></span></th>
-          <th class="triable" onclick="trierPar(6)">1ère mise en service <span class="fleche"></span></th>
-          <th class="triable" onclick="trierPar(7)">Statut <span class="fleche"></span></th>
-          <th class="triable" onclick="trierPar(8)">Durée de vie prolongée <span class="fleche"></span></th>
+          {% for libelle, idx in [("Équipement",1), ("Type",2), ("Sous-type",3), ("Site",4), ("UH",5), ("Affecté depuis",6), ("1ère mise en service",7), ("Statut",8), ("Durée de vie prolongée",9)] %}
+          <th class="th-triable">
+            <span class="th-libelle">{{ libelle }}</span>
+            <span class="ordre-actions">
+              <button type="button" class="btn-ordre" onclick="trierPar({{ idx }}, 1)" title="Trier {{ libelle }} croissant" data-col="{{ idx }}" data-dir="1">▲</button>
+              <button type="button" class="btn-ordre" onclick="trierPar({{ idx }}, -1)" title="Trier {{ libelle }} décroissant" data-col="{{ idx }}" data-dir="-1">▼</button>
+            </span>
+          </th>
+          {% endfor %}
           <th>Alerte</th>
           <th></th>
         </tr>
@@ -69,6 +80,7 @@
           <td><input type="checkbox" name="ids" value="{{ e.id }}" class="case-equipement"></td>
           <td data-tri="{{ e.nom|lower }}"><a href="{{ url_for('equipements.detail_equipement', equipement_id=e.id) }}">{{ e.nom }}</a></td>
           <td data-tri="{{ e.type or '' }}">{{ e.type or '—' }}</td>
+          <td data-tri="{{ e.sous_type or '' }}">{{ e.sous_type or '—' }}</td>
           <td data-tri="{{ e.site_actuel or '' }}">{{ e.site_actuel or '—' }}</td>
           <td data-tri="{{ e.site_uh or '' }}">{{ e.site_uh or '—' }}</td>
           <td data-tri="{{ e.affecte_depuis or '' }}">{{ e.affecte_depuis or '—' }}</td>
@@ -87,10 +99,11 @@
           <td class="col-actions"><a href="{{ url_for('equipements.detail_equipement', equipement_id=e.id) }}" class="muted">détail →</a></td>
         </tr>
         {% else %}
-        <tr><td colspan="10" class="muted">Aucun équipement enregistré.</td></tr>
+        <tr><td colspan="11" class="muted">Aucun équipement enregistré.</td></tr>
         {% endfor %}
       </tbody>
     </table>
+    </div>
 
     <p id="erreurSelection" class="flash" style="display:none; background:#fee2e2; color:#991b1b;">⚠️ Sélectionnez au moins un équipement avant de générer les QR codes.</p>
     <p style="margin-top:1rem;">
@@ -151,12 +164,9 @@ function validerSelection() {
   return auMoinsUn;
 }
 
-var triColonne = null, triAsc = true;
-function trierPar(index) {
+function trierPar(index, direction) {
   const tbody = document.querySelector('#tableEquipements tbody');
   const lignes = Array.from(tbody.querySelectorAll('tr')).filter(function(tr) { return tr.dataset.nom !== undefined; });
-  triAsc = (triColonne === index) ? !triAsc : true;
-  triColonne = index;
 
   lignes.sort(function(a, b) {
     const va = a.children[index].dataset.tri ?? a.children[index].textContent.trim();
@@ -168,13 +178,13 @@ function trierPar(index) {
     } else {
       cmp = va.localeCompare(vb, 'fr');
     }
-    return triAsc ? cmp : -cmp;
+    return direction * cmp;
   });
   lignes.forEach(function(tr) { tbody.appendChild(tr); });
 
-  document.querySelectorAll('#tableEquipements th.triable .fleche').forEach(function(f) { f.textContent = ''; });
-  const th = document.querySelectorAll('#tableEquipements th.triable')[index - 1];
-  if (th) th.querySelector('.fleche').textContent = triAsc ? '▲' : '▼';
+  document.querySelectorAll('#tableEquipements .btn-ordre').forEach(function(b) { b.classList.remove('actif'); });
+  const actif = document.querySelector('#tableEquipements .btn-ordre[data-col="' + index + '"][data-dir="' + direction + '"]');
+  if (actif) actif.classList.add('actif');
 }
 </script>
 {% endblock %}

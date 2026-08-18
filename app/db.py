@@ -403,13 +403,16 @@ _COLONNES_EQUIPEMENT_LISTE = """
 
 
 def list_equipements(conn):
+    # Ordre par défaut de l'accueil et de la gestion des équipements : équipements retirés
+    # relégués en fin de liste, puis groupés par UH / type / sous-type / nom (le tri manuel
+    # par colonne, côté JS, prend le dessus au clic sur un en-tête).
     rows = conn.execute(
         f"""
         SELECT {_COLONNES_EQUIPEMENT_LISTE}
         FROM equipement e
         LEFT JOIN affectation a ON a.equipement_id = e.id AND a.date_fin IS NULL
         LEFT JOIN site s ON s.nom = a.site
-        ORDER BY e.nom
+        ORDER BY (e.date_retrait IS NOT NULL), s.uh_gestion, e.type, e.sous_type, e.nom
         """
     ).fetchall()
     return rows
