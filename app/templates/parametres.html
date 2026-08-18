@@ -288,13 +288,13 @@
 
 <div class="onglet-contenu" data-onglet="tri">
   <h2 class="section-param">🔀 Tri par défaut</h2>
-  <p class="muted">Ordre appliqué au chargement de chaque liste (jusqu'à 3 niveaux) ; les colonnes non couvertes gardent leur ordre habituel. Chaque liste reste triable manuellement à tout moment via les boutons ▲▼ de ses en-têtes.</p>
+  <p class="muted">Ordre appliqué au chargement de chaque liste (jusqu'à 4 niveaux) ; les colonnes non couvertes gardent leur ordre habituel. Chaque liste reste triable manuellement à tout moment via les boutons ▲▼ de ses en-têtes.</p>
   <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
     {% for cle, titre in [("accueil", "Accueil (liste des équipements)"), ("sites", "Gestionnaire des sites"), ("equipements", "Gestionnaire des équipements")] %}
     <form class="card" method="post" action="{{ url_for('parametres.parametres_tri', cle=cle) }}" style="flex:1; min-width:260px; max-width:340px;">
       <h3 style="margin-top:0; margin-bottom:.2rem;">{{ titre }}</h3>
       <p class="muted" style="margin:0 0 1rem;">Ordre actuel : <b>{{ tri_resume[cle] }}</b></p>
-      {% for i in (1, 2, 3) %}
+      {% for i in (1, 2, 3, 4) %}
       <label for="tri_{{ cle }}_{{ i }}">Niveau {{ i }}</label>
       <select id="tri_{{ cle }}_{{ i }}" name="niveau{{ i }}">
         <option value=""{{ " selected" if not tri_actuel[cle][i-1] }}>— (aucun) —</option>

@@ -8,6 +8,8 @@ from app.forms import parse_float
 
 parametres_bp = Blueprint("parametres", __name__)
 
+NIVEAUX_TRI = 4  # nombre de niveaux proposés dans Paramètres > Tri par défaut
+
 
 @parametres_bp.route("/parametres", methods=["GET", "POST"])
 def parametres():
@@ -18,7 +20,7 @@ def parametres():
         return redirect(url_for("parametres.parametres"))
     with db.db_session() as conn:
         tri_actuel = {
-            cle: (db.get_tri_config(conn, cle) + ["", "", ""])[:3]
+            cle: (db.get_tri_config(conn, cle) + [""] * NIVEAUX_TRI)[:NIVEAUX_TRI]
             for cle in db.TRI_COLONNES
         }
         tri_resume = {}
@@ -259,7 +261,7 @@ def parametres_tri(cle):
     if cle not in db.TRI_COLONNES:
         flash("Liste de tri inconnue.")
         return redirect(url_for("parametres.parametres"))
-    colonnes = [request.form.get(f"niveau{i}", "").strip() for i in (1, 2, 3)]
+    colonnes = [request.form.get(f"niveau{i}", "").strip() for i in range(1, NIVEAUX_TRI + 1)]
     with db.db_session() as conn:
         db.set_tri_config(conn, cle, colonnes)
     flash("Tri par défaut enregistré.")

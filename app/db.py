@@ -101,7 +101,8 @@ OPACITES_PAR_DEFAUT = {
     "ferme": 55,
 }
 
-# Tri par défaut (jusqu'à 3 niveaux) appliqué au chargement de chaque liste, en plus de
+# Tri par défaut (jusqu'à 4 niveaux, voir NIVEAUX_TRI dans app/routes/parametres.py)
+# appliqué au chargement de chaque liste, en plus de
 # l'ordre déjà renvoyé par la requête SQL (qui sert de dernier niveau de tri implicite,
 # grâce à la stabilité du tri JS — voir gmao-tri.js). "" pour l'accueil = on ne touche
 # pas à l'ordre SQL existant (rétro-compatible avec le comportement historique).
