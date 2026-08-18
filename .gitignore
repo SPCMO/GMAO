@@ -4,5 +4,6 @@ __pycache__/
 .~lock.*
 settings.json
 data/gmao.db
+data/publication_statut.json
 etiquettes/
 .claude/

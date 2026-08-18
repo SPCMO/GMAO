@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GMAO — Guides pas à pas</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; background: #f4f5f7; color: #1a1a1a; }
+  header { background: #14314f; color: #fff; padding: 1.2rem 1.5rem; }
+  header h1 { margin: 0; font-size: 1.3rem; }
+  header p { margin: .3rem 0 0; font-size: .85rem; opacity: .8; }
+  nav { display: flex; background: #1d4569; overflow-x: auto; }
+  nav button { background: none; border: none; color: #cbd5e1; padding: .8rem 1.2rem; font-size: .9rem; cursor: pointer; white-space: nowrap; border-bottom: 3px solid transparent; }
+  nav button:hover { color: #fff; }
+  nav button.active { color: #fff; border-bottom-color: #4dabf7; font-weight: 600; }
+  main { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+  section { display: none; background: #fff; border-radius: 10px; padding: 1.5rem 1.8rem; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  section.active { display: block; }
+  h2 { font-size: 1.15rem; margin-top: 0; color: #14314f; }
+  h3 { font-size: 1rem; color: #14314f; margin: 1.6rem 0 .4rem; }
+  p, li { line-height: 1.55; font-size: .95rem; }
+  code, pre { font-family: "Cascadia Code", Consolas, monospace; font-size: .85rem; }
+  code { background: #eef1f5; padding: .15rem .4rem; border-radius: 4px; }
+  pre { background: #1d2733; color: #e6edf3; padding: .9rem 1rem; border-radius: 8px; overflow-x: auto; }
+  .warn { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: .8rem 1rem; font-size: .88rem; margin: .8rem 0; }
+  .info { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: .8rem 1rem; font-size: .88rem; margin: .8rem 0; }
+  .etapes { counter-reset: etape; list-style: none; padding: 0; margin: 1rem 0; }
+  .etapes > li { counter-increment: etape; position: relative; padding: .2rem 0 1.1rem 2.6rem; border-left: 2px solid #e5e7eb; margin-left: 1rem; }
+  .etapes > li:last-child { border-left-color: transparent; padding-bottom: 0; }
+  .etapes > li::before {
+    content: counter(etape); position: absolute; left: -1.1rem; top: 0; width: 2.1rem; height: 2.1rem;
+    background: #14314f; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .9rem;
+  }
+  .etapes h4 { margin: 0 0 .3rem; font-size: .96rem; color: #14314f; }
+  .champ { display: grid; grid-template-columns: 200px 1fr; gap: .2rem .8rem; font-size: .88rem; margin: .5rem 0; background: #f9fafb; border-radius: 6px; padding: .6rem .8rem; }
+  .champ b { color: #374151; }
+  table { width: 100%; border-collapse: collapse; margin: .8rem 0; }
+  th, td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid #e5e7eb; font-size: .88rem; }
+  th { background: #eef1f5; }
+  .tag { display: inline-block; font-size: .72rem; font-weight: 700; padding: .1rem .5rem; border-radius: 999px; margin-right: .4rem; }
+  .tag-option { background: #ede9fe; color: #5b21b6; }
+  .tag-attention { background: #fee2e2; color: #991b1b; }
+</style>
+</head>
+<body>
+<header>
+  <h1>GMAO — Guides pas à pas</h1>
+  <p>Mise en route de l'automatisation : tâche planifiée quotidienne et envoi des mails d'alerte</p>
+</header>
+<nav>
+  <button class="tab-btn active" data-tab="planificateur">🗓️ Planificateur de tâches</button>
+  <button class="tab-btn" data-tab="mail">✉️ Envoi de mail</button>
+</nav>
+<main>
+
+<section id="planificateur" class="active">
+  <h2>🗓️ Planificateur de tâches Windows</h2>
+  <p>Objectif : faire tourner automatiquement, tous les jours à 7h, le script <code>scripts/verifier_alertes.py</code> qui vérifie les péremptions de matériel et envoie un mail par équipement nouvellement en alerte. Ce guide part du principe que le relais mail est déjà configuré et testé (voir l'onglet <b>✉️ Envoi de mail</b> si ce n'est pas encore fait).</p>
+
+  <div class="warn"><b>Prérequis</b> : le poste qui exécute la tâche doit rester <b>allumé, connecté au réseau SPCMO</b> (pour lire la base) <b>et à Internet</b> (pour l'envoi) à l'heure prévue. Sur un poste portable, désactiver la mise en veille automatique à cette heure, ou décocher l'option d'alimentation secteur à l'étape 5.</div>
+
+  <h3>Méthode rapide (une seule commande)</h3>
+  <p>Ouvrir une invite de commandes ou PowerShell classique et coller (en adaptant le chemin si l'appli est installée ailleurs) :</p>
+  <pre>schtasks /create /tn "GMAO - Verification alertes" /sc daily /st 07:00 /tr "\"D:\charles-eddy.piot\Documents\Perso CEP\Git-Claude IA\GMAO\venv\Scripts\python.exe\" \"D:\charles-eddy.piot\Documents\Perso CEP\Git-Claude IA\GMAO\scripts\verifier_alertes.py\""</pre>
+  <p>C'est terminé — passer directement à la section <b>Vérifier que la tâche est bien créée</b> plus bas. La suite de cette page détaille la même opération via l'interface graphique, pour ceux qui préfèrent ne pas taper de commande.</p>
+
+  <h3>Méthode détaillée (interface graphique)</h3>
+  <ol class="etapes">
+    <li>
+      <h4>Ouvrir le Planificateur de tâches</h4>
+      <p>Clic sur le menu <b>Démarrer</b>, taper <code>Planificateur de tâches</code> (ou <code>Task Scheduler</code>), puis lancer l'application du même nom.</p>
+    </li>
+    <li>
+      <h4>Créer une nouvelle tâche</h4>
+      <p>Dans le panneau de droite (<b>Actions</b>), cliquer sur <b>Créer une tâche...</b> (pas « Créer une tâche de base », qui offre moins d'options — notamment celle de l'étape 6).</p>
+    </li>
+    <li>
+      <h4>Onglet Général</h4>
+      <div class="champ"><b>Nom</b><span><code>GMAO - Verification alertes</code></span></div>
+      <div class="champ"><b>Description</b><span>(optionnel) <code>Vérifie les péremptions de matériel et envoie les mails d'alerte quotidiens</code></span></div>
+      <p>Cocher <b>Exécuter que l'utilisateur soit connecté ou non</b> si vous voulez que la tâche tourne même sans session ouverte (nécessite de ressaisir le mot de passe Windows du compte à la validation finale).</p>
+    </li>
+    <li>
+      <h4>Onglet Déclencheurs</h4>
+      <p><b>Nouveau...</b> → <b>Quotidienne</b> → heure de début <code>07:00:00</code>, répéter tous les <code>1</code> jour(s) → <b>OK</b>.</p>
+    </li>
+    <li>
+      <h4>Onglet Actions</h4>
+      <p><b>Nouvelle...</b> → Action : <b>Démarrer un programme</b>, puis remplir :</p>
+      <div class="champ"><b>Programme/script</b><span><code>D:\charles-eddy.piot\Documents\Perso CEP\Git-Claude IA\GMAO\venv\Scripts\python.exe</code></span></div>
+      <div class="champ"><b>Ajouter des arguments</b><span><code>scripts\verifier_alertes.py</code></span></div>
+      <div class="champ"><b>Démarrer dans</b><span><code>D:\charles-eddy.piot\Documents\Perso CEP\Git-Claude IA\GMAO</code></span></div>
+      <p class="muted" style="font-size:.85rem; color:#6b7280;">Le champ « Démarrer dans » est important : sans lui, le script ne retrouve pas ses fichiers relatifs (<code>settings.json</code>, etc.).</p>
+    </li>
+    <li>
+      <h4>Onglet Conditions</h4>
+      <p>Décocher <b>Ne démarrer la tâche que si l'ordinateur est branché sur le secteur</b> si le poste peut être sur batterie à 7h (sinon la tâche est silencieusement ignorée). Laisser <b>Réveiller l'ordinateur pour exécuter cette tâche</b> coché si le poste est parfois en veille à cette heure.</p>
+    </li>
+    <li>
+      <h4>Onglet Paramètres</h4>
+      <p>Cocher <b>Exécuter la tâche dès que possible après un démarrage manqué</b> — utile si le poste était éteint à 7h précises (arrivée tardive, poste redémarré) : la tâche se déclenchera dès la prochaine ouverture de session.</p>
+    </li>
+    <li>
+      <h4>Valider</h4>
+      <p><b>OK</b>, puis ressaisir le mot de passe du compte Windows si demandé (uniquement si l'option de l'étape 3 a été cochée). La tâche apparaît maintenant dans la <b>Bibliothèque du Planificateur de tâches</b>.</p>
+    </li>
+  </ol>
+
+  <h3>Vérifier que la tâche est bien créée</h3>
+  <p>Dans le Planificateur de tâches, sélectionner <b>Bibliothèque du Planificateur de tâches</b> dans le panneau de gauche : la tâche <code>GMAO - Verification alertes</code> doit apparaître dans la liste, avec <b>Prochaine exécution</b> indiquant demain 7h (ou aujourd'hui 7h si créée avant cette heure).</p>
+
+  <h3>Tester tout de suite (sans attendre 7h)</h3>
+  <p>Clic droit sur la tâche → <b>Exécuter</b>. Puis onglet <b>Historique</b> (en bas, si affiché — sinon l'activer via <b>Activer tout l'historique des tâches</b> dans le panneau Actions à droite) : un événement <code>Terminé (code de sortie 0)</code> confirme un lancement du script sans erreur Python. Le signe le plus fiable que tout fonctionne reste néanmoins de recevoir (ou pas, si aucun matériel n'est en alerte) un mail à l'UH concernée.</p>
+
+  <div class="info">
+    <b>Voir ce que le script a réellement fait</b> — par défaut, le Planificateur de tâches n'affiche nulle part les messages que <code>verifier_alertes.py</code> imprime (nombre de mails envoyés, erreurs éventuelles). Pour les conserver dans un fichier consultable, remplacer l'action de l'étape 5 par :
+    <div class="champ"><b>Programme/script</b><span><code>cmd.exe</code></span></div>
+    <div class="champ"><b>Ajouter des arguments</b><span><code>/c ""venv\Scripts\python.exe" "scripts\verifier_alertes.py" >> "logs\verifier_alertes.log" 2>&amp;1"</code></span></div>
+    <p style="margin-bottom:0;">(créer au préalable un dossier <code>logs\</code> vide dans le projet). Chaque exécution ajoutera une ligne au fichier <code>logs\verifier_alertes.log</code>, consultable avec le Bloc-notes.</p>
+  </div>
+
+  <h3>Modifier ou supprimer la tâche plus tard</h3>
+  <p>Retour dans le Planificateur de tâches → clic droit sur <code>GMAO - Verification alertes</code> → <b>Propriétés</b> pour modifier, ou <b>Supprimer</b> pour la retirer définitivement.</p>
+
+  <h3>Dépannage</h3>
+  <table>
+    <tr><th>Symptôme</th><th>Cause probable</th></tr>
+    <tr><td>Historique : <code>0x1</code> ou erreur au lancement</td><td>Chemin vers <code>python.exe</code> ou le script incorrect — vérifier qu'ils existent bien à l'endroit indiqué (explorateur de fichiers).</td></tr>
+    <tr><td><code>ModuleNotFoundError</code> dans les logs</td><td>Le champ <b>Programme/script</b> pointe vers un Python système au lieu du <code>venv</code> du projet.</td></tr>
+    <tr><td>Aucun mail reçu, aucune erreur visible</td><td>Normal si aucun équipement n'est en alerte ce jour-là — ou destinataires UH non configurés dans <b>⚙️ Paramètres</b> (message <code>[!!]</code> dans les logs si activés).</td></tr>
+    <tr><td>La tâche ne s'est jamais lancée</td><td>Poste éteint/en veille à 7h et case « démarrage manqué » (étape 6) non cochée, ou condition « secteur » (étape 6) bloquante sur portable.</td></tr>
+  </table>
+</section>
+
+<section id="mail">
+  <h2>✉️ Mise en route de l'envoi de mail</h2>
+  <p>Le réseau SPCMO bloque les connexions SMTP sortantes directes (ports 587/465). La solution qui fonctionne : un petit script <b>Google Apps Script</b>, hébergé et exécuté par les serveurs Google (donc jamais bloqué par le réseau SPCMO), qui reçoit une requête HTTPS de GMAO et envoie réellement le mail via Gmail. Ce guide couvre la mise en route complète, à faire <b>une seule fois</b>.</p>
+
+  <ol class="etapes">
+    <li>
+      <h4>Se connecter au bon compte Google</h4>
+      <p>Dans un navigateur, se connecter sur <a href="https://script.google.com" target="_blank">script.google.com</a> avec le compte <code>spcmo113466@gmail.com</code> (celui qui enverra effectivement les mails). Si un autre compte Google est déjà connecté sur ce navigateur, utiliser une fenêtre de navigation privée ou changer de compte via l'avatar en haut à droite.</p>
+    </li>
+    <li>
+      <h4>Créer le projet Apps Script</h4>
+      <p>Cliquer sur <b>Nouveau projet</b> (bouton en haut à gauche). Un éditeur de code s'ouvre avec un fichier <code>Code.gs</code> vide.</p>
+    </li>
+    <li>
+      <h4>Coller le code du relais</h4>
+      <p>Ouvrir le fichier <code>apps_script/gmao_mail_relay.gs</code> du projet GMAO (avec le Bloc-notes ou un éditeur de texte), tout sélectionner, copier. Dans l'éditeur Apps Script, supprimer le contenu par défaut de <code>Code.gs</code> et coller le code copié.</p>
+    </li>
+    <li>
+      <h4>Choisir un jeton secret</h4>
+      <p>Dans le code collé, repérer la ligne :</p>
+      <pre>const TOKEN_SECRET = 'CHANGE_MOI_AVEC_UNE_VALEUR_SECRETE';</pre>
+      <p>Remplacer <code>CHANGE_MOI_AVEC_UNE_VALEUR_SECRETE</code> par une valeur secrète de votre choix (une phrase ou suite de caractères difficile à deviner, par exemple générée par un gestionnaire de mots de passe). <b>Noter cette valeur quelque part</b> — elle sera resaisie à l'étape 8 dans GMAO. Enregistrer (<code>Ctrl+S</code> ou icône disquette).</p>
+    </li>
+    <li>
+      <h4>Nommer le projet (optionnel mais conseillé)</h4>
+      <p>Cliquer sur <b>Projet sans titre</b> en haut à gauche, renommer en <code>GMAO - Relais mail</code>, <b>Renommer</b>.</p>
+    </li>
+    <li>
+      <h4>Déployer en tant qu'application web</h4>
+      <p>Bouton <b>Déployer</b> (en haut à droite) → <b>Nouveau déploiement</b>. Cliquer sur la roue crantée à côté de « Sélectionner le type » → choisir <b>Application Web</b>. Renseigner :</p>
+      <div class="champ"><b>Description</b><span>(optionnel) <code>v1</code></span></div>
+      <div class="champ"><b>Exécuter en tant que</b><span><code>Moi (spcmo113466@gmail.com)</code></span></div>
+      <div class="champ"><b>Qui a accès</b><span><code>Tout le monde</code></span></div>
+      <p class="muted" style="font-size:.85rem; color:#6b7280;">« Qui a accès : Tout le monde » ne signifie pas que n'importe qui peut envoyer un mail en votre nom : la requête doit fournir le jeton secret de l'étape 4, vérifié dans le code (<code>doPost</code>). C'est l'équivalent d'une clé d'API.</p>
+      <p>Cliquer sur <b>Déployer</b>.</p>
+    </li>
+    <li>
+      <h4>Autoriser l'accès (première fois uniquement)</h4>
+      <p>Google affiche un écran <b>Autoriser l'accès</b> car le script agit sur votre propre compte Gmail. Cliquer sur <b>Autoriser les accès</b>, choisir le compte <code>spcmo113466@gmail.com</code>. Un écran <b>Google n'a pas validé cette application</b> peut apparaître (normal pour un script personnel non publié sur le Play Store) : cliquer sur <b>Paramètres avancés</b> puis <b>Accéder à GMAO - Relais mail (non sécurisé)</b>, puis <b>Autoriser</b> sur l'écran suivant listant les permissions (envoi de mail en votre nom). C'est sans risque : le code est celui du dépôt GMAO, que vous venez de coller vous-même.</p>
+    </li>
+    <li>
+      <h4>Récupérer l'URL de déploiement</h4>
+      <p>Une fenêtre <b>Déploiement réussi</b> affiche une <b>URL de l'application Web</b> qui se termine par <code>/exec</code>. La copier (icône de copie à côté du champ).</p>
+    </li>
+    <li>
+      <h4>Configurer GMAO</h4>
+      <p>Dans l'application GMAO, menu <b>⚙️ Paramètres</b> → section <b>🔗 Relais mail (Google Apps Script)</b> :</p>
+      <div class="champ"><b>URL du déploiement</b><span>coller l'URL de l'étape 8</span></div>
+      <div class="champ"><b>Jeton secret</b><span>la valeur choisie à l'étape 4</span></div>
+      <p>Cliquer sur <b>Enregistrer</b>.</p>
+    </li>
+    <li>
+      <h4>Tester l'envoi</h4>
+      <p>Toujours dans cette section, champ <b>adresse@test.fr pour un envoi test</b> : saisir une adresse à laquelle vous avez accès, cliquer <b>✉️ Envoyer un test</b>. Un message <code>Mail de test envoyé à ...</code> confirme le succès ; vérifier la boîte de réception (et les indésirables) de l'adresse testée.</p>
+    </li>
+    <li>
+      <h4>Configurer les destinataires par UH</h4>
+      <p>Toujours dans <b>⚙️ Paramètres</b>, section <b>📬 Destinataires des alertes par UH de gestion</b> : ajouter une ou plusieurs adresses pour chaque UH (11, 34, 66) concernée. Ce sont ces adresses qui recevront les mails d'alerte automatiques — sans destinataire configuré pour une UH, ses alertes ne seront pas envoyées (mais resteront visibles ⚠️ dans le dashboard).</p>
+    </li>
+  </ol>
+
+  <div class="warn">
+    <span class="tag tag-attention">Repli SMTP</span> Un formulaire SMTP classique reste disponible juste au-dessus dans <b>⚙️ Paramètres</b>, pour le cas où GMAO tournerait un jour sur un réseau qui n'a pas ce blocage. Il n'est <b>pas nécessaire</b> de le remplir si le relais Apps Script fonctionne : GMAO essaie toujours le relais Apps Script en premier, et ne se rabat sur le SMTP direct que si aucune URL de relais n'est configurée.
+  </div>
+
+  <h3>Et ensuite ?</h3>
+  <p>Une fois le relais testé avec succès, passer à l'onglet <b>🗓️ Planificateur de tâches</b> pour automatiser la vérification quotidienne à 7h — sans cette tâche planifiée, les alertes ne sont visibles que si quelqu'un ouvre GMAO dans son navigateur.</p>
+
+  <h3>Dépannage</h3>
+  <table>
+    <tr><th>Symptôme</th><th>Cause probable</th></tr>
+    <tr><td><code>Token invalide</code></td><td>Le jeton saisi dans GMAO ne correspond pas exactement à <code>TOKEN_SECRET</code> dans le script (espace en trop, casse différente).</td></tr>
+    <tr><td><code>Relais Apps Script injoignable</code></td><td>URL mal collée (doit se terminer par <code>/exec</code>, pas <code>/dev</code>), ou déploiement supprimé — recommencer l'étape 6 avec <b>Gérer les déploiements</b> pour vérifier qu'il existe toujours.</td></tr>
+    <tr><td>Le mail de test n'arrive jamais</td><td>Vérifier les indésirables ; vérifier que <code>FROM_EMAIL</code> dans le script correspond bien au compte Google connecté à l'étape 1.</td></tr>
+    <tr><td>Ça marchait puis ça s'arrête</td><td>Quota Gmail gratuit d'environ 100 mails/jour dépassé (peu probable en usage normal) ; ou l'autorisation Google a été révoquée — redéployer une nouvelle version (étape 6) et réautoriser (étape 7).</td></tr>
+  </table>
+</section>
+
+</main>
+
+<script>
+document.querySelectorAll('.tab-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('main > section').forEach(function(s) { s.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

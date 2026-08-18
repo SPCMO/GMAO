@@ -282,6 +282,8 @@
   <p class="muted">Types et sous-types se réordonnent librement avec les boutons <b>▲▼</b> — c'est cet ordre qui s'affiche dans tous les menus déroulants de l'application. Les durées de vie/rappel/rallonge, elles, s'insèrent toujours automatiquement par ordre croissant (pas de tri manuel nécessaire).</p>
   <div class="warn">Supprimer un <b>type</b> supprime aussi tous ses sous-types. Les équipements qui utilisaient déjà une valeur retirée d'une liste conservent cette valeur affichée (elle disparaît seulement des choix proposés pour les nouvelles saisies).</div>
 
+  <div class="info" style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:.8rem 1rem; font-size:.9rem; margin-bottom:1.2rem;">📘 Guides pas à pas détaillés (avec captures des menus, dépannage) disponibles depuis <b>🧭 Guides</b> dans le bandeau, ou directement <a href="Guides.html" target="_blank">ici</a> — un onglet pour la tâche planifiée, un onglet pour le relais mail.</div>
+
   <h3>📧 Alertes de péremption par mail</h3>
   <p>L'envoi effectif est fait par un script autonome, à lancer une fois par jour :</p>
   <pre>"GMAO\venv\Scripts\python.exe" "GMAO\scripts\verifier_alertes.py"</pre>
@@ -312,6 +314,14 @@
   </ol>
   <div class="warn">La base de données du dossier réseau (<code>data/gmao.db</code>) n'est <b>jamais écrasée</b> par ces synchronisations de code — seuls les fichiers du programme sont mis à jour, pour ne pas perdre les données saisies par les utilisateurs.</div>
 
+  <h3>Publication automatique des fiches</h3>
+  <p>Depuis le 18 août 2026, GMAO régénère et republie automatiquement les fiches statiques (<code>docs/e/*.html</code>) sur GitHub à chaque création, modification ou changement d'affectation d'un équipement — plus besoin de lancer <code>scripts/generate_site.py</code> ni de pousser sur GitHub à la main. Un message apparaît en bas à droite de l'écran (visible sur la page suivante consultée) pour confirmer le résultat :</p>
+  <ul>
+    <li>✅ <b>fond vert</b> — fiches publiées avec succès sur GitHub Pages ;</li>
+    <li>⚠️ <b>fond orange</b> — les fiches sont à jour et enregistrées localement (rien n'est perdu), mais l'envoi vers GitHub a échoué.</li>
+  </ul>
+  <div class="warn">Le réseau SPCMO bloque les connexions sortantes de <code>git.exe</code> depuis les postes utilisateurs (même restriction que pour un <code>git push</code> manuel — voir Authentification git ci-dessous). En pratique, l'échec ⚠️ est donc l'issue la plus fréquente sur ce réseau : les fiches restent correctement enregistrées et commitées localement, prêtes à partir dès qu'un push réussira (réseau différent, ou en le demandant explicitement).</div>
+
   <h3>Hébergement GitHub Pages</h3>
   <p>Dépôt : <a href="https://github.com/SPCMO/GMAO" target="_blank">github.com/SPCMO/GMAO</a> (public). Publication activée sur la branche <code>main</code>, dossier <code>/docs</code>. Le fichier <code>docs/.nojekyll</code> désactive le traitement Jekyll (inutile pour du HTML statique, et source de lenteurs au déploiement sans lui).</p>
 
@@ -326,6 +336,16 @@
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Nouvelle page <b>🧭 Guides</b> (lien dans le bandeau) : deux guides pas à pas détaillés (avec dépannage) pour la tâche planifiée Windows et le déploiement du relais mail Google Apps Script.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Publication automatique des fiches statiques sur GitHub à chaque modification d'équipement (création, édition, changement d'affectation), avec message de confirmation ou d'échec affiché dans l'appli. Voir « Publication automatique des fiches » ci-dessous pour le détail (et sa limite connue sur le réseau SPCMO).</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">18 août 2026</div>

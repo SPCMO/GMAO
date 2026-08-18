@@ -1,10 +1,10 @@
 import os
 from datetime import date
 
-from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, jsonify
 
 import config
-from app import db, settings as app_settings, alertes
+from app import db, settings as app_settings, alertes, publication
 from app import qrcodes
 
 app = Flask(__name__, template_folder="app/templates", static_folder="app/static")
@@ -99,6 +99,7 @@ def nouveau_equipement():
                 lon = _parse_coord(request.form.get("lon"))
                 uh = request.form.get("uh_gestion") or None
                 db.update_site(conn, site, maintenance=False, lat=lat, lon=lon, uh_gestion=uh)
+            publication.publier_en_tache_de_fond()
             flash(f"Équipement « {nom} » créé, affecté à « {site} » depuis aujourd'hui.")
             return redirect(url_for("gestion_equipements"))
     return render_template(
@@ -136,6 +137,7 @@ def modifier_equipement(equipement_id):
             # Pas de raison sans date de retrait définitif (garde-fou serveur, en plus du JS).
             champs["raison_retrait"] = (raison or None) if champs["date_retrait"] else None
             db.update_equipement(conn, equipement_id, **champs)
+            publication.publier_en_tache_de_fond()
             flash(f"Équipement « {champs['nom']} » mis à jour.")
             return redirect(url_for("detail_equipement", equipement_id=equipement_id))
         equipement = db.get_equipement(conn, equipement_id)
@@ -173,6 +175,7 @@ def affecter_equipement(equipement_id):
                 lon = _parse_coord(request.form.get("lon"))
                 uh = request.form.get("uh_gestion") or None
                 db.update_site(conn, nouveau_site, maintenance=False, lat=lat, lon=lon, uh_gestion=uh)
+            publication.publier_en_tache_de_fond()
             flash(f"« {equipement['nom']} » réaffecté à {nouveau_site}.")
             return redirect(url_for("detail_equipement", equipement_id=equipement_id))
     return render_template(
@@ -488,6 +491,16 @@ def etiquettes_file(filename):
 @app.route("/aide")
 def aide():
     return send_from_directory(config.BASE_DIR, "Aide.html")
+
+
+@app.route("/guides")
+def guides():
+    return send_from_directory(config.BASE_DIR, "Guides.html")
+
+
+@app.route("/api/statut-publication")
+def api_statut_publication():
+    return jsonify(publication.lire_statut() or {})
 
 
 if __name__ == "__main__":

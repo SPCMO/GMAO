@@ -45,6 +45,14 @@
   th.triable .fleche { opacity: .5; font-size: .75rem; margin-left: .2rem; }
   tr.equip-retire { opacity: .5; }
   tr.equip-retire td:not(.col-actions) { text-decoration: line-through; }
+  .toast-publication {
+    position: fixed; bottom: 1.5rem; right: 1.5rem; max-width: 360px; padding: .8rem 1.1rem;
+    border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.18); font-size: .88rem; z-index: 1000;
+    animation: toast-in .25s ease-out;
+  }
+  .toast-publication.toast-ok { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+  .toast-publication.toast-err { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 {% block extra_head %}{% endblock %}
 </head>
@@ -56,6 +64,7 @@
   <div class="header-title">GMAO — Matériel hydrométrique</div>
   <div class="header-right">
     <a href="{{ url_for('aide') }}" class="btn btn-secondary" title="Aide" target="_blank">📖 Aide</a>
+    <a href="{{ url_for('guides') }}" class="btn btn-secondary" title="Guides pas à pas (planificateur, mail)" target="_blank">🧭 Guides</a>
     <a href="{{ url_for('gestion_sites') }}" class="btn btn-secondary" title="Gestionnaire des sites">🏢 Sites</a>
     <a href="{{ url_for('gestion_equipements') }}" class="btn btn-secondary" title="Gestion des équipements">🔧 Équipements</a>
     <a href="{{ url_for('parametres') }}" class="btn btn-secondary" title="Paramètres">⚙️ Paramètres</a>
@@ -69,6 +78,22 @@
   {% endwith %}
   {% block content %}{% endblock %}
 </main>
+<div id="toastPublication" class="toast-publication" style="display:none;"></div>
+<script>
+(function () {
+  fetch('/api/statut-publication').then(function (r) { return r.ok ? r.json() : null; }).then(function (statut) {
+    if (!statut || !statut.quand) return;
+    var dernierVu = localStorage.getItem('gmaoPublicationVu');
+    if (dernierVu === statut.quand) return;
+    localStorage.setItem('gmaoPublicationVu', statut.quand);
+    var toast = document.getElementById('toastPublication');
+    toast.textContent = (statut.ok ? '✅ ' : '⚠️ ') + statut.message;
+    toast.className = 'toast-publication ' + (statut.ok ? 'toast-ok' : 'toast-err');
+    toast.style.display = 'block';
+    setTimeout(function () { toast.style.display = 'none'; }, 9000);
+  }).catch(function () {});
+})();
+</script>
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>
