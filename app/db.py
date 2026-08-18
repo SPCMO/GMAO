@@ -28,6 +28,11 @@ CREATE TABLE IF NOT EXISTS site (
     uh_gestion TEXT
 );
 
+CREATE TABLE IF NOT EXISTS raison_fermeture_option (
+    nom TEXT PRIMARY KEY,
+    ordre INTEGER NOT NULL DEFAULT 0
+);
+
 CREATE TABLE IF NOT EXISTS type_equipement (
     nom TEXT PRIMARY KEY,
     ordre INTEGER NOT NULL DEFAULT 0
@@ -69,6 +74,7 @@ TYPES_SOUS_TYPES_PAR_DEFAUT = {
 DUREES_VIE_PAR_DEFAUT = [1, 2, 5, 8, 10, 15]
 RAPPELS_PAR_DEFAUT = [0.5, 1, 1.5, 2, 2.5, 3]
 RALLONGES_PAR_DEFAUT = [0.5, 1, 1.5, 2, 2.5, 3, 4, 5]
+RAISONS_FERMETURE_PAR_DEFAUT = ["Abandon", "Déplacée"]
 COULEURS_PAR_DEFAUT = {
     "uh_11": "#dbeafe",
     "uh_34": "#dcfce7",
@@ -110,6 +116,8 @@ def _migrate(conn):
 
     _add_col_if_missing(conn, "site", "maintenance", "INTEGER DEFAULT 0")
     _add_col_if_missing(conn, "site", "uh_gestion", "TEXT")
+    _add_col_if_missing(conn, "site", "date_fermeture", "TEXT")
+    _add_col_if_missing(conn, "site", "raison_fermeture", "TEXT")
 
     _add_col_if_missing(conn, "type_equipement", "ordre", "INTEGER NOT NULL DEFAULT 0")
     _add_col_if_missing(conn, "sous_type_equipement", "ordre", "INTEGER NOT NULL DEFAULT 0")
@@ -150,6 +158,10 @@ def _migrate(conn):
         conn.execute("INSERT OR IGNORE INTO rallonge_option (annees) VALUES (?)", (v,))
     for cle, valeur in COULEURS_PAR_DEFAUT.items():
         conn.execute("INSERT OR IGNORE INTO couleur_config (cle, valeur) VALUES (?, ?)", (cle, valeur))
+    for i, nom in enumerate(RAISONS_FERMETURE_PAR_DEFAUT, start=1):
+        conn.execute(
+            "INSERT OR IGNORE INTO raison_fermeture_option (nom, ordre) VALUES (?, ?)", (nom, i)
+        )
 
     # Backfill ordre (ordre=0 = jamais numéroté) : numérote une fois par ordre alphabétique,
     # devient un no-op dès que tout le monde a un ordre > 0. Les ajouts ultérieurs
@@ -213,10 +225,13 @@ def set_site_maintenance(conn, nom, maintenance):
     conn.execute("UPDATE site SET maintenance = ? WHERE nom = ?", (1 if maintenance else 0, nom))
 
 
-def update_site(conn, nom, maintenance, lat, lon, uh_gestion=None):
+def update_site(conn, nom, maintenance, lat, lon, uh_gestion=None, date_fermeture=None, raison_fermeture=None):
+    if not date_fermeture:
+        raison_fermeture = None
     conn.execute(
-        "UPDATE site SET lat = ?, lon = ?, maintenance = ?, uh_gestion = ? WHERE nom = ?",
-        (lat, lon, 1 if maintenance else 0, uh_gestion, nom),
+        "UPDATE site SET lat = ?, lon = ?, maintenance = ?, uh_gestion = ?, "
+        "date_fermeture = ?, raison_fermeture = ? WHERE nom = ?",
+        (lat, lon, 1 if maintenance else 0, uh_gestion, date_fermeture, raison_fermeture, nom),
     )
 
 
@@ -227,7 +242,8 @@ def get_site(conn, nom):
 def list_all_sites(conn):
     rows = conn.execute(
         """
-        SELECT s.nom, s.lat, s.lon, s.maintenance, s.uh_gestion, COUNT(a.id) AS nb_equipements
+        SELECT s.nom, s.lat, s.lon, s.maintenance, s.uh_gestion,
+               s.date_fermeture, s.raison_fermeture, COUNT(a.id) AS nb_equipements
         FROM site s
         LEFT JOIN affectation a ON a.site = s.nom AND a.date_fin IS NULL
         GROUP BY s.nom
@@ -337,7 +353,8 @@ _COLONNES_EQUIPEMENT_LISTE = """
     e.duree_vie_ans, e.duree_vie_effective_ans, e.rappel_ans, e.rallonge_ans,
     e.date_retrait, e.raison_retrait, e.alerte_envoyee_le,
     a.site AS site_actuel, a.date_debut AS affecte_depuis,
-    s.lat AS site_lat, s.lon AS site_lon, s.maintenance AS site_maintenance, s.uh_gestion AS site_uh
+    s.lat AS site_lat, s.lon AS site_lon, s.maintenance AS site_maintenance, s.uh_gestion AS site_uh,
+    s.date_fermeture AS site_date_fermeture, s.raison_fermeture AS site_raison_fermeture
 """
 
 
@@ -390,7 +407,7 @@ def get_historique(conn, equipement_id):
         """
         SELECT * FROM affectation
         WHERE equipement_id = ?
-        ORDER BY date_debut DESC
+        ORDER BY date_debut ASC
         """,
         (equipement_id,),
     ).fetchall()
@@ -564,3 +581,38 @@ def set_couleur(conn, cle, valeur):
         "ON CONFLICT(cle) DO UPDATE SET valeur = excluded.valeur",
         (cle, valeur),
     )
+
+
+# ── Raisons de fermeture de site ────────────────────────────────────────
+
+def list_raisons_fermeture(conn):
+    return [
+        r["nom"] for r in conn.execute(
+            "SELECT nom FROM raison_fermeture_option ORDER BY ordre"
+        ).fetchall()
+    ]
+
+
+def add_raison_fermeture(conn, nom):
+    max_ordre = conn.execute("SELECT COALESCE(MAX(ordre), 0) FROM raison_fermeture_option").fetchone()[0]
+    conn.execute(
+        "INSERT OR IGNORE INTO raison_fermeture_option (nom, ordre) VALUES (?, ?)", (nom, max_ordre + 1)
+    )
+
+
+def delete_raison_fermeture(conn, nom):
+    conn.execute("DELETE FROM raison_fermeture_option WHERE nom = ?", (nom,))
+
+
+def deplacer_raison_fermeture(conn, nom, direction):
+    """direction : -1 pour monter, +1 pour descendre."""
+    rows = conn.execute("SELECT nom, ordre FROM raison_fermeture_option ORDER BY ordre").fetchall()
+    noms = [r["nom"] for r in rows]
+    if nom not in noms:
+        return
+    i = noms.index(nom)
+    j = i + direction
+    if j < 0 or j >= len(noms):
+        return
+    conn.execute("UPDATE raison_fermeture_option SET ordre = ? WHERE nom = ?", (rows[j]["ordre"], rows[i]["nom"]))
+    conn.execute("UPDATE raison_fermeture_option SET ordre = ? WHERE nom = ?", (rows[i]["ordre"], rows[j]["nom"]))

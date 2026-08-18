@@ -28,6 +28,23 @@
   <p class="muted" style="margin-top:.3rem;">Cliquez sur la carte pour pointer l'emplacement, ou saisissez les coordonnées directement. Laissez vide pour effacer la localisation.</p>
   <div id="mapPicker" style="height:320px; margin-top:.5rem; border-radius:6px; overflow:hidden;"></div>
 
+  <h3 class="section-param" style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid #e5e7eb;">Statut du site</h3>
+  <label for="date_fermeture">Date de fermeture</label>
+  <input type="date" id="date_fermeture" name="date_fermeture" value="{{ site.date_fermeture or '' }}">
+  <p class="muted" style="margin-top:.3rem;">Laisser vide tant que le site est en fonction.</p>
+
+  <label for="raison_fermeture">Raison de la fermeture</label>
+  <select id="raison_fermeture" name="raison_fermeture">
+    <option value="">—</option>
+    {% for r in raisons_fermeture %}
+      <option value="{{ r }}" {{ "selected" if r == site.raison_fermeture }}>{{ r }}</option>
+    {% endfor %}
+    <option value="__libre__" {{ "selected" if site.raison_fermeture and site.raison_fermeture not in raisons_fermeture }}>Autre (saisie libre)...</option>
+  </select>
+  <input type="text" id="raison_fermeture_libre" name="raison_fermeture_libre" placeholder="Préciser la raison"
+         value="{{ site.raison_fermeture if site.raison_fermeture and site.raison_fermeture not in raisons_fermeture else '' }}"
+         style="margin-top:.5rem; display:none;">
+
   <p style="margin-top:1.5rem;">
     <button type="submit" class="btn">Enregistrer</button>
     <a href="{{ url_for('gestion_sites') }}" class="btn btn-secondary">Annuler</a>
@@ -37,9 +54,12 @@
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
 <script src="{{ url_for('static', filename='leaflet/gmao-map.js') }}"></script>
+<script src="{{ url_for('static', filename='gmao-common.js') }}"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     initMiniCarte('mapPicker', 'lat', 'lon');
+    toggleRaisonLibre('raison_fermeture', 'raison_fermeture_libre');
+    validerRaisonNecessiteDate('date_fermeture', 'raison_fermeture', 'raison_fermeture_libre');
   });
 </script>
 {% endblock %}

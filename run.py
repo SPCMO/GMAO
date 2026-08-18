@@ -59,7 +59,8 @@ def dashboard():
             couleur_fond = couleurs.get(f"uh_{e['site_uh']}")
         else:
             couleur_fond = None
-        lignes.append({"e": e, "etat": etat, "couleur_fond": couleur_fond})
+        site_ferme = bool(e["site_date_fermeture"])
+        lignes.append({"e": e, "etat": etat, "couleur_fond": couleur_fond, "site_ferme": site_ferme})
     types = sorted({l["e"]["type"] for l in lignes if l["e"]["type"]})
     return render_template(
         "dashboard.html", lignes=lignes, sites=sites, couleurs=couleurs,
@@ -132,7 +133,8 @@ def modifier_equipement(equipement_id):
             raison = request.form.get("raison_retrait", "").strip()
             if raison == "__libre__":
                 raison = request.form.get("raison_retrait_libre", "").strip()
-            champs["raison_retrait"] = raison or None
+            # Pas de raison sans date de retrait définitif (garde-fou serveur, en plus du JS).
+            champs["raison_retrait"] = (raison or None) if champs["date_retrait"] else None
             db.update_equipement(conn, equipement_id, **champs)
             flash(f"Équipement « {champs['nom']} » mis à jour.")
             return redirect(url_for("detail_equipement", equipement_id=equipement_id))
@@ -209,11 +211,24 @@ def modifier_site(nom):
             lon = _parse_coord(request.form.get("lon"))
             maintenance = request.form.get("maintenance") == "on"
             uh = request.form.get("uh_gestion") or None
-            db.update_site(conn, nom, maintenance, lat, lon, uh_gestion=uh)
+            date_fermeture = request.form.get("date_fermeture", "").strip() or None
+            raison_fermeture = request.form.get("raison_fermeture", "").strip()
+            if raison_fermeture == "__libre__":
+                raison_fermeture = request.form.get("raison_fermeture_libre", "").strip()
+            # Pas de raison sans date de fermeture (garde-fou serveur, en plus du JS ;
+            # update_site() applique aussi cette règle de son côté).
+            raison_fermeture = (raison_fermeture or None) if date_fermeture else None
+            db.update_site(
+                conn, nom, maintenance, lat, lon, uh_gestion=uh,
+                date_fermeture=date_fermeture, raison_fermeture=raison_fermeture,
+            )
             flash(f"Site « {nom} » mis à jour.")
             return redirect(url_for("gestion_sites"))
         site = db.get_site(conn, nom)
-    return render_template("modifier_site.html", site=site, uh_valeurs=db.UH_VALEURS)
+        raisons_fermeture = db.list_raisons_fermeture(conn)
+    return render_template(
+        "modifier_site.html", site=site, uh_valeurs=db.UH_VALEURS, raisons_fermeture=raisons_fermeture
+    )
 
 
 @app.route("/equipement/<equipement_id>/fiche")
@@ -248,6 +263,7 @@ def parametres():
             uh_valeurs=db.UH_VALEURS,
             uh_emails=db.list_uh_emails_tous(conn),
             couleurs=db.list_couleurs(conn),
+            raisons_fermeture=db.list_raisons_fermeture(conn),
         )
     return render_template("parametres.html", **contexte)
 
@@ -407,6 +423,39 @@ def parametres_uh_emails_supprimer():
     with db.db_session() as conn:
         db.delete_uh_email(conn, uh, email)
     flash(f"Adresse supprimée pour l'UH {uh}.")
+    return redirect(url_for("parametres"))
+
+
+@app.route("/parametres/raisons-fermeture/ajouter", methods=["POST"])
+def parametres_raisons_fermeture_ajouter():
+    nom = request.form["nom"].strip()
+    if nom:
+        with db.db_session() as conn:
+            db.add_raison_fermeture(conn, nom)
+        flash(f"Raison de fermeture « {nom} » ajoutée.")
+    return redirect(url_for("parametres"))
+
+
+@app.route("/parametres/raisons-fermeture/supprimer", methods=["POST"])
+def parametres_raisons_fermeture_supprimer():
+    nom = request.form["nom"]
+    with db.db_session() as conn:
+        db.delete_raison_fermeture(conn, nom)
+    flash(f"Raison de fermeture « {nom} » supprimée.")
+    return redirect(url_for("parametres"))
+
+
+@app.route("/parametres/raisons-fermeture/monter", methods=["POST"])
+def parametres_raisons_fermeture_monter():
+    with db.db_session() as conn:
+        db.deplacer_raison_fermeture(conn, request.form["nom"], -1)
+    return redirect(url_for("parametres"))
+
+
+@app.route("/parametres/raisons-fermeture/descendre", methods=["POST"])
+def parametres_raisons_fermeture_descendre():
+    with db.db_session() as conn:
+        db.deplacer_raison_fermeture(conn, request.form["nom"], 1)
     return redirect(url_for("parametres"))
 
 

@@ -45,3 +45,22 @@ function toggleRaisonLibre(selectId, champLibreId) {
   sel.addEventListener('change', maj);
   maj();
 }
+
+/** Empêche de choisir une raison (retrait équipement / fermeture site) tant que la date associée est vide. */
+function validerRaisonNecessiteDate(dateId, raisonSelectId, raisonLibreId) {
+  var dateChamp = document.getElementById(dateId);
+  var raisonSelect = document.getElementById(raisonSelectId);
+  var raisonLibre = raisonLibreId ? document.getElementById(raisonLibreId) : null;
+  function verifier() {
+    var raisonRenseignee = raisonSelect.value || (raisonLibre && raisonLibre.value.trim());
+    if (!dateChamp.value && raisonRenseignee) {
+      raisonSelect.setCustomValidity("Renseignez d'abord la date avant de choisir une raison.");
+    } else {
+      raisonSelect.setCustomValidity("");
+    }
+  }
+  dateChamp.addEventListener('change', verifier);
+  raisonSelect.addEventListener('change', verifier);
+  if (raisonLibre) raisonLibre.addEventListener('input', verifier);
+  verifier();
+}

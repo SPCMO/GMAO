@@ -19,26 +19,22 @@
   <div class="detail-info">
     <p><a href="{{ url_for('dashboard') }}" class="muted">← Retour à la vue globale</a></p>
     <h1>{{ equipement.nom }}</h1>
-    {% if equipement.date_retrait %}
-      <p><span class="badge" style="background:#f3f4f6; color:#374151;">Retiré le {{ equipement.date_retrait }}{% if equipement.raison_retrait %} — {{ equipement.raison_retrait }}{% endif %}</span></p>
-    {% endif %}
+    <p>
+      {% if equipement.date_retrait %}
+        <span class="badge" style="background:#f3f4f6; color:#374151;">Retiré le {{ equipement.date_retrait }}{% if equipement.raison_retrait %} — {{ equipement.raison_retrait }}{% endif %}</span>
+      {% else %}
+        <span class="badge" style="background:#dcfce7; color:#166534;">En fonction</span>
+      {% endif %}
+    </p>
 
     <table>
       <tr><th style="width:220px;">Type</th><td>{{ equipement.type or '—' }}{% if equipement.sous_type %} / {{ equipement.sous_type }}{% endif %}</td></tr>
-      <tr><th>UH de gestion (héritée du site)</th><td>{{ (site_geo.uh_gestion if site_geo else none) or '—' }}</td></tr>
-      <tr><th>Site d'affectation actuel</th><td>{{ site_actuel.site if site_actuel else '—' }}</td></tr>
-      <tr><th>Affecté depuis</th><td>{{ site_actuel.date_debut if site_actuel else '—' }}</td></tr>
+      <tr><th>Identifiant (utilisé dans le QR code)</th><td><code>{{ equipement.id }}</code></td></tr>
       <tr><th>Date de création</th><td>{{ equipement.date_creation or '—' }}</td></tr>
       <tr><th>Date de 1ère mise en service</th><td>{{ equipement.date_installation }}</td></tr>
-      <tr><th>Durée de vie</th>
-        <td>
-          {{ equipement.duree_vie_ans or '—' }}{% if equipement.duree_vie_ans %} an(s){% endif %}
-          {% if equipement.duree_vie_effective_ans and equipement.duree_vie_ans and equipement.duree_vie_effective_ans > equipement.duree_vie_ans %}
-            <span class="badge" style="background:#dbeafe; color:#1e40af;">prolongée à {{ equipement.duree_vie_effective_ans }} ans</span>
-          {% endif %}
-        </td>
-      </tr>
-      <tr><th>Identifiant (utilisé dans le QR code)</th><td><code>{{ equipement.id }}</code></td></tr>
+      <tr><th>Affecté depuis</th><td>{{ site_actuel.date_debut if site_actuel else '—' }}</td></tr>
+      <tr><th>UH de gestion (héritée du site)</th><td>{{ (site_geo.uh_gestion if site_geo else none) or '—' }}</td></tr>
+      <tr><th>Site d'affectation actuel</th><td>{{ site_actuel.site if site_actuel else '—' }}</td></tr>
       <tr>
         <th>Localisation (héritée du site)</th>
         <td>
@@ -49,6 +45,16 @@
           {% endif %}
         </td>
       </tr>
+      <tr><th>Durée de vie</th>
+        <td>
+          {{ equipement.duree_vie_ans or '—' }}{% if equipement.duree_vie_ans %} an(s){% endif %}
+          {% if equipement.duree_vie_effective_ans and equipement.duree_vie_ans and equipement.duree_vie_effective_ans > equipement.duree_vie_ans %}
+            <span class="badge" style="background:#dbeafe; color:#1e40af;">prolongée à {{ equipement.duree_vie_effective_ans }} ans</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr><th>Rappel</th><td>{{ equipement.rappel_ans or '—' }}{% if equipement.rappel_ans %} an(s) avant péremption{% endif %}</td></tr>
+      <tr><th>Rallonge</th><td>{{ equipement.rallonge_ans or '—' }}{% if equipement.rallonge_ans %} an(s){% endif %}</td></tr>
     </table>
 
     <p style="margin-top:1rem;">
@@ -63,11 +69,16 @@
     <h2 style="margin-top:2rem;">Historique des affectations</h2>
     <table>
       <thead>
-        <tr><th>Site</th><th>Début</th><th>Fin</th></tr>
+        <tr><th>Événement</th><th>Site</th><th>Début</th><th>Fin</th></tr>
       </thead>
       <tbody>
+        {% if equipement.date_creation %}
+        <tr><td>Création</td><td>—</td><td>{{ equipement.date_creation }}</td><td>—</td></tr>
+        {% endif %}
+        <tr><td>1ère mise en service</td><td>—</td><td>{{ equipement.date_installation }}</td><td>—</td></tr>
         {% for a in historique %}
         <tr>
+          <td>Affectation</td>
           <td>{{ a.site }}</td>
           <td>{{ a.date_debut }}</td>
           <td>{{ a.date_fin or 'en cours' }}</td>

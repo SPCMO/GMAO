@@ -203,6 +203,40 @@
   {% endfor %}
 </div>
 
+<h2 class="section-param">🚫 Raisons de fermeture de site</h2>
+<p class="muted">Utilisées dans le menu déroulant « Raison de la fermeture » (fiche site).</p>
+<div class="card" style="max-width:700px; padding:1.5rem;">
+  <ul class="liste-gestion">
+    {% for r in raisons_fermeture %}
+    <li>
+      <span>{{ r }}</span>
+      <span style="display:flex; align-items:center;">
+        <span class="ordre-actions">
+          <form method="post" action="{{ url_for('parametres_raisons_fermeture_monter') }}" style="display:inline;">
+            <input type="hidden" name="nom" value="{{ r }}">
+            <button type="submit" class="btn-ordre" title="Monter" {{ "disabled" if loop.first }}>▲</button>
+          </form>
+          <form method="post" action="{{ url_for('parametres_raisons_fermeture_descendre') }}" style="display:inline;">
+            <input type="hidden" name="nom" value="{{ r }}">
+            <button type="submit" class="btn-ordre" title="Descendre" {{ "disabled" if loop.last }}>▼</button>
+          </form>
+        </span>
+        <form method="post" action="{{ url_for('parametres_raisons_fermeture_supprimer') }}" style="margin-left:.8rem;">
+          <input type="hidden" name="nom" value="{{ r }}">
+          <button type="submit" class="lien-suppr">supprimer</button>
+        </form>
+      </span>
+    </li>
+    {% else %}
+    <li class="muted">Aucune raison</li>
+    {% endfor %}
+  </ul>
+  <form class="form-inline" method="post" action="{{ url_for('parametres_raisons_fermeture_ajouter') }}">
+    <input type="text" name="nom" placeholder="ex: Vandalisme" required>
+    <button type="submit" class="btn btn-secondary">+ Ajouter</button>
+  </form>
+</div>
+
 <h2 class="section-param">🎨 Couleurs de fond (liste des équipements et carte)</h2>
 <form class="card" method="post" action="{{ url_for('parametres_couleurs') }}" style="max-width:700px;">
   <div style="display:flex; gap:1.5rem; flex-wrap:wrap; align-items:flex-end;">

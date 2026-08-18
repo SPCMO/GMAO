@@ -83,16 +83,34 @@ function initMiniCarte(mapId, latInputId, lonInputId) {
 }
 
 /**
- * Carte du dashboard : place un marqueur par équipement géolocalisé et notifie
- * onBoundsChange(bounds|null) à chaque déplacement/zoom (null si zoom arrière-plan par défaut, pour ne pas filtrer).
+ * Carte du dashboard : place une pastille colorée par équipement géolocalisé (couleur du
+ * site : UH de gestion ou maintenance, voir Paramètres) et notifie onBoundsChange(bounds|null)
+ * à chaque déplacement/zoom (null si zoom arrière-plan par défaut, pour ne pas filtrer).
  */
-var GMAO_ICONE_GRISE = null;
-function iconeGrisee() {
-  if (!GMAO_ICONE_GRISE) {
-    GMAO_ICONE_GRISE = new L.Icon.Default();
-    GMAO_ICONE_GRISE.options.className = 'gmao-marker-grise';
-  }
-  return GMAO_ICONE_GRISE;
+var GMAO_COULEUR_PASTILLE_DEFAUT = '#3388ff';
+
+function creerPastille(couleur) {
+  return L.divIcon({
+    className: 'gmao-pastille',
+    html: '<div style="width:20px;height:20px;border-radius:50%;background:' + couleur +
+      ';border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.5);"></div>',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10],
+  });
+}
+
+/** Site fermé : pastille blanche à croix rouge (prioritaire sur la couleur UH/maintenance). */
+function creerPastilleFermee() {
+  return L.divIcon({
+    className: 'gmao-pastille',
+    html: '<div style="width:20px;height:20px;border-radius:50%;background:#fff;' +
+      'border:2px solid #dc2626;box-shadow:0 1px 3px rgba(0,0,0,.5);display:flex;' +
+      'align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#dc2626;line-height:1;">&#10005;</div>',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10],
+  });
 }
 
 function initDashboardCarte(mapId, equipements, onBoundsChange) {
@@ -102,8 +120,9 @@ function initDashboardCarte(mapId, equipements, onBoundsChange) {
   var group = L.featureGroup();
   equipements.forEach(function (e) {
     if (e.lat !== null && e.lon !== null) {
-      var options = e.maintenance ? { icon: iconeGrisee() } : {};
-      L.marker([e.lat, e.lon], options).addTo(group).bindPopup(e.nom + (e.maintenance ? ' (site de maintenance)' : ''));
+      var icon = e.ferme ? creerPastilleFermee() : creerPastille(e.couleur || GMAO_COULEUR_PASTILLE_DEFAUT);
+      var libelle = e.nom + (e.ferme ? ' (site fermé)' : (e.maintenance ? ' (site de maintenance)' : ''));
+      L.marker([e.lat, e.lon], { icon: icon }).addTo(group).bindPopup(libelle);
     }
   });
   group.addTo(map);

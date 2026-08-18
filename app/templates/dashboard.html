@@ -12,7 +12,6 @@
     .dashboard-carte { position: static; width: 100%; flex-basis: auto; }
   }
   .icone-alerte { font-size: 1.1rem; cursor: pointer; text-decoration: none; }
-  .gmao-marker-grise { filter: grayscale(100%) opacity(0.65); }
 </style>
 {% endblock %}
 {% block content %}
@@ -187,7 +186,7 @@ function trierPar(index) {
     var equipements = [
       {% for l in lignes %}
       {% set e = l.e %}
-      { id: "{{ e.id }}", nom: {{ e.nom|tojson }}, lat: {{ e.site_lat if e.site_lat is not none else 'null' }}, lon: {{ e.site_lon if e.site_lon is not none else 'null' }}, maintenance: {{ 'true' if e.site_maintenance else 'false' }} }{{ "," if not loop.last }}
+      { id: "{{ e.id }}", nom: {{ e.nom|tojson }}, lat: {{ e.site_lat if e.site_lat is not none else 'null' }}, lon: {{ e.site_lon if e.site_lon is not none else 'null' }}, couleur: {{ l.couleur_fond|tojson }}, maintenance: {{ 'true' if e.site_maintenance else 'false' }}, ferme: {{ 'true' if l.site_ferme else 'false' }} }{{ "," if not loop.last }}
       {% endfor %}
     ];
     initDashboardCarte('carteDashboard', equipements, function (bounds) {

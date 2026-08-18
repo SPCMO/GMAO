@@ -36,10 +36,15 @@
 
     <h2>Historique des affectations</h2>
     <table>
-      <thead><tr><th>Site</th><th>Début</th><th>Fin</th></tr></thead>
+      <thead><tr><th>Événement</th><th>Site</th><th>Début</th><th>Fin</th></tr></thead>
       <tbody>
+        {% if equipement.date_creation %}
+        <tr><td>Création</td><td>—</td><td>{{ equipement.date_creation }}</td><td>—</td></tr>
+        {% endif %}
+        <tr><td>1ère mise en service</td><td>—</td><td>{{ equipement.date_installation }}</td><td>—</td></tr>
         {% for a in historique %}
         <tr>
+          <td>Affectation</td>
           <td>{{ a.site }}</td>
           <td>{{ a.date_debut }}</td>
           <td>{{ a.date_fin or 'en cours' }}</td>

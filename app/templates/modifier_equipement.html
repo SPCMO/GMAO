@@ -82,6 +82,7 @@ document.addEventListener('DOMContentLoaded', function () {
   initCascadeType('type', 'sous_type', {{ sous_types_json|tojson }}, {{ equipement.sous_type|tojson }});
   validerDateCreationMiseService('date_creation', 'date_installation');
   toggleRaisonLibre('raison_retrait', 'raison_retrait_libre');
+  validerRaisonNecessiteDate('date_retrait', 'raison_retrait', 'raison_retrait_libre');
 
   {% if depuis_alerte %}
   if (confirm("Cet équipement approche (ou a dépassé) sa date de péremption.\n\nSouhaitez-vous le prolonger de {{ equipement.rallonge_ans or '?' }} an(s) (durée de la rallonge configurée) ?")) {
