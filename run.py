@@ -51,11 +51,6 @@ def aide():
     return send_from_directory(config.BASE_DIR, "Aide.html")
 
 
-@app.route("/guides")
-def guides():
-    return send_from_directory(config.BASE_DIR, "Guides.html")
-
-
 @app.route("/api/statut-publication")
 def api_statut_publication():
     return jsonify(publication.lire_statut() or {})

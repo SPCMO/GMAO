@@ -289,8 +289,6 @@
   <p class="muted">Types et sous-types se réordonnent librement avec les boutons <b>▲▼</b> — c'est cet ordre qui s'affiche dans tous les menus déroulants de l'application. Les durées de vie/rappel/rallonge, elles, s'insèrent toujours automatiquement par ordre croissant (pas de tri manuel nécessaire).</p>
   <div class="warn">Supprimer un <b>type</b> supprime aussi tous ses sous-types. Les équipements qui utilisaient déjà une valeur retirée d'une liste conservent cette valeur affichée (elle disparaît seulement des choix proposés pour les nouvelles saisies).</div>
 
-  <div class="info" style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:.8rem 1rem; font-size:.9rem; margin-bottom:1.2rem;">📘 Guides pas à pas détaillés (avec captures des menus, dépannage) disponibles depuis <b>🧭 Guides</b> dans le bandeau, ou directement <a href="Guides.html" target="_blank">ici</a> — un onglet pour la tâche planifiée, un onglet pour le relais mail.</div>
-
   <h3>📧 Alertes de péremption par mail</h3>
   <p>L'envoi effectif est fait par un script autonome, à lancer une fois par jour :</p>
   <pre>"GMAO\venv\Scripts\python.exe" "GMAO\scripts\verifier_alertes.py"</pre>
@@ -343,6 +341,11 @@
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-fix">Correctif</span> Le bouton et la page <b>🧭 Guides</b> ont été retirés de l'application (bandeau, route <code>/guides</code>) et du dépôt public/réseau — <code>Guides.html</code> n'existe plus que dans le dossier local, pour un usage personnel.</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">18 août 2026</div>
