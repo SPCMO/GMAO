@@ -43,10 +43,12 @@
         {% endif %}
       </td>
       <td>
-        <a href="{{ url_for('sites.modifier_site', nom=s.nom) }}" class="muted">✏️ Modifier →</a>
-        <form method="post" action="{{ url_for('sites.supprimer_site', nom=s.nom) }}" style="display:inline; margin-left:.6rem;" onsubmit="return confirm('Supprimer le site « {{ s.nom }} » ?{% if s.nb_equipements %} Impossible : {{ s.nb_equipements }} équipement(s) encore affecté(s) ici.{% endif %}');">
-          <button type="submit" class="lien-suppr">supprimer</button>
-        </form>
+        <div style="display:flex; flex-direction:column; gap:.35rem; min-width:120px;">
+          <a href="{{ url_for('sites.modifier_site', nom=s.nom) }}" class="btn btn-secondary" style="text-align:center;">✏️ Modifier</a>
+          <form method="post" action="{{ url_for('sites.supprimer_site', nom=s.nom) }}" onsubmit="return confirm('Supprimer le site « {{ s.nom }} » ?{% if s.nb_equipements %} Impossible : {{ s.nb_equipements }} équipement(s) encore affecté(s) ici.{% endif %}');">
+            <button type="submit" class="btn btn-danger w-full">🗑️ Supprimer</button>
+          </form>
+        </div>
       </td>
     </tr>
     {% else %}
