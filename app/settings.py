@@ -32,3 +32,42 @@ def set_db_path(path):
     os.makedirs(os.path.dirname(SETTINGS_PATH) or ".", exist_ok=True)
     with open(SETTINGS_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+DEFAULT_SMTP = {"smtp_host": "", "smtp_port": 587, "smtp_user": "", "smtp_password": ""}
+
+
+def get_smtp_config():
+    data = _read()
+    return {k: data.get(k, v) for k, v in DEFAULT_SMTP.items()}
+
+
+def set_smtp_config(smtp_host, smtp_port, smtp_user, smtp_password):
+    data = _read()
+    data["smtp_host"] = smtp_host
+    data["smtp_port"] = smtp_port
+    data["smtp_user"] = smtp_user
+    if smtp_password:
+        # Un champ mot de passe laissé vide dans le formulaire ne l'efface pas.
+        data["smtp_password"] = smtp_password
+    os.makedirs(os.path.dirname(SETTINGS_PATH) or ".", exist_ok=True)
+    with open(SETTINGS_PATH, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+DEFAULT_APPS_SCRIPT = {"apps_script_url": "", "apps_script_token": ""}
+
+
+def get_apps_script_config():
+    data = _read()
+    return {k: data.get(k, v) for k, v in DEFAULT_APPS_SCRIPT.items()}
+
+
+def set_apps_script_config(url, token):
+    data = _read()
+    data["apps_script_url"] = url
+    if token:
+        data["apps_script_token"] = token
+    os.makedirs(os.path.dirname(SETTINGS_PATH) or ".", exist_ok=True)
+    with open(SETTINGS_PATH, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)

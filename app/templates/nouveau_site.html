@@ -1,24 +1,29 @@
 {% extends "base.html" %}
-{% block title %}Localisation — {{ site.nom }}{% endblock %}
+{% block title %}Nouveau site{% endblock %}
 {% block extra_head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}">
 {% endblock %}
 {% block content %}
 <p><a href="{{ url_for('gestion_sites') }}" class="muted">← Retour aux sites</a></p>
-<h1>Localisation du site — {{ site.nom }}</h1>
-<p class="muted">Tous les équipements actuellement affectés à ce site hériteront de cette localisation.</p>
+<h1>Nouveau site</h1>
 
 <form class="card" method="post" style="max-width:520px;">
-  <label>Coordonnées</label>
+  <label for="nom">Nom du site</label>
+  <input type="text" id="nom" name="nom" required placeholder="ex: Carcassonne Pont Neuf">
+
+  <label style="margin-top:1rem; display:flex; align-items:center; gap:.5rem;">
+    <input type="checkbox" name="maintenance" style="width:auto; margin:0;"> Site de maintenance
+  </label>
+
+  <label style="margin-top:1rem;">Localisation (optionnel)</label>
   <div style="display:flex; gap:.5rem; margin-top:.3rem;">
-    <input type="number" step="any" id="lat" name="lat" placeholder="Latitude" value="{{ site.lat if site.lat is not none else '' }}">
-    <input type="number" step="any" id="lon" name="lon" placeholder="Longitude" value="{{ site.lon if site.lon is not none else '' }}">
+    <input type="number" step="any" id="lat" name="lat" placeholder="Latitude">
+    <input type="number" step="any" id="lon" name="lon" placeholder="Longitude">
   </div>
-  <p class="muted" style="margin-top:.3rem;">Cliquez sur la carte pour pointer l'emplacement, ou saisissez les coordonnées directement. Laissez vide pour effacer la localisation.</p>
   <div id="mapPicker" style="height:320px; margin-top:.5rem; border-radius:6px; overflow:hidden;"></div>
 
   <p style="margin-top:1.5rem;">
-    <button type="submit" class="btn">Enregistrer</button>
+    <button type="submit" class="btn">Créer</button>
     <a href="{{ url_for('gestion_sites') }}" class="btn btn-secondary">Annuler</a>
   </p>
 </form>

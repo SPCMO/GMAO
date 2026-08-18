@@ -9,7 +9,24 @@
   <label for="nom">Nom de l'équipement</label>
   <input type="text" id="nom" name="nom" required placeholder="ex: AquaCJ 9">
 
-  <label for="site">Site d'affectation</label>
+  <label for="type">Type</label>
+  <select id="type" name="type">
+    <option value="">—</option>
+    {% for t in types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+  </select>
+
+  <label for="sous_type">Sous-type</label>
+  <select id="sous_type" name="sous_type">
+    <option value="">—</option>
+  </select>
+
+  <label for="uh_gestion">UH de gestion</label>
+  <select id="uh_gestion" name="uh_gestion">
+    <option value="">—</option>
+    {% for uh in uh_valeurs %}<option value="{{ uh }}">{{ uh }}</option>{% endfor %}
+  </select>
+
+  <label for="site" style="margin-top:1rem;">Site d'affectation</label>
   <select id="site" name="site" required onchange="toggleNouveauSite()">
     <option value="" disabled selected>Choisir un site...</option>
     {% for site in sites %}<option value="{{ site }}">{{ site }}</option>{% endfor %}
@@ -29,13 +46,34 @@
     <div id="mapPicker" style="height:280px; margin-top:.5rem; border-radius:6px; overflow:hidden;"></div>
   </div>
 
-  <label for="date_installation" style="margin-top:1rem;">Date d'installation</label>
-  <input type="date" id="date_installation" name="date_installation" required>
-  <p class="muted" style="margin-top:.3rem;">La date d'affectation au site ci-dessus sera celle d'aujourd'hui ({{ aujourdhui }}), indépendamment de la date d'installation.</p>
+  <label for="date_creation" style="margin-top:1rem;">Date de création</label>
+  <input type="date" id="date_creation" name="date_creation" placeholder="jj/mm/aaaa">
+
+  <label for="date_installation">Date de 1ère mise en service</label>
+  <input type="date" id="date_installation" name="date_installation" required placeholder="jj/mm/aaaa">
+  <p class="muted" style="margin-top:.3rem;">Doit être postérieure ou égale à la date de création. La date d'affectation au site ci-dessus sera celle d'aujourd'hui ({{ aujourdhui }}).</p>
+
+  <label for="duree_vie_ans" style="margin-top:1rem;">Durée de vie (années)</label>
+  <select id="duree_vie_ans" name="duree_vie_ans">
+    <option value="">—</option>
+    {% for v in durees_vie %}<option value="{{ v }}">{{ v|int if v == v|int else v }}</option>{% endfor %}
+  </select>
+
+  <label for="rappel_ans">Rappel avant échéance (années)</label>
+  <select id="rappel_ans" name="rappel_ans">
+    <option value="">—</option>
+    {% for v in rappels %}<option value="{{ v }}">{{ v|int if v == v|int else v }}</option>{% endfor %}
+  </select>
+
+  <label for="rallonge_ans">Rallonge post rappel (années)</label>
+  <select id="rallonge_ans" name="rallonge_ans">
+    <option value="">—</option>
+    {% for v in rallonges %}<option value="{{ v }}">{{ v|int if v == v|int else v }}</option>{% endfor %}
+  </select>
 
   <p style="margin-top:1.5rem;">
     <button type="submit" class="btn">Créer</button>
-    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Annuler</a>
+    <a href="{{ url_for('gestion_equipements') }}" class="btn btn-secondary">Annuler</a>
   </p>
 </form>
 
@@ -61,9 +99,14 @@ function toggleNouveauSite() {
     champNom.required = false;
   }
 }
+document.addEventListener('DOMContentLoaded', function () {
+  initCascadeType('type', 'sous_type', {{ sous_types_json|tojson }}, null);
+  validerDateCreationMiseService('date_creation', 'date_installation');
+});
 </script>
 {% endblock %}
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
 <script src="{{ url_for('static', filename='leaflet/gmao-map.js') }}"></script>
+<script src="{{ url_for('static', filename='gmao-common.js') }}"></script>
 {% endblock %}

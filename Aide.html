@@ -106,6 +106,24 @@
 
   <h3>Étiquettes</h3>
   <p>Chaque étiquette imprimée porte le QR code <b>et</b> le nom de l'équipement en clair — utile si le réseau mobile est absent ou instable sur le site (cas fréquent pour du matériel isolé), pour au moins identifier visuellement le matériel sans avoir à scanner.</p>
+
+  <h3>🔧 Gestion des équipements</h3>
+  <p>Bouton <b>🔧 Équipements</b> en haut de page : liste de gestion (type, site, UH, statut) avec le bouton <b>+ Nouvel équipement</b> et un lien <b>✏️ modifier</b> par ligne. Le formulaire (création ou modification) couvre :</p>
+  <ul>
+    <li><b>Type / Sous-type</b> — menus déroulants en cascade (le choix du type détermine la liste des sous-types proposés) ;</li>
+    <li><b>UH de gestion</b> — 11, 34 ou 66 ;</li>
+    <li><b>Date de création</b> et <b>Date de 1ère mise en service</b> — la seconde doit être postérieure ou égale à la première (contrôle de saisie automatique) ;</li>
+    <li><b>Durée de vie</b>, <b>Rappel avant échéance</b> et <b>Rallonge post rappel</b> (en années) — utilisés pour calculer la péremption (voir ci-dessous) ;</li>
+    <li><b>Retrait définitif</b> (uniquement en modification) — une fois une date de retrait renseignée, l'équipement s'affiche grisé et barré dans la liste d'accueil, avec la <b>raison du retrait</b> (menu déroulant : Usure normale / Vol / Détérioration / Vandalisme / Détérioration par crue / saisie libre).</li>
+  </ul>
+
+  <h3>⚠️ Alertes de péremption</h3>
+  <p>Péremption = <i>date de 1ère mise en service</i> + <i>durée de vie</i>. L'alerte se déclenche <i>rappel</i> années avant cette échéance. Un équipement en alerte affiche une icône <b>⚠️</b> dans la colonne dédiée du dashboard ; cliquer dessus ouvre sa fiche de modification avec une question <i>« Souhaitez-vous le prolonger ? »</i> :</p>
+  <ul>
+    <li><b>Non</b> — rien ne change, l'alerte reste affichée ;</li>
+    <li><b>Oui</b> — la durée de vie effective est augmentée de la <i>rallonge</i> configurée (visible dans la colonne <b>Durée de vie prolongée</b> et sur la fiche détail). La péremption est recalculée sur cette nouvelle base, et l'alerte réapparaîtra plus tard si la nouvelle échéance est également dépassée.</li>
+  </ul>
+  <p class="muted">Le mail envoyé (voir Paramétrage) précise si la durée de vie affichée est déjà une durée prolongée.</p>
 </section>
 
 <section id="architecture">
@@ -198,15 +216,18 @@
 ├── run.py                  # appli Flask locale (dashboard + formulaires)
 ├── config.py                # chemins et URL de base des fiches
 ├── app/
-│   ├── db.py                 # accès base + logique métier (affectations)
-│   ├── settings.py           # emplacement de la base, propre à ce poste (settings.json)
+│   ├── db.py                 # accès base + logique métier (affectations, listes de référence)
+│   ├── settings.py           # réglages propres à ce poste : base + SMTP (settings.json)
 │   ├── qrcodes.py            # génération des QR codes/PDF (tous ou une sélection)
+│   ├── alertes.py            # calcul des péremptions et alertes
+│   ├── mail.py                # construction et envoi des mails d'alerte (SMTP)
 │   ├── templates/            # pages HTML (dashboard, formulaires, fiche)
-│   └── static/leaflet/       # bibliothèque cartographique (vendorisée, pas de CDN)
+│   └── static/               # leaflet/ (carto) + gmao-common.js (cascades, validations)
 ├── scripts/
 │   ├── import_excel.py       # import initial depuis un classeur Excel
 │   ├── generate_site.py      # génère les fiches statiques (docs/e/)
-│   └── generate_qrcodes.py   # génère les QR codes + planches (HTML/PDF)
+│   ├── generate_qrcodes.py   # génère les QR codes + planches (HTML/PDF)
+│   └── verifier_alertes.py   # vérifie les péremptions + envoie les mails (tâche planifiée 7h)
 ├── data/gmao.db              # base SQLite locale par défaut (voir Paramètres pour un chemin partagé)
 ├── settings.json             # chemin de base choisi sur ce poste (non versionné, non publié)
 ├── docs/e/                   # fiches publiées (GitHub Pages)
@@ -217,11 +238,15 @@
   <h3>Modèle de données</h3>
   <table>
     <tr><th>Table</th><th>Champs</th><th>Rôle</th></tr>
-    <tr><td><code>equipement</code></td><td>id, nom, date_installation</td><td>identité du matériel</td></tr>
+    <tr><td><code>equipement</code></td><td>id, nom, type, sous_type, uh_gestion, date_creation, date_installation (= 1ère mise en service), duree_vie_ans, duree_vie_effective_ans, rappel_ans, rallonge_ans, date_retrait, raison_retrait, alerte_envoyee_le</td><td>identité, cycle de vie et suivi d'alerte du matériel</td></tr>
     <tr><td><code>affectation</code></td><td>equipement_id, site, date_debut, date_fin</td><td>une ligne par période d'affectation ; <code>date_fin NULL</code> = affectation en cours</td></tr>
-    <tr><td><code>site</code></td><td>nom, lat, lon</td><td>localisation d'un site — partagée par tous les équipements qui y sont affectés</td></tr>
+    <tr><td><code>site</code></td><td>nom, lat, lon, maintenance</td><td>localisation et statut (maintenance) d'un site — partagés par tous les équipements qui y sont affectés</td></tr>
+    <tr><td><code>type_equipement</code> / <code>sous_type_equipement</code></td><td>nom (+ type parent)</td><td>listes déroulantes gérables depuis Paramètres</td></tr>
+    <tr><td><code>duree_vie_option</code> / <code>rappel_option</code> / <code>rallonge_option</code></td><td>annees</td><td>valeurs proposées dans les menus déroulants correspondants</td></tr>
+    <tr><td><code>uh_email</code></td><td>uh, email</td><td>destinataires des mails d'alerte par UH de gestion</td></tr>
+    <tr><td><code>couleur_config</code></td><td>cle, valeur</td><td>couleurs de fond (uh_11, uh_34, uh_66, maintenance)</td></tr>
   </table>
-  <p class="muted">La table <code>site</code> est créée automatiquement au premier lancement après cette mise à jour, et pré-remplie avec tous les sites déjà utilisés dans l'historique (sans coordonnées — à renseigner via <b>🏢 Sites</b>). Les colonnes <code>lat</code>/<code>lon</code> qui existaient sur <code>equipement</code> dans une version antérieure ne sont plus utilisées.</p>
+  <p class="muted">Toutes ces tables/colonnes sont créées et pré-remplies automatiquement au premier lancement après chaque mise à jour (migration silencieuse). La colonne <code>duree_vie_effective_ans</code> démarre égale à <code>duree_vie_ans</code> et n'augmente que lorsqu'une prolongation est confirmée.</p>
 
   <h3>Usage multi-postes</h3>
   <p>Chaque poste garde sa propre copie du code (son propre <code>.bat</code>), mais peut pointer vers une base SQLite <b>partagée</b> sur le réseau au lieu de sa base locale, via le menu <b>⚙️ Paramètres</b>. Tous les postes configurés sur le même chemin réseau voient alors les mêmes équipements et affectations. Le chemin choisi est propre à chaque poste (fichier <code>settings.json</code>, non versionné) — chacun le configure une fois.</p>
@@ -253,6 +278,31 @@
   <pre>\\10.11.208.239\suivi\Suivi_hydrométrie\00_Projets_en_cours\2026_GMAO\data\gmao.db</pre>
   <p>Ce choix est enregistré dans <code>settings.json</code> à la racine du projet — un fichier propre à chaque poste, exclu du dépôt git (<code>.gitignore</code>), donc jamais publié sur GitHub. C'est ce qui permet de garder un chemin réseau interne hors du dépôt public.</p>
 
+  <h3>Listes déroulantes et couleurs (menu Paramètres)</h3>
+  <p>Toujours dans <b>⚙️ Paramètres</b> : gestion des types/sous-types d'équipement, des valeurs proposées pour durée de vie/rappel/rallonge, des adresses mail par UH de gestion, et des couleurs de fond (UH 11/34/66, site de maintenance) utilisées dans la liste d'accueil et sur la carte. Chaque liste s'édite par simple ajout/suppression, sans toucher au code.</p>
+  <div class="warn">Supprimer un <b>type</b> supprime aussi tous ses sous-types. Les équipements qui utilisaient déjà une valeur retirée d'une liste conservent cette valeur affichée (elle disparaît seulement des choix proposés pour les nouvelles saisies).</div>
+
+  <h3>📧 Alertes de péremption par mail</h3>
+  <p>L'envoi effectif est fait par un script autonome, à lancer une fois par jour :</p>
+  <pre>"GMAO\venv\Scripts\python.exe" "GMAO\scripts\verifier_alertes.py"</pre>
+  <p>Il vérifie tous les équipements, envoie un mail par équipement nouvellement en alerte (destinataires = adresses configurées pour son UH de gestion), puis marque l'alerte comme notifiée pour ne plus la renvoyer les jours suivants — ce marqueur est remis à zéro automatiquement si l'équipement est prolongé, pour permettre une nouvelle alerte à la prochaine échéance.</p>
+  <p><b>Déclenchement quotidien à 7h</b> — sur un poste qui reste allumé et a accès au réseau SPCMO (pour la base) et à Internet (pour l'envoi), créer une tâche planifiée Windows :</p>
+  <pre>schtasks /create /tn "GMAO - Verification alertes" /sc daily /st 07:00 /tr "\"D:\charles-eddy.piot\Documents\Perso CEP\Git-Claude IA\GMAO\venv\Scripts\python.exe\" \"D:\charles-eddy.piot\Documents\Perso CEP\Git-Claude IA\GMAO\scripts\verifier_alertes.py\""</pre>
+  <p class="muted">Adapter les chemins si le script tourne depuis un autre poste. Vérifier ensuite dans le Planificateur de tâches Windows (recherche "Planificateur de tâches" dans le menu Démarrer) que la tâche apparaît bien, avec un test manuel via clic droit → Exécuter.</p>
+
+  <h3>Comment le mail part réellement : relais Google Apps Script</h3>
+  <p>Le réseau SPCMO bloque le SMTP direct (587/465, testé et confirmé le 18 août 2026 — timeout avant même l'authentification), mais laisse passer le HTTPS classique (comme pour GitHub). Solution retenue : un script <b>Google Apps Script</b> (<code>apps_script/gmao_mail_relay.gs</code>), qui s'exécute côté serveur Google et envoie le mail via <code>GmailApp.sendEmail()</code> — GMAO le contacte simplement par une requête HTTPS, sans jamais ouvrir de connexion SMTP.</p>
+  <p><b>Déploiement (une seule fois)</b> :</p>
+  <ol>
+    <li>Se connecter sur <a href="https://script.google.com" target="_blank">script.google.com</a> avec le compte <code>spcmo113466@gmail.com</code></li>
+    <li><b>Nouveau projet</b>, coller le contenu de <code>apps_script/gmao_mail_relay.gs</code></li>
+    <li>Remplacer <code>TOKEN_SECRET</code> par une valeur secrète de ton choix (à retenir, elle sera resaisie dans GMAO)</li>
+    <li><b>Déployer</b> → <b>Nouveau déploiement</b> → type <b>Application Web</b> — Exécuter en tant que <b>Moi</b>, accès <b>Tout le monde</b></li>
+    <li>Copier l'URL de déploiement (se termine par <code>/exec</code>)</li>
+    <li>Dans GMAO → <b>⚙️ Paramètres</b> → section <b>🔗 Relais mail</b> : coller l'URL et le même jeton secret, Enregistrer, puis <b>✉️ Envoyer un test</b> pour vérifier</li>
+  </ol>
+  <p class="muted">Le SMTP direct reste disponible en repli dans <b>⚙️ Paramètres</b> (utile si l'appli tourne un jour sur un réseau qui n'a pas cette restriction) : GMAO essaie d'abord le relais Apps Script s'il est configuré, sinon retombe sur le SMTP.</p>
+
   <h3>Trois destinations de déploiement</h3>
   <p>Comme pour les autres outils du service, chaque modification du code est déployée vers trois emplacements :</p>
   <ol>
@@ -276,6 +326,31 @@
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Relais mail via Google Apps Script (<code>apps_script/gmao_mail_relay.gs</code>) pour contourner le blocage SMTP du réseau SPCMO — envoi en HTTPS, comme GitHub. Configurable dans <b>⚙️ Paramètres</b> avec bouton d'envoi de test ; le SMTP direct reste disponible en repli.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Gestion complète du cycle de vie des équipements : type/sous-type, UH de gestion, dates de création et de 1ère mise en service, durée de vie/rappel/rallonge, retrait définitif (avec raison) — équipements retirés affichés grisés/barrés dans la liste d'accueil. Nouvelle page <b>🔧 Équipements</b> dans le bandeau (création + modification), toutes ces listes déroulantes se gèrent depuis <b>⚙️ Paramètres</b>.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Alertes de péremption : icône ⚠️ dans le dashboard quand un équipement approche (ou dépasse) sa date de péremption, avec proposition de prolongation (durée de vie + rallonge) au clic. Envoi mail quotidien automatisable (<code>scripts/verifier_alertes.py</code> + tâche planifiée Windows 7h) aux destinataires configurés par UH — un seul mail par alerte, pas de renvoi quotidien. Envoi SMTP actuellement bloqué par le réseau SPCMO, en attente d'une solution (voir Paramétrage).</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Sites : boutons <b>+ Site</b> et <b>✏️ Modifier</b> (localisation et case <b>Site de maintenance</b>). Les équipements affectés à un site de maintenance s'affichent avec un fond grisé dans la liste d'accueil et une pastille grisée sur la carte.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Dashboard : colonnes Type, UH, Statut et Durée de vie prolongée ; toutes les colonnes sont triables (clic sur l'en-tête), filtres par site/type/UH en plus de la recherche par nom ; fond de ligne coloré selon l'UH de gestion (couleurs personnalisables dans Paramètres).</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">18 août 2026</div>

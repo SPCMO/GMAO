@@ -86,6 +86,15 @@ function initMiniCarte(mapId, latInputId, lonInputId) {
  * Carte du dashboard : place un marqueur par équipement géolocalisé et notifie
  * onBoundsChange(bounds|null) à chaque déplacement/zoom (null si zoom arrière-plan par défaut, pour ne pas filtrer).
  */
+var GMAO_ICONE_GRISE = null;
+function iconeGrisee() {
+  if (!GMAO_ICONE_GRISE) {
+    GMAO_ICONE_GRISE = new L.Icon.Default();
+    GMAO_ICONE_GRISE.options.className = 'gmao-marker-grise';
+  }
+  return GMAO_ICONE_GRISE;
+}
+
 function initDashboardCarte(mapId, equipements, onBoundsChange) {
   var map = L.map(mapId).setView(GMAO_CENTRE_DEFAUT, GMAO_ZOOM_DEFAUT);
   ajouterControlesCommuns(map, creerFondsDeCarte());
@@ -93,7 +102,8 @@ function initDashboardCarte(mapId, equipements, onBoundsChange) {
   var group = L.featureGroup();
   equipements.forEach(function (e) {
     if (e.lat !== null && e.lon !== null) {
-      L.marker([e.lat, e.lon]).addTo(group).bindPopup(e.nom);
+      var options = e.maintenance ? { icon: iconeGrisee() } : {};
+      L.marker([e.lat, e.lon], options).addTo(group).bindPopup(e.nom + (e.maintenance ? ' (site de maintenance)' : ''));
     }
   });
   group.addTo(map);

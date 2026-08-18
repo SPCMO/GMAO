@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Modifier — {{ equipement.nom }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('detail_equipement', equipement_id=equipement.id) }}" class="muted">← Retour à {{ equipement.nom }}</a></p>
+<h1>Modifier — {{ equipement.nom }}</h1>
+
+<form class="card" method="post" style="max-width:520px;">
+  <label for="nom">Nom de l'équipement</label>
+  <input type="text" id="nom" name="nom" required value="{{ equipement.nom }}">
+
+  <label for="type">Type</label>
+  <select id="type" name="type">
+    <option value="">—</option>
+    {% for t in types %}<option value="{{ t }}" {{ "selected" if t == equipement.type }}>{{ t }}</option>{% endfor %}
+  </select>
+
+  <label for="sous_type">Sous-type</label>
+  <select id="sous_type" name="sous_type">
+    <option value="">—</option>
+  </select>
+
+  <label for="uh_gestion">UH de gestion</label>
+  <select id="uh_gestion" name="uh_gestion">
+    <option value="">—</option>
+    {% for uh in uh_valeurs %}<option value="{{ uh }}" {{ "selected" if uh == equipement.uh_gestion }}>{{ uh }}</option>{% endfor %}
+  </select>
+
+  <label for="date_creation" style="margin-top:1rem;">Date de création</label>
+  <input type="date" id="date_creation" name="date_creation" value="{{ equipement.date_creation or '' }}">
+
+  <label for="date_installation">Date de 1ère mise en service</label>
+  <input type="date" id="date_installation" name="date_installation" required value="{{ equipement.date_installation }}">
+  <p class="muted" style="margin-top:.3rem;">Doit être postérieure ou égale à la date de création.</p>
+
+  <label for="duree_vie_ans" style="margin-top:1rem;">Durée de vie (années)</label>
+  <select id="duree_vie_ans" name="duree_vie_ans">
+    <option value="">—</option>
+    {% for v in durees_vie %}<option value="{{ v }}" {{ "selected" if v == equipement.duree_vie_ans }}>{{ v|int if v == v|int else v }}</option>{% endfor %}
+  </select>
+  {% if equipement.duree_vie_effective_ans and equipement.duree_vie_ans and equipement.duree_vie_effective_ans > equipement.duree_vie_ans %}
+    <p class="muted" style="margin-top:.3rem;">Durée de vie prolongée en cours : <b>{{ equipement.duree_vie_effective_ans }} ans</b> au total.</p>
+  {% endif %}
+
+  <label for="rappel_ans">Rappel avant échéance (années)</label>
+  <select id="rappel_ans" name="rappel_ans">
+    <option value="">—</option>
+    {% for v in rappels %}<option value="{{ v }}" {{ "selected" if v == equipement.rappel_ans }}>{{ v|int if v == v|int else v }}</option>{% endfor %}
+  </select>
+
+  <label for="rallonge_ans">Rallonge post rappel (années)</label>
+  <select id="rallonge_ans" name="rallonge_ans">
+    <option value="">—</option>
+    {% for v in rallonges %}<option value="{{ v }}" {{ "selected" if v == equipement.rallonge_ans }}>{{ v|int if v == v|int else v }}</option>{% endfor %}
+  </select>
+
+  <h3 class="section-param" style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid #e5e7eb;">Retrait définitif</h3>
+  <label for="date_retrait">Date de retrait définitif</label>
+  <input type="date" id="date_retrait" name="date_retrait" value="{{ equipement.date_retrait or '' }}">
+  <p class="muted" style="margin-top:.3rem;">Laisser vide tant que l'équipement est en fonction.</p>
+
+  <label for="raison_retrait">Raison du retrait</label>
+  <select id="raison_retrait" name="raison_retrait">
+    <option value="">—</option>
+    {% set raisons_predefinies = ["Usure normale", "Vol", "Détérioration", "Vandalisme", "Détérioration par crue"] %}
+    {% for r in raisons_predefinies %}
+      <option value="{{ r }}" {{ "selected" if r == equipement.raison_retrait }}>{{ r }}</option>
+    {% endfor %}
+    <option value="__libre__" {{ "selected" if equipement.raison_retrait and equipement.raison_retrait not in raisons_predefinies }}>Autre (saisie libre)...</option>
+  </select>
+  <input type="text" id="raison_retrait_libre" name="raison_retrait_libre" placeholder="Préciser la raison"
+         value="{{ equipement.raison_retrait if equipement.raison_retrait and equipement.raison_retrait not in ["Usure normale", "Vol", "Détérioration", "Vandalisme", "Détérioration par crue"] else '' }}"
+         style="margin-top:.5rem; display:none;">
+
+  <p style="margin-top:1.5rem;">
+    <button type="submit" class="btn">Enregistrer</button>
+    <a href="{{ url_for('detail_equipement', equipement_id=equipement.id) }}" class="btn btn-secondary">Annuler</a>
+  </p>
+</form>
+
+{% if depuis_alerte %}
+<form id="formProlonger" method="post" action="{{ url_for('prolonger_equipement', equipement_id=equipement.id) }}" style="display:none;"></form>
+{% endif %}
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='gmao-common.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  initCascadeType('type', 'sous_type', {{ sous_types_json|tojson }}, {{ equipement.sous_type|tojson }});
+  validerDateCreationMiseService('date_creation', 'date_installation');
+  toggleRaisonLibre('raison_retrait', 'raison_retrait_libre');
+
+  {% if depuis_alerte %}
+  if (confirm("Cet équipement approche (ou a dépassé) sa date de péremption.\n\nSouhaitez-vous le prolonger de {{ equipement.rallonge_ans or '?' }} an(s) (durée de la rallonge configurée) ?")) {
+    document.getElementById('formProlonger').submit();
+  }
+  {% endif %}
+});
+</script>
+{% endblock %}

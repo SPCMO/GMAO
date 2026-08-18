@@ -2,7 +2,8 @@
 {% block title %}Paramètres{% endblock %}
 {% block content %}
 <h1>Paramètres</h1>
-<form class="card" method="post" style="max-width:640px;">
+
+<form class="card" method="post" style="max-width:700px;">
   <label for="db_path">Emplacement de la base de données</label>
   <input type="text" id="db_path" name="db_path" value="{{ db_path }}" required style="font-family:monospace; font-size:.85rem;">
   <p class="muted" style="margin-top:.5rem;">
@@ -12,7 +13,182 @@
   </p>
   <p style="margin-top:1.5rem;">
     <button type="submit" class="btn">Enregistrer</button>
-    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Retour</a>
+  </p>
+</form>
+
+<h2 class="section-param">📧 Notifications par mail (SMTP)</h2>
+<form class="card" method="post" action="{{ url_for('parametres_smtp') }}" style="max-width:700px;">
+  <label for="smtp_host">Serveur SMTP</label>
+  <input type="text" id="smtp_host" name="smtp_host" value="{{ smtp.smtp_host }}" placeholder="ex: smtp.gmail.com">
+
+  <label for="smtp_port">Port</label>
+  <input type="number" id="smtp_port" name="smtp_port" value="{{ smtp.smtp_port }}" placeholder="587">
+
+  <label for="smtp_user">Adresse d'expéditeur</label>
+  <input type="email" id="smtp_user" name="smtp_user" value="{{ smtp.smtp_user }}" placeholder="ex: gmao@spcmo.fr">
+
+  <label for="smtp_password">Mot de passe {% if smtp.smtp_password %}<span class="muted">(déjà enregistré — laisser vide pour ne pas le changer)</span>{% endif %}</label>
+  <input type="password" id="smtp_password" name="smtp_password" placeholder="{{ '••••••••' if smtp.smtp_password else '' }}">
+  <p class="muted" style="margin-top:.5rem;">Stocké uniquement dans <code>settings.json</code> sur ce poste, jamais publié. Utilisé par le script quotidien <code>scripts/verifier_alertes.py</code> (voir Aide.html).</p>
+
+  <p style="margin-top:1.5rem;">
+    <button type="submit" class="btn">Enregistrer</button>
+  </p>
+</form>
+
+<h2 class="section-param">🔗 Relais mail (Google Apps Script) — recommandé</h2>
+<div class="card" style="max-width:700px; padding:1.5rem;">
+  <p class="muted">Le réseau SPCMO bloque le SMTP direct ci-dessus. Solution qui fonctionne : un petit script Google Apps Script (fichier <code>apps_script/gmao_mail_relay.gs</code> du dépôt) envoie le mail via Gmail côté serveur Google ; GMAO le contacte simplement en HTTPS, comme il le fait déjà pour GitHub. Voir Aide.html (onglet Paramétrage) pour les étapes de déploiement du script.</p>
+  <form method="post" action="{{ url_for('parametres_relais_mail') }}" style="margin-top:1rem;">
+    <label for="apps_script_url">URL du déploiement Apps Script</label>
+    <input type="text" id="apps_script_url" name="apps_script_url" value="{{ apps_script.apps_script_url }}" placeholder="https://script.google.com/macros/s/.../exec" style="font-family:monospace; font-size:.85rem;">
+
+    <label for="apps_script_token">Jeton secret {% if apps_script.apps_script_token %}<span class="muted">(déjà enregistré — laisser vide pour ne pas le changer)</span>{% endif %}</label>
+    <input type="password" id="apps_script_token" name="apps_script_token" placeholder="{{ '••••••••' if apps_script.apps_script_token else '' }}">
+    <p class="muted" style="margin-top:.5rem;">Doit correspondre exactement à <code>TOKEN_SECRET</code> dans le script Apps Script déployé.</p>
+
+    <p style="margin-top:1.5rem;">
+      <button type="submit" class="btn">Enregistrer</button>
+    </p>
+  </form>
+
+  <form method="post" action="{{ url_for('parametres_relais_mail_tester') }}" class="form-inline" style="margin-top:1rem; padding-top:1rem; border-top:1px solid #e5e7eb;">
+    <input type="email" name="destinataire_test" placeholder="adresse@test.fr pour un envoi test" required style="flex:1;">
+    <button type="submit" class="btn btn-secondary">✉️ Envoyer un test</button>
+  </form>
+</div>
+
+<h2 class="section-param">🔧 Types et sous-types d'équipement</h2>
+<div class="card" style="max-width:700px; padding:1.5rem;">
+  {% for t in types %}
+  <h3 style="margin-top:{{ '0' if loop.first else '1.2rem' }};">{{ t }}</h3>
+  <ul class="liste-gestion">
+    {% for st in sous_types_json.get(t, []) %}
+    <li>
+      {{ st }}
+      <form method="post" action="{{ url_for('parametres_sous_types_supprimer') }}">
+        <input type="hidden" name="type" value="{{ t }}">
+        <input type="hidden" name="nom" value="{{ st }}">
+        <button type="submit" class="lien-suppr">supprimer</button>
+      </form>
+    </li>
+    {% else %}
+    <li class="muted">Aucun sous-type</li>
+    {% endfor %}
+  </ul>
+  <form class="form-inline" method="post" action="{{ url_for('parametres_sous_types_ajouter') }}">
+    <input type="hidden" name="type" value="{{ t }}">
+    <input type="text" name="nom" placeholder="Nouveau sous-type" required>
+    <button type="submit" class="btn btn-secondary">+ Ajouter</button>
+  </form>
+  <form method="post" action="{{ url_for('parametres_types_supprimer') }}" onsubmit="return confirm('Supprimer le type « {{ t }} » et tous ses sous-types ?');" style="margin-top:.5rem;">
+    <input type="hidden" name="nom" value="{{ t }}">
+    <button type="submit" class="lien-suppr">supprimer le type « {{ t }} »</button>
+  </form>
+  {% endfor %}
+
+  <h3 class="section-param" style="margin-top:1.5rem; padding-top:1rem;">Ajouter un type</h3>
+  <form class="form-inline" method="post" action="{{ url_for('parametres_types_ajouter') }}">
+    <input type="text" name="nom" placeholder="Nom du type" required>
+    <button type="submit" class="btn btn-secondary">+ Ajouter</button>
+  </form>
+</div>
+
+<h2 class="section-param">⏳ Durée de vie, rappel et rallonge (années)</h2>
+<div class="card" style="max-width:700px; padding:1.5rem; display:flex; gap:1.5rem; flex-wrap:wrap;">
+  <div style="flex:1; min-width:180px;">
+    <h3 style="margin-top:0;">Durée de vie</h3>
+    <ul class="liste-gestion">
+      {% for v in durees_vie %}
+      <li>{{ v|int if v == v|int else v }} an(s)
+        <form method="post" action="{{ url_for('parametres_durees_supprimer') }}">
+          <input type="hidden" name="annees" value="{{ v }}">
+          <button type="submit" class="lien-suppr">×</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    <form class="form-inline" method="post" action="{{ url_for('parametres_durees_ajouter') }}">
+      <input type="number" step="0.5" name="annees" placeholder="ex: 6" required style="width:80px;">
+      <button type="submit" class="btn btn-secondary">+</button>
+    </form>
+  </div>
+  <div style="flex:1; min-width:180px;">
+    <h3 style="margin-top:0;">Rappel</h3>
+    <ul class="liste-gestion">
+      {% for v in rappels %}
+      <li>{{ v|int if v == v|int else v }} an(s)
+        <form method="post" action="{{ url_for('parametres_rappels_supprimer') }}">
+          <input type="hidden" name="annees" value="{{ v }}">
+          <button type="submit" class="lien-suppr">×</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    <form class="form-inline" method="post" action="{{ url_for('parametres_rappels_ajouter') }}">
+      <input type="number" step="0.5" name="annees" placeholder="ex: 0.5" required style="width:80px;">
+      <button type="submit" class="btn btn-secondary">+</button>
+    </form>
+  </div>
+  <div style="flex:1; min-width:180px;">
+    <h3 style="margin-top:0;">Rallonge</h3>
+    <ul class="liste-gestion">
+      {% for v in rallonges %}
+      <li>{{ v|int if v == v|int else v }} an(s)
+        <form method="post" action="{{ url_for('parametres_rallonges_supprimer') }}">
+          <input type="hidden" name="annees" value="{{ v }}">
+          <button type="submit" class="lien-suppr">×</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    <form class="form-inline" method="post" action="{{ url_for('parametres_rallonges_ajouter') }}">
+      <input type="number" step="0.5" name="annees" placeholder="ex: 2" required style="width:80px;">
+      <button type="submit" class="btn btn-secondary">+</button>
+    </form>
+  </div>
+</div>
+
+<h2 class="section-param">📬 Destinataires des alertes par UH de gestion</h2>
+<div class="card" style="max-width:700px; padding:1.5rem; display:flex; gap:1.5rem; flex-wrap:wrap;">
+  {% for uh in uh_valeurs %}
+  <div style="flex:1; min-width:180px;">
+    <h3 style="margin-top:0;">UH {{ uh }}</h3>
+    <ul class="liste-gestion">
+      {% for email in uh_emails.get(uh, []) %}
+      <li>{{ email }}
+        <form method="post" action="{{ url_for('parametres_uh_emails_supprimer') }}">
+          <input type="hidden" name="uh" value="{{ uh }}">
+          <input type="hidden" name="email" value="{{ email }}">
+          <button type="submit" class="lien-suppr">×</button>
+        </form>
+      </li>
+      {% else %}
+      <li class="muted">Aucun destinataire</li>
+      {% endfor %}
+    </ul>
+    <form class="form-inline" method="post" action="{{ url_for('parametres_uh_emails_ajouter') }}">
+      <input type="hidden" name="uh" value="{{ uh }}">
+      <input type="email" name="email" placeholder="adresse@spcmo.fr" required style="width:100%;">
+      <button type="submit" class="btn btn-secondary">+</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+
+<h2 class="section-param">🎨 Couleurs de fond (liste des équipements et carte)</h2>
+<form class="card" method="post" action="{{ url_for('parametres_couleurs') }}" style="max-width:700px;">
+  <div style="display:flex; gap:1.5rem; flex-wrap:wrap; align-items:flex-end;">
+    {% for cle, libelle in [("uh_11", "UH 11"), ("uh_34", "UH 34"), ("uh_66", "UH 66"), ("maintenance", "Site de maintenance")] %}
+    <div>
+      <label for="c_{{ cle }}">{{ libelle }}</label>
+      <input type="color" id="c_{{ cle }}" name="{{ cle }}" value="{{ couleurs.get(cle, '#ffffff') }}" style="width:70px; height:38px; padding:2px; margin-top:.3rem;">
+    </div>
+    {% endfor %}
+  </div>
+  <p class="muted" style="margin-top:1rem;">En cas de site de maintenance <b>et</b> d'UH tous deux configurés pour un équipement, la couleur « site de maintenance » est prioritaire dans la liste et sur la carte.</p>
+  <p style="margin-top:1rem;">
+    <button type="submit" class="btn">Enregistrer</button>
   </p>
 </form>
 {% endblock %}

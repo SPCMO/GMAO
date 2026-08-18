@@ -27,8 +27,51 @@ CREATE TABLE IF NOT EXISTS site (
     lon REAL
 );
 
+CREATE TABLE IF NOT EXISTS type_equipement (
+    nom TEXT PRIMARY KEY
+);
+
+CREATE TABLE IF NOT EXISTS sous_type_equipement (
+    type TEXT NOT NULL,
+    nom TEXT NOT NULL,
+    PRIMARY KEY (type, nom)
+);
+
+CREATE TABLE IF NOT EXISTS duree_vie_option (annees REAL PRIMARY KEY);
+CREATE TABLE IF NOT EXISTS rappel_option (annees REAL PRIMARY KEY);
+CREATE TABLE IF NOT EXISTS rallonge_option (annees REAL PRIMARY KEY);
+
+CREATE TABLE IF NOT EXISTS uh_email (
+    uh TEXT NOT NULL,
+    email TEXT NOT NULL,
+    PRIMARY KEY (uh, email)
+);
+
+CREATE TABLE IF NOT EXISTS couleur_config (
+    cle TEXT PRIMARY KEY,
+    valeur TEXT
+);
+
 CREATE INDEX IF NOT EXISTS idx_affectation_equipement ON affectation(equipement_id);
 """
+
+TYPES_SOUS_TYPES_PAR_DEFAUT = {
+    "Centrale d'acquisition": ["AquaCJ", "LNS"],
+    "Piézomètre": ["Paratronic", "Vega"],
+    "Bulle à bulle": ["Limnair", "Nimbus", "OTT-CBS"],
+    "Radar": ["Paratronic", "Vega", "Endress-Hauser", "TBRS"],
+    "Modem": ["Radio", "IP"],
+    "Batterie": ["40Ah", "80Ah"],
+}
+DUREES_VIE_PAR_DEFAUT = [1, 2, 5, 8, 10, 15]
+RAPPELS_PAR_DEFAUT = [0.5, 1, 1.5, 2, 2.5, 3]
+RALLONGES_PAR_DEFAUT = [0.5, 1, 1.5, 2, 2.5, 3, 4, 5]
+COULEURS_PAR_DEFAUT = {
+    "uh_11": "#dbeafe",
+    "uh_34": "#dcfce7",
+    "uh_66": "#fef3c7",
+    "maintenance": "#e5e7eb",
+}
 
 
 def get_connection():
@@ -38,19 +81,52 @@ def get_connection():
     return conn
 
 
+def _add_col_if_missing(conn, table, col, coltype):
+    cols = [r["name"] for r in conn.execute(f"PRAGMA table_info({table})").fetchall()]
+    if col not in cols:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {coltype}")
+
+
 def _migrate(conn):
-    # equipement.lat/lon (version précédente) : conservées si présentes mais plus utilisées,
+    # equipement.lat/lon (version antérieure) : conservées si présentes mais plus utilisées,
     # la localisation vit désormais sur le site (table site).
-    cols = [r["name"] for r in conn.execute("PRAGMA table_info(equipement)").fetchall()]
-    if "lat" not in cols:
-        conn.execute("ALTER TABLE equipement ADD COLUMN lat REAL")
-    if "lon" not in cols:
-        conn.execute("ALTER TABLE equipement ADD COLUMN lon REAL")
+    _add_col_if_missing(conn, "equipement", "lat", "REAL")
+    _add_col_if_missing(conn, "equipement", "lon", "REAL")
+
+    _add_col_if_missing(conn, "equipement", "date_creation", "TEXT")
+    _add_col_if_missing(conn, "equipement", "type", "TEXT")
+    _add_col_if_missing(conn, "equipement", "sous_type", "TEXT")
+    _add_col_if_missing(conn, "equipement", "duree_vie_ans", "REAL")
+    _add_col_if_missing(conn, "equipement", "duree_vie_effective_ans", "REAL")
+    _add_col_if_missing(conn, "equipement", "rappel_ans", "REAL")
+    _add_col_if_missing(conn, "equipement", "rallonge_ans", "REAL")
+    _add_col_if_missing(conn, "equipement", "uh_gestion", "TEXT")
+    _add_col_if_missing(conn, "equipement", "date_retrait", "TEXT")
+    _add_col_if_missing(conn, "equipement", "raison_retrait", "TEXT")
+    _add_col_if_missing(conn, "equipement", "alerte_envoyee_le", "TEXT")
+
+    _add_col_if_missing(conn, "site", "maintenance", "INTEGER DEFAULT 0")
 
     # Backfill : un site déjà utilisé dans l'historique mais absent de la table site
     conn.execute(
         "INSERT OR IGNORE INTO site (nom) SELECT DISTINCT site FROM affectation"
     )
+
+    for type_nom, sous_types in TYPES_SOUS_TYPES_PAR_DEFAUT.items():
+        conn.execute("INSERT OR IGNORE INTO type_equipement (nom) VALUES (?)", (type_nom,))
+        for st in sous_types:
+            conn.execute(
+                "INSERT OR IGNORE INTO sous_type_equipement (type, nom) VALUES (?, ?)",
+                (type_nom, st),
+            )
+    for v in DUREES_VIE_PAR_DEFAUT:
+        conn.execute("INSERT OR IGNORE INTO duree_vie_option (annees) VALUES (?)", (v,))
+    for v in RAPPELS_PAR_DEFAUT:
+        conn.execute("INSERT OR IGNORE INTO rappel_option (annees) VALUES (?)", (v,))
+    for v in RALLONGES_PAR_DEFAUT:
+        conn.execute("INSERT OR IGNORE INTO rallonge_option (annees) VALUES (?)", (v,))
+    for cle, valeur in COULEURS_PAR_DEFAUT.items():
+        conn.execute("INSERT OR IGNORE INTO couleur_config (cle, valeur) VALUES (?, ?)", (cle, valeur))
 
 
 def init_db():
@@ -74,13 +150,33 @@ def new_equipement_id():
     return uuid.uuid4().hex[:12]
 
 
+# ── Sites ─────────────────────────────────────────────────────────────────
+
 def ensure_site(conn, nom):
     conn.execute("INSERT OR IGNORE INTO site (nom) VALUES (?)", (nom,))
+
+
+def create_site(conn, nom, maintenance=False, lat=None, lon=None):
+    conn.execute(
+        "INSERT OR IGNORE INTO site (nom, lat, lon, maintenance) VALUES (?, ?, ?, ?)",
+        (nom, lat, lon, 1 if maintenance else 0),
+    )
 
 
 def set_site_coordonnees(conn, nom, lat, lon):
     ensure_site(conn, nom)
     conn.execute("UPDATE site SET lat = ?, lon = ? WHERE nom = ?", (lat, lon, nom))
+
+
+def set_site_maintenance(conn, nom, maintenance):
+    conn.execute("UPDATE site SET maintenance = ? WHERE nom = ?", (1 if maintenance else 0, nom))
+
+
+def update_site(conn, nom, maintenance, lat, lon):
+    conn.execute(
+        "UPDATE site SET lat = ?, lon = ?, maintenance = ? WHERE nom = ?",
+        (lat, lon, 1 if maintenance else 0, nom),
+    )
 
 
 def get_site(conn, nom):
@@ -90,7 +186,7 @@ def get_site(conn, nom):
 def list_all_sites(conn):
     rows = conn.execute(
         """
-        SELECT s.nom, s.lat, s.lon, COUNT(a.id) AS nb_equipements
+        SELECT s.nom, s.lat, s.lon, s.maintenance, COUNT(a.id) AS nb_equipements
         FROM site s
         LEFT JOIN affectation a ON a.site = s.nom AND a.date_fin IS NULL
         GROUP BY s.nom
@@ -100,18 +196,86 @@ def list_all_sites(conn):
     return rows
 
 
-def create_equipement(conn, nom, date_installation, site, date_debut=None):
+def list_sites(conn):
+    rows = conn.execute(
+        "SELECT DISTINCT site FROM affectation ORDER BY site"
+    ).fetchall()
+    return [r["site"] for r in rows]
+
+
+# ── Équipements ──────────────────────────────────────────────────────────
+
+_CHAMPS_EQUIPEMENT_OPTIONNELS = [
+    "date_creation", "type", "sous_type",
+    "duree_vie_ans", "rappel_ans", "rallonge_ans", "uh_gestion",
+]
+
+
+def create_equipement(conn, nom, date_installation, site, date_debut=None, **champs):
     ensure_site(conn, site)
     eq_id = new_equipement_id()
+    valeurs = {c: champs.get(c) for c in _CHAMPS_EQUIPEMENT_OPTIONNELS}
+    duree_vie = valeurs.get("duree_vie_ans")
     conn.execute(
-        "INSERT INTO equipement (id, nom, date_installation) VALUES (?, ?, ?)",
-        (eq_id, nom, date_installation),
+        """
+        INSERT INTO equipement
+            (id, nom, date_installation, date_creation, type, sous_type,
+             duree_vie_ans, duree_vie_effective_ans, rappel_ans, rallonge_ans, uh_gestion)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            eq_id, nom, date_installation, valeurs["date_creation"], valeurs["type"], valeurs["sous_type"],
+            duree_vie, duree_vie, valeurs["rappel_ans"], valeurs["rallonge_ans"], valeurs["uh_gestion"],
+        ),
     )
     conn.execute(
         "INSERT INTO affectation (equipement_id, site, date_debut, date_fin) VALUES (?, ?, ?, NULL)",
         (eq_id, site, date_debut or date_installation),
     )
     return eq_id
+
+
+def update_equipement(conn, equipement_id, **champs):
+    """Met à jour les champs fournis (parmi nom, date_creation, date_installation, type,
+    sous_type, duree_vie_ans, rappel_ans, rallonge_ans, uh_gestion, date_retrait, raison_retrait).
+    Ne touche pas à duree_vie_effective_ans ni alerte_envoyee_le (voir prolonger_equipement)."""
+    autorises = {
+        "nom", "date_creation", "date_installation", "type", "sous_type",
+        "duree_vie_ans", "rappel_ans", "rallonge_ans", "uh_gestion",
+        "date_retrait", "raison_retrait",
+    }
+    a_mettre_a_jour = {k: v for k, v in champs.items() if k in autorises}
+    if not a_mettre_a_jour:
+        return
+    colonnes = ", ".join(f"{k} = ?" for k in a_mettre_a_jour)
+    valeurs = list(a_mettre_a_jour.values()) + [equipement_id]
+    conn.execute(f"UPDATE equipement SET {colonnes} WHERE id = ?", valeurs)
+    # Si la durée de vie de base change manuellement, resynchroniser la valeur effective
+    # tant qu'aucune prolongation n'a eu lieu.
+    if "duree_vie_ans" in a_mettre_a_jour:
+        eq = get_equipement(conn, equipement_id)
+        if eq and (eq["duree_vie_effective_ans"] is None or eq["duree_vie_effective_ans"] == eq["duree_vie_ans"]):
+            conn.execute(
+                "UPDATE equipement SET duree_vie_effective_ans = ? WHERE id = ?",
+                (a_mettre_a_jour["duree_vie_ans"], equipement_id),
+            )
+
+
+def prolonger_equipement(conn, equipement_id):
+    """Ajoute la rallonge à la durée de vie effective et réinitialise le suivi d'alerte."""
+    eq = get_equipement(conn, equipement_id)
+    if not eq or eq["rallonge_ans"] is None:
+        return
+    base = eq["duree_vie_effective_ans"] if eq["duree_vie_effective_ans"] is not None else (eq["duree_vie_ans"] or 0)
+    nouvelle_duree = base + eq["rallonge_ans"]
+    conn.execute(
+        "UPDATE equipement SET duree_vie_effective_ans = ?, alerte_envoyee_le = NULL WHERE id = ?",
+        (nouvelle_duree, equipement_id),
+    )
+
+
+def marquer_alerte_envoyee(conn, equipement_id, quand):
+    conn.execute("UPDATE equipement SET alerte_envoyee_le = ? WHERE id = ?", (quand, equipement_id))
 
 
 def changer_affectation(conn, equipement_id, nouveau_site, date_transfert):
@@ -126,17 +290,42 @@ def changer_affectation(conn, equipement_id, nouveau_site, date_transfert):
     )
 
 
+_COLONNES_EQUIPEMENT_LISTE = """
+    e.id, e.nom, e.date_installation, e.date_creation, e.type, e.sous_type,
+    e.duree_vie_ans, e.duree_vie_effective_ans, e.rappel_ans, e.rallonge_ans,
+    e.uh_gestion, e.date_retrait, e.raison_retrait, e.alerte_envoyee_le,
+    a.site AS site_actuel, a.date_debut AS affecte_depuis,
+    s.lat AS site_lat, s.lon AS site_lon, s.maintenance AS site_maintenance
+"""
+
+
 def list_equipements(conn):
     rows = conn.execute(
-        """
-        SELECT e.id, e.nom, e.date_installation,
-               a.site AS site_actuel, a.date_debut AS affecte_depuis,
-               s.lat AS site_lat, s.lon AS site_lon
+        f"""
+        SELECT {_COLONNES_EQUIPEMENT_LISTE}
         FROM equipement e
         LEFT JOIN affectation a ON a.equipement_id = e.id AND a.date_fin IS NULL
         LEFT JOIN site s ON s.nom = a.site
         ORDER BY e.nom
         """
+    ).fetchall()
+    return rows
+
+
+def list_equipements_by_ids(conn, equipement_ids):
+    if not equipement_ids:
+        return []
+    placeholders = ",".join("?" for _ in equipement_ids)
+    rows = conn.execute(
+        f"""
+        SELECT {_COLONNES_EQUIPEMENT_LISTE}
+        FROM equipement e
+        LEFT JOIN affectation a ON a.equipement_id = e.id AND a.date_fin IS NULL
+        LEFT JOIN site s ON s.nom = a.site
+        WHERE e.id IN ({placeholders})
+        ORDER BY e.nom
+        """,
+        equipement_ids,
     ).fetchall()
     return rows
 
@@ -165,28 +354,128 @@ def get_historique(conn, equipement_id):
     ).fetchall()
 
 
-def list_equipements_by_ids(conn, equipement_ids):
-    if not equipement_ids:
-        return []
-    placeholders = ",".join("?" for _ in equipement_ids)
-    rows = conn.execute(
-        f"""
-        SELECT e.id, e.nom, e.date_installation,
-               a.site AS site_actuel, a.date_debut AS affecte_depuis,
-               s.lat AS site_lat, s.lon AS site_lon
-        FROM equipement e
-        LEFT JOIN affectation a ON a.equipement_id = e.id AND a.date_fin IS NULL
-        LEFT JOIN site s ON s.nom = a.site
-        WHERE e.id IN ({placeholders})
-        ORDER BY e.nom
-        """,
-        equipement_ids,
-    ).fetchall()
-    return rows
+# ── Listes de référence (types, sous-types, durées) ─────────────────────
+
+def list_types(conn):
+    return [r["nom"] for r in conn.execute("SELECT nom FROM type_equipement ORDER BY nom").fetchall()]
 
 
-def list_sites(conn):
-    rows = conn.execute(
-        "SELECT DISTINCT site FROM affectation ORDER BY site"
-    ).fetchall()
-    return [r["site"] for r in rows]
+def add_type(conn, nom):
+    conn.execute("INSERT OR IGNORE INTO type_equipement (nom) VALUES (?)", (nom,))
+
+
+def delete_type(conn, nom):
+    conn.execute("DELETE FROM sous_type_equipement WHERE type = ?", (nom,))
+    conn.execute("DELETE FROM type_equipement WHERE nom = ?", (nom,))
+
+
+def list_sous_types(conn, type_nom):
+    return [
+        r["nom"] for r in conn.execute(
+            "SELECT nom FROM sous_type_equipement WHERE type = ? ORDER BY nom", (type_nom,)
+        ).fetchall()
+    ]
+
+
+def list_sous_types_tous(conn):
+    """{type: [sous_types...]} pour tous les types, utilisé pour la cascade JS des formulaires."""
+    resultat = {t: [] for t in list_types(conn)}
+    for r in conn.execute("SELECT type, nom FROM sous_type_equipement ORDER BY type, nom").fetchall():
+        resultat.setdefault(r["type"], []).append(r["nom"])
+    return resultat
+
+
+def add_sous_type(conn, type_nom, nom):
+    conn.execute("INSERT OR IGNORE INTO sous_type_equipement (type, nom) VALUES (?, ?)", (type_nom, nom))
+
+
+def delete_sous_type(conn, type_nom, nom):
+    conn.execute("DELETE FROM sous_type_equipement WHERE type = ? AND nom = ?", (type_nom, nom))
+
+
+def _list_options(conn, table):
+    return [r["annees"] for r in conn.execute(f"SELECT annees FROM {table} ORDER BY annees").fetchall()]
+
+
+def _add_option(conn, table, annees):
+    conn.execute(f"INSERT OR IGNORE INTO {table} (annees) VALUES (?)", (annees,))
+
+
+def _delete_option(conn, table, annees):
+    conn.execute(f"DELETE FROM {table} WHERE annees = ?", (annees,))
+
+
+def list_durees_vie(conn):
+    return _list_options(conn, "duree_vie_option")
+
+
+def add_duree_vie(conn, annees):
+    _add_option(conn, "duree_vie_option", annees)
+
+
+def delete_duree_vie(conn, annees):
+    _delete_option(conn, "duree_vie_option", annees)
+
+
+def list_rappels(conn):
+    return _list_options(conn, "rappel_option")
+
+
+def add_rappel(conn, annees):
+    _add_option(conn, "rappel_option", annees)
+
+
+def delete_rappel(conn, annees):
+    _delete_option(conn, "rappel_option", annees)
+
+
+def list_rallonges(conn):
+    return _list_options(conn, "rallonge_option")
+
+
+def add_rallonge(conn, annees):
+    _add_option(conn, "rallonge_option", annees)
+
+
+def delete_rallonge(conn, annees):
+    _delete_option(conn, "rallonge_option", annees)
+
+
+# ── UH de gestion : emails de destination ───────────────────────────────
+
+UH_VALEURS = ["11", "34", "66"]
+
+
+def list_uh_emails(conn, uh):
+    return [r["email"] for r in conn.execute(
+        "SELECT email FROM uh_email WHERE uh = ? ORDER BY email", (uh,)
+    ).fetchall()]
+
+
+def list_uh_emails_tous(conn):
+    resultat = {uh: [] for uh in UH_VALEURS}
+    for r in conn.execute("SELECT uh, email FROM uh_email ORDER BY uh, email").fetchall():
+        resultat.setdefault(r["uh"], []).append(r["email"])
+    return resultat
+
+
+def add_uh_email(conn, uh, email):
+    conn.execute("INSERT OR IGNORE INTO uh_email (uh, email) VALUES (?, ?)", (uh, email))
+
+
+def delete_uh_email(conn, uh, email):
+    conn.execute("DELETE FROM uh_email WHERE uh = ? AND email = ?", (uh, email))
+
+
+# ── Couleurs (UH / site de maintenance) ─────────────────────────────────
+
+def list_couleurs(conn):
+    return {r["cle"]: r["valeur"] for r in conn.execute("SELECT cle, valeur FROM couleur_config").fetchall()}
+
+
+def set_couleur(conn, cle, valeur):
+    conn.execute(
+        "INSERT INTO couleur_config (cle, valeur) VALUES (?, ?) "
+        "ON CONFLICT(cle) DO UPDATE SET valeur = excluded.valeur",
+        (cle, valeur),
+    )

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Gestion des équipements{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <h1 style="margin:0;">Gestion des équipements</h1>
+  <a href="{{ url_for('nouveau_equipement') }}" class="btn">+ Nouvel équipement</a>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Équipement</th>
+      <th>Type</th>
+      <th>Site actuel</th>
+      <th>UH</th>
+      <th>Statut</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for l in lignes %}
+    {% set e = l.e %}
+    <tr class="{{ 'equip-retire' if e.date_retrait else '' }}">
+      <td><a href="{{ url_for('detail_equipement', equipement_id=e.id) }}">{{ e.nom }}</a></td>
+      <td>{{ e.type or '—' }}{% if e.sous_type %} / {{ e.sous_type }}{% endif %}</td>
+      <td>{{ e.site_actuel or '—' }}</td>
+      <td>{{ e.uh_gestion or '—' }}</td>
+      <td>
+        {% if e.date_retrait %}
+          Retiré le {{ e.date_retrait }}{% if e.raison_retrait %} ({{ e.raison_retrait }}){% endif %}
+        {% elif l.etat.active %}
+          ⚠️ Alerte en cours
+        {% else %}
+          En fonction
+        {% endif %}
+      </td>
+      <td class="col-actions"><a href="{{ url_for('modifier_equipement', equipement_id=e.id) }}" class="muted">✏️ modifier →</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="muted">Aucun équipement enregistré.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

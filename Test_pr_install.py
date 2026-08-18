@@ -36,6 +36,7 @@ REQUIRED = [
     ("PIL",       "pillow",      None),
     ("openpyxl",  "openpyxl",    None),
     ("reportlab", "reportlab",   None),
+    ("dateutil",  "python-dateutil", None),
 ]
 
 OPTIONAL = []

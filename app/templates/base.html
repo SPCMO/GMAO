@@ -28,6 +28,19 @@
   .flash { background: #dcfce7; color: #166534; padding: .6rem 1rem; border-radius: 6px; margin-bottom: 1rem; }
   .badge { display: inline-block; background: #e0e7ff; color: #3730a3; padding: .15rem .5rem; border-radius: 999px; font-size: .78rem; }
   .muted { color: #6b7280; font-size: .85rem; }
+  .liste-gestion { list-style: none; padding: 0; margin: .5rem 0 1rem; }
+  .liste-gestion li { display: flex; justify-content: space-between; align-items: center; padding: .35rem .6rem; border-bottom: 1px solid #eee; font-size: .88rem; }
+  .liste-gestion form { margin: 0; }
+  .lien-suppr { background: none; border: none; color: #b91c1c; cursor: pointer; font-size: .82rem; padding: 0; }
+  .lien-suppr:hover { text-decoration: underline; }
+  .form-inline { display: flex; gap: .5rem; margin-top: .5rem; align-items: center; flex-wrap: wrap; }
+  .form-inline input, .form-inline select { padding: .4rem .5rem; border: 1px solid #d1d5db; border-radius: 6px; }
+  h3.section-param { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; }
+  th.triable { cursor: pointer; user-select: none; }
+  th.triable:hover { background: #e5e9ef; }
+  th.triable .fleche { opacity: .5; font-size: .75rem; margin-left: .2rem; }
+  tr.equip-retire { opacity: .5; }
+  tr.equip-retire td:not(.col-actions) { text-decoration: line-through; }
 </style>
 {% block extra_head %}{% endblock %}
 </head>
@@ -40,8 +53,8 @@
   <div class="header-right">
     <a href="{{ url_for('aide') }}" class="btn btn-secondary" title="Aide" target="_blank">📖 Aide</a>
     <a href="{{ url_for('gestion_sites') }}" class="btn btn-secondary" title="Gestionnaire des sites">🏢 Sites</a>
+    <a href="{{ url_for('gestion_equipements') }}" class="btn btn-secondary" title="Gestion des équipements">🔧 Équipements</a>
     <a href="{{ url_for('parametres') }}" class="btn btn-secondary" title="Paramètres">⚙️ Paramètres</a>
-    <a href="{{ url_for('nouveau_equipement') }}" class="btn">+ Nouvel équipement</a>
   </div>
 </header>
 <main>
