@@ -164,7 +164,8 @@
     <div class="schema-couche">
       <div class="schema-titre-couche">Serveur local — Python (Flask)</div>
       <div class="schema-ligne">
-        <div class="schema-boite b-py">run.py<span class="note">routes, logique métier</span></div>
+        <div class="schema-boite b-py">run.py<span class="note">création de l'app, routes transverses</span></div>
+        <div class="schema-boite b-py">app/routes/*.py<span class="note">routes par domaine : équipements, sites, paramètres</span></div>
         <div class="schema-boite b-py">app/db.py<span class="note">accès SQLite, historique</span></div>
         <div class="schema-boite b-py">app/settings.py<span class="note">emplacement de la base</span></div>
         <div class="schema-boite b-py">app/qrcodes.py<span class="note">génère QR codes + PDF</span></div>
@@ -212,14 +213,20 @@
 
   <h3>Arborescence du projet</h3>
   <pre>GMAO/
-├── run.py                  # appli Flask locale (dashboard + formulaires)
+├── run.py                  # crée l'appli Flask, enregistre les blueprints, routes transverses
 ├── config.py                # chemins et URL de base des fiches
 ├── app/
+│   ├── routes/
+│   │   ├── equipements.py    # cycle de vie équipement (création, fiche, modif, affectation, QR)
+│   │   ├── sites.py          # gestion des sites (création, modif, localisation, fermeture)
+│   │   └── parametres.py     # page Paramètres et toutes ses listes de référence
+│   ├── forms.py               # parsing de formulaires partagé entre les routes ci-dessus
 │   ├── db.py                 # accès base + logique métier (affectations, listes de référence)
 │   ├── settings.py           # réglages propres à ce poste : base + SMTP (settings.json)
 │   ├── qrcodes.py            # génération des QR codes/PDF (tous ou une sélection)
 │   ├── alertes.py            # calcul des péremptions et alertes
 │   ├── mail.py                # construction et envoi des mails d'alerte (SMTP)
+│   ├── publication.py         # régénère + republie les fiches sur GitHub après chaque modif
 │   ├── templates/            # pages HTML (dashboard, formulaires, fiche)
 │   └── static/               # leaflet/ (carto) + gmao-common.js (cascades, validations)
 ├── scripts/
@@ -336,6 +343,11 @@
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-fix">Correctif</span> Les 7 défauts mineurs relevés par l'audit de code interne ont été corrigés : confirmation de suppression cohérente dans Paramètres (sous-types, durées/rappel/rallonge, emails UH, raisons de fermeture) ; bouton « annuler la prolongation » sur la fiche équipement ; badge « ⚙️ non configuré » distinct de « En fonction » quand durée de vie/rappel ne sont pas renseignés ; la fiche équipement ne régénère plus son QR/PDF à chaque consultation (bouton « 🔄 Régénérer l'étiquette » si besoin, ex. après un renommage) ; <code>run.py</code> découpé en Blueprints Flask (<code>app/routes/equipements.py</code>, <code>sites.py</code>, <code>parametres.py</code>) ; commentaires ajoutés sur la logique métier des routes ; classes CSS utilitaires pour réduire les styles inline répétés.</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">18 août 2026</div>
