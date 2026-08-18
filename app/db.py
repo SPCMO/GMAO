@@ -254,10 +254,11 @@ def list_all_sites(conn):
 
 
 def list_sites(conn):
-    rows = conn.execute(
-        "SELECT DISTINCT site FROM affectation ORDER BY site"
-    ).fetchall()
-    return [r["site"] for r in rows]
+    """Tous les sites connus (table site), pas seulement ceux ayant déjà eu un équipement
+    affecté : un site fraîchement créé via "+ Site" doit apparaître immédiatement dans les
+    menus déroulants de création/réaffectation d'équipement."""
+    rows = conn.execute("SELECT nom FROM site ORDER BY nom").fetchall()
+    return [r["nom"] for r in rows]
 
 
 # ── Équipements ──────────────────────────────────────────────────────────
