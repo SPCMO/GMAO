@@ -1,17 +1,34 @@
 {% extends "base.html" %}
 {% block title %}Changer l'affectation{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}">
+{% endblock %}
 {% block content %}
 <h1>Changer l'affectation — {{ equipement.nom }}</h1>
 <p class="muted">Site actuel : {{ site_actuel.site if site_actuel else '—' }} (depuis le {{ site_actuel.date_debut if site_actuel else '—' }})</p>
 
-<form class="card" method="post">
+<form class="card" method="post" style="max-width:520px;">
   <label for="nouveau_site">Nouveau site d'affectation</label>
-  <input type="text" id="nouveau_site" name="nouveau_site" required list="sites" placeholder="ex: Cassaignes">
-  <datalist id="sites">
-    {% for site in sites %}<option value="{{ site }}">{% endfor %}
-  </datalist>
+  <select id="nouveau_site" name="nouveau_site" required onchange="toggleNouveauSite()">
+    <option value="" disabled selected>Choisir un site...</option>
+    {% for site in sites %}<option value="{{ site }}">{{ site }}</option>{% endfor %}
+    <option value="__new__">+ Nouveau site...</option>
+  </select>
+  <p class="muted" id="infoSiteExistant" style="display:none; margin-top:.3rem;">La localisation sera reprise automatiquement de ce site (voir 🏢 Sites).</p>
 
-  <label for="date_transfert">Date de transfert</label>
+  <div id="blocNouveauSite" style="display:none;">
+    <input type="text" id="nouveau_site_nom" name="nouveau_site_nom" placeholder="Nom du nouveau site" style="margin-top:.5rem;">
+
+    <label style="margin-top:1rem;">Localisation du nouveau site (optionnel)</label>
+    <div style="display:flex; gap:.5rem; margin-top:.3rem;">
+      <input type="number" step="any" id="lat" name="lat" placeholder="Latitude">
+      <input type="number" step="any" id="lon" name="lon" placeholder="Longitude">
+    </div>
+    <p class="muted" style="margin-top:.3rem;">Cliquez sur la carte pour pointer l'emplacement du site, ou saisissez les coordonnées directement.</p>
+    <div id="mapPicker" style="height:280px; margin-top:.5rem; border-radius:6px; overflow:hidden;"></div>
+  </div>
+
+  <label for="date_transfert" style="margin-top:1rem;">Date de transfert</label>
   <input type="date" id="date_transfert" name="date_transfert" required>
 
   <p style="margin-top:1.5rem;">
@@ -19,4 +36,32 @@
     <a href="{{ url_for('detail_equipement', equipement_id=equipement.id) }}" class="btn btn-secondary">Annuler</a>
   </p>
 </form>
+
+<script>
+var carteInitialisee = false;
+function toggleNouveauSite() {
+  var sel = document.getElementById('nouveau_site');
+  var blocNouveau = document.getElementById('blocNouveauSite');
+  var infoExistant = document.getElementById('infoSiteExistant');
+  var champNom = document.getElementById('nouveau_site_nom');
+  if (sel.value === '__new__') {
+    blocNouveau.style.display = 'block';
+    infoExistant.style.display = 'none';
+    champNom.required = true;
+    champNom.focus();
+    if (!carteInitialisee) {
+      initMiniCarte('mapPicker', 'lat', 'lon');
+      carteInitialisee = true;
+    }
+  } else {
+    blocNouveau.style.display = 'none';
+    infoExistant.style.display = sel.value ? 'block' : 'none';
+    champNom.required = false;
+  }
+}
+</script>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
+<script src="{{ url_for('static', filename='leaflet/gmao-map.js') }}"></script>
 {% endblock %}

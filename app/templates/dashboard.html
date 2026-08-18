@@ -44,7 +44,7 @@
       </thead>
       <tbody>
         {% for e in equipements %}
-        <tr data-site="{{ e.site_actuel }}" data-nom="{{ e.nom|lower }}" data-lat="{{ e.lat if e.lat is not none else '' }}" data-lon="{{ e.lon if e.lon is not none else '' }}">
+        <tr data-site="{{ e.site_actuel }}" data-nom="{{ e.nom|lower }}" data-lat="{{ e.site_lat if e.site_lat is not none else '' }}" data-lon="{{ e.site_lon if e.site_lon is not none else '' }}">
           <td><input type="checkbox" name="ids" value="{{ e.id }}" class="case-equipement"></td>
           <td><a href="{{ url_for('detail_equipement', equipement_id=e.id) }}">{{ e.nom }}</a></td>
           <td>{{ e.site_actuel or '—' }}</td>
@@ -114,7 +114,7 @@ function reinitialiserFiltreCarte() {
   document.addEventListener('DOMContentLoaded', function () {
     var equipements = [
       {% for e in equipements %}
-      { id: "{{ e.id }}", nom: {{ e.nom|tojson }}, lat: {{ e.lat if e.lat is not none else 'null' }}, lon: {{ e.lon if e.lon is not none else 'null' }} }{{ "," if not loop.last }}
+      { id: "{{ e.id }}", nom: {{ e.nom|tojson }}, lat: {{ e.site_lat if e.site_lat is not none else 'null' }}, lon: {{ e.site_lon if e.site_lon is not none else 'null' }} }{{ "," if not loop.last }}
       {% endfor %}
     ];
     initDashboardCarte('carteDashboard', equipements, function (bounds) {

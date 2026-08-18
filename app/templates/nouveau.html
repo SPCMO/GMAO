@@ -15,19 +15,23 @@
     {% for site in sites %}<option value="{{ site }}">{{ site }}</option>{% endfor %}
     <option value="__new__">+ Nouveau site...</option>
   </select>
-  <input type="text" id="nouveau_site_nom" name="nouveau_site_nom" placeholder="Nom du nouveau site" style="display:none; margin-top:.5rem;">
+  <p class="muted" id="infoSiteExistant" style="display:none; margin-top:.3rem;">La localisation sera reprise automatiquement de ce site (voir 🏢 Sites).</p>
 
-  <label for="date_installation">Date d'installation</label>
+  <div id="blocNouveauSite" style="display:none;">
+    <input type="text" id="nouveau_site_nom" name="nouveau_site_nom" placeholder="Nom du nouveau site" style="margin-top:.5rem;">
+
+    <label style="margin-top:1rem;">Localisation du nouveau site (optionnel)</label>
+    <div style="display:flex; gap:.5rem; margin-top:.3rem;">
+      <input type="number" step="any" id="lat" name="lat" placeholder="Latitude">
+      <input type="number" step="any" id="lon" name="lon" placeholder="Longitude">
+    </div>
+    <p class="muted" style="margin-top:.3rem;">Cliquez sur la carte pour pointer l'emplacement du site, ou saisissez les coordonnées directement. Tous les équipements affectés à ce site en hériteront.</p>
+    <div id="mapPicker" style="height:280px; margin-top:.5rem; border-radius:6px; overflow:hidden;"></div>
+  </div>
+
+  <label for="date_installation" style="margin-top:1rem;">Date d'installation</label>
   <input type="date" id="date_installation" name="date_installation" required>
   <p class="muted" style="margin-top:.3rem;">La date d'affectation au site ci-dessus sera celle d'aujourd'hui ({{ aujourdhui }}), indépendamment de la date d'installation.</p>
-
-  <label>Localisation (optionnel)</label>
-  <div style="display:flex; gap:.5rem; margin-top:.3rem;">
-    <input type="number" step="any" id="lat" name="lat" placeholder="Latitude">
-    <input type="number" step="any" id="lon" name="lon" placeholder="Longitude">
-  </div>
-  <p class="muted" style="margin-top:.3rem;">Cliquez sur la carte pour pointer l'emplacement, ou saisissez les coordonnées directement.</p>
-  <div id="mapPicker" style="height:280px; margin-top:.5rem; border-radius:6px; overflow:hidden;"></div>
 
   <p style="margin-top:1.5rem;">
     <button type="submit" class="btn">Créer</button>
@@ -36,16 +40,25 @@
 </form>
 
 <script>
+var carteInitialisee = false;
 function toggleNouveauSite() {
   var sel = document.getElementById('site');
-  var input = document.getElementById('nouveau_site_nom');
+  var blocNouveau = document.getElementById('blocNouveauSite');
+  var infoExistant = document.getElementById('infoSiteExistant');
+  var champNom = document.getElementById('nouveau_site_nom');
   if (sel.value === '__new__') {
-    input.style.display = 'block';
-    input.required = true;
-    input.focus();
+    blocNouveau.style.display = 'block';
+    infoExistant.style.display = 'none';
+    champNom.required = true;
+    champNom.focus();
+    if (!carteInitialisee) {
+      initMiniCarte('mapPicker', 'lat', 'lon');
+      carteInitialisee = true;
+    }
   } else {
-    input.style.display = 'none';
-    input.required = false;
+    blocNouveau.style.display = 'none';
+    infoExistant.style.display = sel.value ? 'block' : 'none';
+    champNom.required = false;
   }
 }
 </script>
@@ -53,9 +66,4 @@ function toggleNouveauSite() {
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
 <script src="{{ url_for('static', filename='leaflet/gmao-map.js') }}"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    initMiniCarte('mapPicker', 'lat', 'lon');
-  });
-</script>
 {% endblock %}

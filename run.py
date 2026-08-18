@@ -31,15 +31,18 @@ def nouveau_equipement():
         if request.method == "POST":
             nom = request.form["nom"].strip()
             site = request.form["site"].strip()
-            if site == "__new__":
+            nouveau_site = site == "__new__"
+            if nouveau_site:
                 site = request.form.get("nouveau_site_nom", "").strip()
             date_installation = request.form["date_installation"]
-            lat = _parse_coord(request.form.get("lat"))
-            lon = _parse_coord(request.form.get("lon"))
             db.create_equipement(
-                conn, nom, date_installation, site,
-                date_debut=date.today().isoformat(), lat=lat, lon=lon,
+                conn, nom, date_installation, site, date_debut=date.today().isoformat()
             )
+            if nouveau_site:
+                lat = _parse_coord(request.form.get("lat"))
+                lon = _parse_coord(request.form.get("lon"))
+                if lat is not None and lon is not None:
+                    db.set_site_coordonnees(conn, site, lat, lon)
             flash(f"Équipement « {nom} » créé, affecté à « {site} » depuis aujourd'hui.")
             return redirect(url_for("dashboard"))
     return render_template("nouveau.html", sites=sites, aujourdhui=date.today().isoformat())
@@ -51,22 +54,11 @@ def detail_equipement(equipement_id):
         equipement = db.get_equipement(conn, equipement_id)
         site_actuel = db.get_site_actuel(conn, equipement_id)
         historique = db.get_historique(conn, equipement_id)
+        site_geo = db.get_site(conn, site_actuel["site"]) if site_actuel else None
     return render_template(
-        "detail.html", equipement=equipement, site_actuel=site_actuel, historique=historique
+        "detail.html", equipement=equipement, site_actuel=site_actuel,
+        historique=historique, site_geo=site_geo,
     )
-
-
-@app.route("/equipement/<equipement_id>/coordonnees", methods=["GET", "POST"])
-def modifier_coordonnees(equipement_id):
-    with db.db_session() as conn:
-        equipement = db.get_equipement(conn, equipement_id)
-        if request.method == "POST":
-            lat = _parse_coord(request.form.get("lat"))
-            lon = _parse_coord(request.form.get("lon"))
-            db.set_coordonnees(conn, equipement_id, lat, lon)
-            flash("Coordonnées mises à jour.")
-            return redirect(url_for("detail_equipement", equipement_id=equipement_id))
-    return render_template("coordonnees.html", equipement=equipement)
 
 
 @app.route("/equipement/<equipement_id>/affecter", methods=["GET", "POST"])
@@ -77,13 +69,41 @@ def affecter_equipement(equipement_id):
         sites = db.list_sites(conn)
         if request.method == "POST":
             nouveau_site = request.form["nouveau_site"].strip()
+            est_nouveau_site = nouveau_site == "__new__"
+            if est_nouveau_site:
+                nouveau_site = request.form.get("nouveau_site_nom", "").strip()
             date_transfert = request.form["date_transfert"]
             db.changer_affectation(conn, equipement_id, nouveau_site, date_transfert)
+            if est_nouveau_site:
+                lat = _parse_coord(request.form.get("lat"))
+                lon = _parse_coord(request.form.get("lon"))
+                if lat is not None and lon is not None:
+                    db.set_site_coordonnees(conn, nouveau_site, lat, lon)
             flash(f"« {equipement['nom']} » réaffecté à {nouveau_site}.")
             return redirect(url_for("detail_equipement", equipement_id=equipement_id))
     return render_template(
         "affecter.html", equipement=equipement, site_actuel=site_actuel, sites=sites
     )
+
+
+@app.route("/sites")
+def gestion_sites():
+    with db.db_session() as conn:
+        sites = db.list_all_sites(conn)
+    return render_template("sites.html", sites=sites)
+
+
+@app.route("/sites/<nom>/coordonnees", methods=["GET", "POST"])
+def modifier_site_coordonnees(nom):
+    with db.db_session() as conn:
+        if request.method == "POST":
+            lat = _parse_coord(request.form.get("lat"))
+            lon = _parse_coord(request.form.get("lon"))
+            db.set_site_coordonnees(conn, nom, lat, lon)
+            flash(f"Localisation de « {nom} » mise à jour.")
+            return redirect(url_for("gestion_sites"))
+        site = db.get_site(conn, nom)
+    return render_template("site_coordonnees.html", site=site)
 
 
 @app.route("/equipement/<equipement_id>/fiche")

@@ -21,6 +21,12 @@ CREATE TABLE IF NOT EXISTS affectation (
     date_fin TEXT
 );
 
+CREATE TABLE IF NOT EXISTS site (
+    nom TEXT PRIMARY KEY,
+    lat REAL,
+    lon REAL
+);
+
 CREATE INDEX IF NOT EXISTS idx_affectation_equipement ON affectation(equipement_id);
 """
 
@@ -33,11 +39,18 @@ def get_connection():
 
 
 def _migrate(conn):
+    # equipement.lat/lon (version précédente) : conservées si présentes mais plus utilisées,
+    # la localisation vit désormais sur le site (table site).
     cols = [r["name"] for r in conn.execute("PRAGMA table_info(equipement)").fetchall()]
     if "lat" not in cols:
         conn.execute("ALTER TABLE equipement ADD COLUMN lat REAL")
     if "lon" not in cols:
         conn.execute("ALTER TABLE equipement ADD COLUMN lon REAL")
+
+    # Backfill : un site déjà utilisé dans l'historique mais absent de la table site
+    conn.execute(
+        "INSERT OR IGNORE INTO site (nom) SELECT DISTINCT site FROM affectation"
+    )
 
 
 def init_db():
@@ -61,11 +74,38 @@ def new_equipement_id():
     return uuid.uuid4().hex[:12]
 
 
-def create_equipement(conn, nom, date_installation, site, date_debut=None, lat=None, lon=None):
+def ensure_site(conn, nom):
+    conn.execute("INSERT OR IGNORE INTO site (nom) VALUES (?)", (nom,))
+
+
+def set_site_coordonnees(conn, nom, lat, lon):
+    ensure_site(conn, nom)
+    conn.execute("UPDATE site SET lat = ?, lon = ? WHERE nom = ?", (lat, lon, nom))
+
+
+def get_site(conn, nom):
+    return conn.execute("SELECT * FROM site WHERE nom = ?", (nom,)).fetchone()
+
+
+def list_all_sites(conn):
+    rows = conn.execute(
+        """
+        SELECT s.nom, s.lat, s.lon, COUNT(a.id) AS nb_equipements
+        FROM site s
+        LEFT JOIN affectation a ON a.site = s.nom AND a.date_fin IS NULL
+        GROUP BY s.nom
+        ORDER BY s.nom
+        """
+    ).fetchall()
+    return rows
+
+
+def create_equipement(conn, nom, date_installation, site, date_debut=None):
+    ensure_site(conn, site)
     eq_id = new_equipement_id()
     conn.execute(
-        "INSERT INTO equipement (id, nom, date_installation, lat, lon) VALUES (?, ?, ?, ?, ?)",
-        (eq_id, nom, date_installation, lat, lon),
+        "INSERT INTO equipement (id, nom, date_installation) VALUES (?, ?, ?)",
+        (eq_id, nom, date_installation),
     )
     conn.execute(
         "INSERT INTO affectation (equipement_id, site, date_debut, date_fin) VALUES (?, ?, ?, NULL)",
@@ -75,6 +115,7 @@ def create_equipement(conn, nom, date_installation, site, date_debut=None, lat=N
 
 
 def changer_affectation(conn, equipement_id, nouveau_site, date_transfert):
+    ensure_site(conn, nouveau_site)
     conn.execute(
         "UPDATE affectation SET date_fin = ? WHERE equipement_id = ? AND date_fin IS NULL",
         (date_transfert, equipement_id),
@@ -88,20 +129,16 @@ def changer_affectation(conn, equipement_id, nouveau_site, date_transfert):
 def list_equipements(conn):
     rows = conn.execute(
         """
-        SELECT e.id, e.nom, e.date_installation, e.lat, e.lon,
-               a.site AS site_actuel, a.date_debut AS affecte_depuis
+        SELECT e.id, e.nom, e.date_installation,
+               a.site AS site_actuel, a.date_debut AS affecte_depuis,
+               s.lat AS site_lat, s.lon AS site_lon
         FROM equipement e
         LEFT JOIN affectation a ON a.equipement_id = e.id AND a.date_fin IS NULL
+        LEFT JOIN site s ON s.nom = a.site
         ORDER BY e.nom
         """
     ).fetchall()
     return rows
-
-
-def set_coordonnees(conn, equipement_id, lat, lon):
-    conn.execute(
-        "UPDATE equipement SET lat = ?, lon = ? WHERE id = ?", (lat, lon, equipement_id)
-    )
 
 
 def get_equipement(conn, equipement_id):
@@ -134,10 +171,12 @@ def list_equipements_by_ids(conn, equipement_ids):
     placeholders = ",".join("?" for _ in equipement_ids)
     rows = conn.execute(
         f"""
-        SELECT e.id, e.nom, e.date_installation, e.lat, e.lon,
-               a.site AS site_actuel, a.date_debut AS affecte_depuis
+        SELECT e.id, e.nom, e.date_installation,
+               a.site AS site_actuel, a.date_debut AS affecte_depuis,
+               s.lat AS site_lat, s.lon AS site_lon
         FROM equipement e
         LEFT JOIN affectation a ON a.equipement_id = e.id AND a.date_fin IS NULL
+        LEFT JOIN site s ON s.nom = a.site
         WHERE e.id IN ({placeholders})
         ORDER BY e.nom
         """,

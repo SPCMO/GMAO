@@ -37,6 +37,21 @@
   .changelog-entry { border-left: 3px solid #d9dde3; padding: .3rem 0 .3rem 1rem; margin-bottom: 1rem; }
   .changelog-date { font-size: .78rem; color: #6b7280; font-weight: 600; }
   .warn { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: .8rem 1rem; font-size: .88rem; }
+
+  .legende { display: flex; flex-wrap: wrap; gap: .3rem 1.2rem; font-size: .85rem; color: #374151; margin: .6rem 0 1rem; }
+  .legende span.puce { display: inline-block; width: .7rem; height: .7rem; border-radius: 3px; margin-right: .4rem; vertical-align: middle; }
+  .schema { margin: .5rem 0 1.5rem; }
+  .schema-couche { border: 1px dashed #d9dde3; border-radius: 10px; padding: .8rem; margin-bottom: .3rem; }
+  .schema-titre-couche { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; margin-bottom: .6rem; }
+  .schema-ligne { display: flex; flex-wrap: wrap; gap: .6rem; }
+  .schema-boite { flex: 1 1 150px; border-radius: 8px; padding: .6rem .8rem; font-size: .82rem; font-weight: 700; border: 1px solid; }
+  .schema-boite .note { display: block; font-weight: 400; font-size: .76rem; margin-top: .2rem; opacity: .85; }
+  .schema-fleche { text-align: center; color: #9ca3af; font-size: .95rem; padding: .3rem 0; }
+  .b-html { background: #fef3c7; border-color: #f5c451; color: #92400e; }
+  .b-py   { background: #dbeafe; border-color: #60a5fa; color: #1e40af; }
+  .b-lib  { background: #ede9fe; border-color: #a78bfa; color: #5b21b6; }
+  .b-data { background: #d1fae5; border-color: #34d399; color: #065f46; }
+  .b-autre{ background: #f1f5f9; border-color: #94a3b8; color: #334155; }
 </style>
 </head>
 <body>
@@ -67,8 +82,11 @@
   <p>Bouton <b>+ Nouvel équipement</b> en haut de page : nom, site d'affectation (menu déroulant listant les sites déjà utilisés, avec une option <b>+ Nouveau site...</b> pour en créer un directement depuis le formulaire), date d'installation. Un identifiant technique unique est généré automatiquement (utilisé plus tard dans l'URL du QR code).</p>
   <p class="muted">La date saisie dans ce formulaire est la date d'installation du matériel (qui peut être dans le passé). La date d'affectation au site choisi est toujours celle du jour de la création dans l'outil — les deux dates sont indépendantes.</p>
 
-  <h3>Localiser un équipement sur la carte</h3>
-  <p>Dans le formulaire de création, un encart carte permet de cliquer directement à l'emplacement du matériel (ou de saisir latitude/longitude à la main — les deux se synchronisent). Pour un équipement déjà créé, le bouton <b>📍 Modifier les coordonnées</b> sur sa fiche détail ouvre le même encart, pré-rempli si une localisation existe déjà. Laisser les champs vides efface la localisation.</p>
+  <h3>Localisation : la carte se règle par site, pas par équipement</h3>
+  <p>La localisation appartient au <b>site</b>, pas à l'équipement : tous les équipements affectés à un même site partagent automatiquement sa position. Quand un site existe déjà, le sélectionner suffit — sa localisation est reprise automatiquement (aucun encart carte à remplir). Quand on choisit <b>+ Nouveau site...</b>, un encart carte apparaît pour pointer l'emplacement du site (clic sur la carte ou saisie manuelle des coordonnées) ; c'est valable aussi bien depuis le formulaire de création d'équipement que depuis <b>Changer l'affectation</b>. Voir la section <b>🏢 Gestionnaire des sites</b> ci-dessous pour corriger ou compléter une localisation après coup.</p>
+
+  <h3>🏢 Gestionnaire des sites</h3>
+  <p>Accessible depuis le bouton <b>🏢 Sites</b> en haut de chaque page : liste tous les sites connus, le nombre d'équipements actuellement affectés à chacun, et leur localisation. Le lien <b>📍 modifier</b> ouvre un encart carte pour définir ou corriger la position d'un site (laisser les champs vides efface la localisation). C'est l'endroit central pour géolocaliser les sites créés avant cette fonctionnalité, ou pour corriger une position.</p>
 
   <h3>Changer l'affectation d'un équipement</h3>
   <p>Depuis la fiche détail d'un équipement → <b>Changer l'affectation</b> : indiquer le nouveau site et la date de transfert. L'ancienne affectation est automatiquement clôturée (date de fin renseignée) et une nouvelle ligne d'historique est créée. L'historique n'est jamais réécrit, seulement complété.</p>
@@ -100,6 +118,77 @@
     <div class="box"><b>4. GitHub Pages</b> (<code>github.com/SPCMO/GMAO</code>, dossier <code>docs/</code>) — hébergement public gratuit des fiches, accessible depuis un smartphone en scannant le QR code, y compris hors réseau interne.</div>
   </div>
 
+  <h3>Vue schématique : quelle techno fait quoi</h3>
+  <p>Le détail technique de chaque brique, et la nature de chaque fichier (page HTML, code Python, bibliothèque externe...).</p>
+  <div class="legende">
+    <span><span class="puce" style="background:#f5c451;"></span>HTML / gabarits Jinja2</span>
+    <span><span class="puce" style="background:#60a5fa;"></span>Python</span>
+    <span><span class="puce" style="background:#a78bfa;"></span>Bibliothèque externe</span>
+    <span><span class="puce" style="background:#34d399;"></span>Données</span>
+    <span><span class="puce" style="background:#94a3b8;"></span>Hébergement / lancement</span>
+  </div>
+
+  <div class="schema">
+
+    <div class="schema-couche">
+      <div class="schema-titre-couche">Navigateur (poste de travail ou smartphone)</div>
+      <div class="schema-ligne">
+        <div class="schema-boite b-html">Pages de l'appli<span class="note">dashboard, nouveau, détail, sites, affecter, paramètres — générées par Flask via Jinja2</span></div>
+        <div class="schema-boite b-lib">Leaflet.js<span class="note">carte interactive, exécutée entièrement dans le navigateur</span></div>
+      </div>
+    </div>
+
+    <div class="schema-fleche">↕ requêtes HTTP (localhost:5000)</div>
+
+    <div class="schema-couche">
+      <div class="schema-titre-couche">Serveur local — Python (Flask)</div>
+      <div class="schema-ligne">
+        <div class="schema-boite b-py">run.py<span class="note">routes, logique métier</span></div>
+        <div class="schema-boite b-py">app/db.py<span class="note">accès SQLite, historique</span></div>
+        <div class="schema-boite b-py">app/settings.py<span class="note">emplacement de la base</span></div>
+        <div class="schema-boite b-py">app/qrcodes.py<span class="note">génère QR codes + PDF</span></div>
+      </div>
+      <div class="schema-ligne" style="margin-top:.6rem;">
+        <div class="schema-boite b-lib">Flask<span class="note">serveur web</span></div>
+        <div class="schema-boite b-lib">qrcode + Pillow<span class="note">image des QR codes</span></div>
+        <div class="schema-boite b-lib">reportlab<span class="note">génère les PDF</span></div>
+        <div class="schema-boite b-lib">openpyxl<span class="note">import du classeur Excel initial</span></div>
+      </div>
+    </div>
+
+    <div class="schema-fleche">↕ lecture / écriture</div>
+
+    <div class="schema-couche">
+      <div class="schema-titre-couche">Données</div>
+      <div class="schema-ligne">
+        <div class="schema-boite b-data">SQLite — data/gmao.db<span class="note">locale ou réseau partagée, tables équipement + affectation + site (localisation)</span></div>
+      </div>
+    </div>
+
+    <div class="schema-fleche">↓ génération (scripts Python, à la demande)</div>
+
+    <div class="schema-couche">
+      <div class="schema-titre-couche">Sorties générées — HTML/PDF statiques (aucun Python à la consultation)</div>
+      <div class="schema-ligne">
+        <div class="schema-boite b-html">docs/e/*.html<span class="note">une fiche publique par équipement (état + historique)</span></div>
+        <div class="schema-boite b-html">etiquettes/*.html<span class="note">planches QR imprimables</span></div>
+        <div class="schema-boite b-lib">etiquettes/*.pdf<span class="note">généré par reportlab</span></div>
+      </div>
+    </div>
+
+    <div class="schema-fleche">↓ publication / distribution</div>
+
+    <div class="schema-couche">
+      <div class="schema-titre-couche">Hébergement, diffusion et lancement</div>
+      <div class="schema-ligne">
+        <div class="schema-boite b-autre">GitHub Pages<span class="note">fiches publiques, accès direct via QR code</span></div>
+        <div class="schema-boite b-autre">Réseau SPCMO<span class="note">copie du code + base partagée multi-postes</span></div>
+        <div class="schema-boite b-autre">Lancer_GMAO.bat<span class="note">démarre run.py, ouvre le navigateur</span></div>
+      </div>
+    </div>
+
+  </div>
+
   <h3>Arborescence du projet</h3>
   <pre>GMAO/
 ├── run.py                  # appli Flask locale (dashboard + formulaires)
@@ -124,10 +213,11 @@
   <h3>Modèle de données</h3>
   <table>
     <tr><th>Table</th><th>Champs</th><th>Rôle</th></tr>
-    <tr><td><code>equipement</code></td><td>id, nom, date_installation, lat, lon</td><td>identité et localisation du matériel (lat/lon optionnels)</td></tr>
+    <tr><td><code>equipement</code></td><td>id, nom, date_installation</td><td>identité du matériel</td></tr>
     <tr><td><code>affectation</code></td><td>equipement_id, site, date_debut, date_fin</td><td>une ligne par période d'affectation ; <code>date_fin NULL</code> = affectation en cours</td></tr>
+    <tr><td><code>site</code></td><td>nom, lat, lon</td><td>localisation d'un site — partagée par tous les équipements qui y sont affectés</td></tr>
   </table>
-  <p class="muted">Les colonnes <code>lat</code>/<code>lon</code> sont ajoutées automatiquement à la base (locale ou réseau) au premier lancement après cette mise à jour — aucune manipulation nécessaire.</p>
+  <p class="muted">La table <code>site</code> est créée automatiquement au premier lancement après cette mise à jour, et pré-remplie avec tous les sites déjà utilisés dans l'historique (sans coordonnées — à renseigner via <b>🏢 Sites</b>). Les colonnes <code>lat</code>/<code>lon</code> qui existaient sur <code>equipement</code> dans une version antérieure ne sont plus utilisées.</p>
 
   <h3>Usage multi-postes</h3>
   <p>Chaque poste garde sa propre copie du code (son propre <code>.bat</code>), mais peut pointer vers une base SQLite <b>partagée</b> sur le réseau au lieu de sa base locale, via le menu <b>⚙️ Paramètres</b>. Tous les postes configurés sur le même chemin réseau voient alors les mêmes équipements et affectations. Le chemin choisi est propre à chaque poste (fichier <code>settings.json</code>, non versionné) — chacun le configure une fois.</p>
@@ -182,6 +272,16 @@
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Vue schématique dans l'onglet Architecture : quelle brique est en HTML, Python ou bibliothèque externe.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-fix">Correctif</span> La localisation appartient désormais au <b>site</b> (nouvelle table <code>site</code>, gestionnaire <b>🏢 Sites</b>) et non plus à chaque équipement individuellement : affecter plusieurs équipements au même site ne demande plus de repointer la carte à chaque fois, ils héritent tous automatiquement de la position du site. L'encart carte n'apparaît plus que lors de la création d'un nouveau site (formulaire nouvel équipement ou changement d'affectation).</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">17 août 2026</div>
