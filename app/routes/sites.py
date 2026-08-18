@@ -2,7 +2,7 @@
 UH de gestion, statut maintenance, statut de fermeture)."""
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
-from app import db
+from app import db, publication
 from app.forms import parse_coord
 
 sites_bp = Blueprint("sites", __name__)
@@ -25,6 +25,7 @@ def nouveau_site():
         uh = request.form.get("uh_gestion") or None
         with db.db_session() as conn:
             db.create_site(conn, nom, maintenance=maintenance, lat=lat, lon=lon, uh_gestion=uh)
+        publication.publier_en_tache_de_fond()
         flash(f"Site « {nom} » créé.")
         return redirect(url_for("sites.gestion_sites"))
     return render_template("nouveau_site.html", uh_valeurs=db.UH_VALEURS)

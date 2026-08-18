@@ -65,8 +65,12 @@ def _regenerer_fiches():
 
 
 def _git(args):
+    # Proxy RIE explicite (voir config.PROXY_RIE) via -c, indépendant de la config git
+    # personnelle de chacun : marche même si l'utilisateur n'a jamais configuré git lui-même.
+    proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy") or config.PROXY_RIE
     return subprocess.run(
-        ["git"] + args, cwd=config.BASE_DIR, capture_output=True, text=True, timeout=30
+        ["git", "-c", f"http.proxy={proxy}", "-c", f"https.proxy={proxy}"] + args,
+        cwd=config.BASE_DIR, capture_output=True, text=True, timeout=30
     )
 
 

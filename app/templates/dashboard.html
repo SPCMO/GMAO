@@ -7,8 +7,9 @@
   .dashboard-layout { display: flex; gap: 1.5rem; align-items: flex-start; }
   .dashboard-carte { flex: 0 0 34%; min-width: 320px; height: 640px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.1); position: sticky; top: calc(var(--header-h) + 1.5rem); }
   .dashboard-table { flex: 1; min-width: 0; }
-  .dashboard-table table { min-width: 900px; font-size: .82rem; }
-  .dashboard-table th, .dashboard-table td { padding: .4rem .55rem; }
+  .dashboard-table table { min-width: 760px; font-size: .8rem; }
+  .dashboard-table th, .dashboard-table td { padding: .35rem .45rem; }
+  .dashboard-table th { text-transform: none; letter-spacing: 0; font-size: .72rem; font-weight: 700; vertical-align: bottom; }
   .table-scroll { max-height: 640px; overflow: auto; border: 1px solid #e5e7eb; border-radius: 6px; }
   .table-scroll table { box-shadow: none; }
   .table-scroll thead th { position: sticky; top: 0; z-index: 5; box-shadow: 0 1px 0 #e5e7eb; }
@@ -17,10 +18,13 @@
     .dashboard-carte { position: static; width: 100%; flex-basis: auto; }
   }
   .icone-alerte { font-size: 1.1rem; cursor: pointer; text-decoration: none; }
-  .th-triable { white-space: nowrap; }
-  .th-triable .th-libelle { margin-right: .35rem; }
-  .th-triable .ordre-actions { display: inline-flex; gap: .15rem; vertical-align: middle; margin: 0; }
-  .th-triable .btn-ordre { width: 1.15rem; height: 1.15rem; font-size: .6rem; padding: 0; }
+  .th-triable { white-space: normal; }
+  .th-triable-inner { display: flex; align-items: flex-start; justify-content: space-between; gap: .25rem; }
+  .th-triable .th-libelle { line-height: 1.2; }
+  .th-triable .ordre-actions { display: flex; flex-direction: column; gap: 1px; flex-shrink: 0; }
+  .th-triable .btn-ordre { width: .85rem; height: .85rem; font-size: .48rem; padding: 0; line-height: 1; }
+  .toolbar { justify-content: flex-start; }
+  .toolbar .filtres-groupe { display: flex; gap: .6rem; flex-wrap: wrap; }
 </style>
 {% endblock %}
 {% block content %}
@@ -30,7 +34,7 @@
   <div class="dashboard-table">
     <div class="toolbar">
       <input id="recherche" type="search" placeholder="Rechercher un équipement..." onkeyup="filtrer()">
-      <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
+      <div class="filtres-groupe">
         <select id="filtreSite" onchange="filtrer()">
           <option value="">Tous les sites ({{ lignes|length }})</option>
           {% for site in sites %}
@@ -57,10 +61,12 @@
           <th style="width:2rem;"><input type="checkbox" id="toutSelectionner" onclick="toggleTout(this)" title="Sélectionner tout ce qui est affiché"></th>
           {% for libelle, idx in [("Équipement",1), ("Type",2), ("Sous-type",3), ("Site",4), ("UH",5), ("Affecté depuis",6), ("1ère mise en service",7), ("Statut",8), ("Durée de vie prolongée",9)] %}
           <th class="th-triable">
-            <span class="th-libelle">{{ libelle }}</span>
-            <span class="ordre-actions">
-              <button type="button" class="btn-ordre" onclick="trierPar({{ idx }}, 1)" title="Trier {{ libelle }} croissant" data-col="{{ idx }}" data-dir="1">▲</button>
-              <button type="button" class="btn-ordre" onclick="trierPar({{ idx }}, -1)" title="Trier {{ libelle }} décroissant" data-col="{{ idx }}" data-dir="-1">▼</button>
+            <span class="th-triable-inner">
+              <span class="th-libelle">{{ libelle }}</span>
+              <span class="ordre-actions">
+                <button type="button" class="btn-ordre" onclick="trierPar({{ idx }}, 1)" title="Trier {{ libelle }} croissant" data-col="{{ idx }}" data-dir="1">▲</button>
+                <button type="button" class="btn-ordre" onclick="trierPar({{ idx }}, -1)" title="Trier {{ libelle }} décroissant" data-col="{{ idx }}" data-dir="-1">▼</button>
+              </span>
             </span>
           </th>
           {% endfor %}
