@@ -336,6 +336,27 @@ def marquer_alerte_envoyee(conn, equipement_id, quand):
     conn.execute("UPDATE equipement SET alerte_envoyee_le = ? WHERE id = ?", (quand, equipement_id))
 
 
+def peut_annuler_prolongation(eq):
+    """Vrai si la durée de vie effective correspond exactement à une unique rallonge appliquée
+    (base + rallonge) : au-delà d'une seule prolongation, l'historique n'est pas assez précis
+    pour annuler sans ambiguïté, donc on ne propose pas le retour arrière."""
+    if eq["duree_vie_ans"] is None or eq["duree_vie_effective_ans"] is None or eq["rallonge_ans"] is None:
+        return False
+    return abs(eq["duree_vie_effective_ans"] - (eq["duree_vie_ans"] + eq["rallonge_ans"])) < 1e-9
+
+
+def annuler_prolongation(conn, equipement_id):
+    """Ramène la durée de vie effective à sa valeur de base (voir peut_annuler_prolongation)."""
+    eq = get_equipement(conn, equipement_id)
+    if not eq or not peut_annuler_prolongation(eq):
+        return False
+    conn.execute(
+        "UPDATE equipement SET duree_vie_effective_ans = ? WHERE id = ?",
+        (eq["duree_vie_ans"], equipement_id),
+    )
+    return True
+
+
 def changer_affectation(conn, equipement_id, nouveau_site, date_transfert):
     ensure_site(conn, nouveau_site)
     conn.execute(

@@ -64,14 +64,27 @@ def _ensure_png(equipement):
     return png_path, img
 
 
-def generate(equipement_ids=None):
+def generate(equipement_ids=None, force=False):
     """Génère les PNG des QR codes + une planche imprimable HTML + un PDF.
 
     equipement_ids=None -> tous les équipements (planche_etiquettes.*).
     equipement_ids=[...] -> uniquement cette sélection (planche_selection.*).
     Retourne (nombre généré, chemin de la planche HTML, chemin du PDF).
+
+    Pour un unique équipement déjà généré (cas de la consultation de sa fiche détail,
+    appelée à chaque affichage), le contenu ne change quasiment jamais une fois créé
+    (l'URL du QR code est basée sur l'identifiant, fixe) : on évite de réécrire PNG/HTML/PDF
+    à chaque vue et on renvoie directement les fichiers existants, sauf force=True (utilisé
+    par le bouton "Régénérer l'étiquette", utile après un renommage de l'équipement).
     """
     os.makedirs(config.ETIQUETTES_DIR, exist_ok=True)
+    if equipement_ids is not None and len(equipement_ids) == 1 and not force:
+        eq_id = equipement_ids[0]
+        pdf_existant = os.path.join(config.ETIQUETTES_DIR, f"fiche_{eq_id}.pdf")
+        png_existant = os.path.join(config.ETIQUETTES_DIR, f"{eq_id}.png")
+        html_existant = os.path.join(config.ETIQUETTES_DIR, f"fiche_{eq_id}.html")
+        if os.path.exists(pdf_existant) and os.path.exists(png_existant) and os.path.exists(html_existant):
+            return 1, html_existant, pdf_existant
     if equipement_ids is None:
         base_filename, titre = "planche_etiquettes", "Planche d'étiquettes — Matériel hydrométrique"
     elif len(equipement_ids) == 1:

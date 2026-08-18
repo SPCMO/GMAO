@@ -17,7 +17,7 @@
 </form>
 
 <h2 class="section-param">📧 Notifications par mail (SMTP)</h2>
-<form class="card" method="post" action="{{ url_for('parametres_smtp') }}" style="max-width:700px;">
+<form class="card" method="post" action="{{ url_for('parametres.parametres_smtp') }}" style="max-width:700px;">
   <label for="smtp_host">Serveur SMTP</label>
   <input type="text" id="smtp_host" name="smtp_host" value="{{ smtp.smtp_host }}" placeholder="ex: smtp.gmail.com">
 
@@ -39,7 +39,7 @@
 <h2 class="section-param">🔗 Relais mail (Google Apps Script) — recommandé</h2>
 <div class="card" style="max-width:700px; padding:1.5rem;">
   <p class="muted">Le réseau SPCMO bloque le SMTP direct ci-dessus. Solution qui fonctionne : un petit script Google Apps Script (fichier <code>apps_script/gmao_mail_relay.gs</code> du dépôt) envoie le mail via Gmail côté serveur Google ; GMAO le contacte simplement en HTTPS, comme il le fait déjà pour GitHub. Voir Aide.html (onglet Paramétrage) pour les étapes de déploiement du script.</p>
-  <form method="post" action="{{ url_for('parametres_relais_mail') }}" style="margin-top:1rem;">
+  <form method="post" action="{{ url_for('parametres.parametres_relais_mail') }}" style="margin-top:1rem;">
     <label for="apps_script_url">URL du déploiement Apps Script</label>
     <input type="text" id="apps_script_url" name="apps_script_url" value="{{ apps_script.apps_script_url }}" placeholder="https://script.google.com/macros/s/.../exec" style="font-family:monospace; font-size:.85rem;">
 
@@ -52,7 +52,7 @@
     </p>
   </form>
 
-  <form method="post" action="{{ url_for('parametres_relais_mail_tester') }}" class="form-inline" style="margin-top:1rem; padding-top:1rem; border-top:1px solid #e5e7eb;">
+  <form method="post" action="{{ url_for('parametres.parametres_relais_mail_tester') }}" class="form-inline" style="margin-top:1rem; padding-top:1rem; border-top:1px solid #e5e7eb;">
     <input type="email" name="destinataire_test" placeholder="adresse@test.fr pour un envoi test" required style="flex:1;">
     <button type="submit" class="btn btn-secondary">✉️ Envoyer un test</button>
   </form>
@@ -65,11 +65,11 @@
   <h3 style="margin-top:{{ '0' if loop.first else '1.2rem' }}; display:flex; align-items:center; gap:.5rem;">
     {{ t }}
     <span class="ordre-actions">
-      <form method="post" action="{{ url_for('parametres_types_monter') }}" style="display:inline;">
+      <form method="post" action="{{ url_for('parametres.parametres_types_monter') }}" style="display:inline;">
         <input type="hidden" name="nom" value="{{ t }}">
         <button type="submit" class="btn-ordre" title="Monter" {{ "disabled" if loop.first }}>▲</button>
       </form>
-      <form method="post" action="{{ url_for('parametres_types_descendre') }}" style="display:inline;">
+      <form method="post" action="{{ url_for('parametres.parametres_types_descendre') }}" style="display:inline;">
         <input type="hidden" name="nom" value="{{ t }}">
         <button type="submit" class="btn-ordre" title="Descendre" {{ "disabled" if loop.last }}>▼</button>
       </form>
@@ -81,18 +81,18 @@
       <span>{{ st }}</span>
       <span style="display:flex; align-items:center;">
         <span class="ordre-actions">
-          <form method="post" action="{{ url_for('parametres_sous_types_monter') }}" style="display:inline;">
+          <form method="post" action="{{ url_for('parametres.parametres_sous_types_monter') }}" style="display:inline;">
             <input type="hidden" name="type" value="{{ t }}">
             <input type="hidden" name="nom" value="{{ st }}">
             <button type="submit" class="btn-ordre" title="Monter" {{ "disabled" if loop.first }}>▲</button>
           </form>
-          <form method="post" action="{{ url_for('parametres_sous_types_descendre') }}" style="display:inline;">
+          <form method="post" action="{{ url_for('parametres.parametres_sous_types_descendre') }}" style="display:inline;">
             <input type="hidden" name="type" value="{{ t }}">
             <input type="hidden" name="nom" value="{{ st }}">
             <button type="submit" class="btn-ordre" title="Descendre" {{ "disabled" if loop.last }}>▼</button>
           </form>
         </span>
-        <form method="post" action="{{ url_for('parametres_sous_types_supprimer') }}" style="margin-left:.8rem;">
+        <form method="post" action="{{ url_for('parametres.parametres_sous_types_supprimer') }}" style="margin-left:.8rem;" onsubmit="return confirm('Supprimer le sous-type « {{ st }} » ?');">
           <input type="hidden" name="type" value="{{ t }}">
           <input type="hidden" name="nom" value="{{ st }}">
           <button type="submit" class="lien-suppr">supprimer</button>
@@ -103,19 +103,19 @@
     <li class="muted">Aucun sous-type</li>
     {% endfor %}
   </ul>
-  <form class="form-inline" method="post" action="{{ url_for('parametres_sous_types_ajouter') }}">
+  <form class="form-inline" method="post" action="{{ url_for('parametres.parametres_sous_types_ajouter') }}">
     <input type="hidden" name="type" value="{{ t }}">
     <input type="text" name="nom" placeholder="Nouveau sous-type" required>
     <button type="submit" class="btn btn-secondary">+ Ajouter</button>
   </form>
-  <form method="post" action="{{ url_for('parametres_types_supprimer') }}" onsubmit="return confirm('Supprimer le type « {{ t }} » et tous ses sous-types ?');" style="margin-top:.5rem;">
+  <form method="post" action="{{ url_for('parametres.parametres_types_supprimer') }}" onsubmit="return confirm('Supprimer le type « {{ t }} » et tous ses sous-types ?');" style="margin-top:.5rem;">
     <input type="hidden" name="nom" value="{{ t }}">
     <button type="submit" class="lien-suppr">supprimer le type « {{ t }} »</button>
   </form>
   {% endfor %}
 
   <h3 class="section-param" style="margin-top:1.5rem; padding-top:1rem;">Ajouter un type</h3>
-  <form class="form-inline" method="post" action="{{ url_for('parametres_types_ajouter') }}">
+  <form class="form-inline" method="post" action="{{ url_for('parametres.parametres_types_ajouter') }}">
     <input type="text" name="nom" placeholder="Nom du type" required>
     <button type="submit" class="btn btn-secondary">+ Ajouter</button>
   </form>
@@ -128,14 +128,14 @@
     <ul class="liste-gestion">
       {% for v in durees_vie %}
       <li>{{ v|int if v == v|int else v }} an(s)
-        <form method="post" action="{{ url_for('parametres_durees_supprimer') }}">
+        <form method="post" action="{{ url_for('parametres.parametres_durees_supprimer') }}" onsubmit="return confirm('Supprimer la valeur {{ v|int if v == v|int else v }} an(s) des durées de vie proposées ?');">
           <input type="hidden" name="annees" value="{{ v }}">
           <button type="submit" class="lien-suppr">×</button>
         </form>
       </li>
       {% endfor %}
     </ul>
-    <form class="form-inline" method="post" action="{{ url_for('parametres_durees_ajouter') }}">
+    <form class="form-inline" method="post" action="{{ url_for('parametres.parametres_durees_ajouter') }}">
       <input type="number" step="0.5" name="annees" placeholder="ex: 6" required style="width:80px;">
       <button type="submit" class="btn btn-secondary">+</button>
     </form>
@@ -145,14 +145,14 @@
     <ul class="liste-gestion">
       {% for v in rappels %}
       <li>{{ v|int if v == v|int else v }} an(s)
-        <form method="post" action="{{ url_for('parametres_rappels_supprimer') }}">
+        <form method="post" action="{{ url_for('parametres.parametres_rappels_supprimer') }}" onsubmit="return confirm('Supprimer la valeur {{ v|int if v == v|int else v }} an(s) des rappels proposés ?');">
           <input type="hidden" name="annees" value="{{ v }}">
           <button type="submit" class="lien-suppr">×</button>
         </form>
       </li>
       {% endfor %}
     </ul>
-    <form class="form-inline" method="post" action="{{ url_for('parametres_rappels_ajouter') }}">
+    <form class="form-inline" method="post" action="{{ url_for('parametres.parametres_rappels_ajouter') }}">
       <input type="number" step="0.5" name="annees" placeholder="ex: 0.5" required style="width:80px;">
       <button type="submit" class="btn btn-secondary">+</button>
     </form>
@@ -162,14 +162,14 @@
     <ul class="liste-gestion">
       {% for v in rallonges %}
       <li>{{ v|int if v == v|int else v }} an(s)
-        <form method="post" action="{{ url_for('parametres_rallonges_supprimer') }}">
+        <form method="post" action="{{ url_for('parametres.parametres_rallonges_supprimer') }}" onsubmit="return confirm('Supprimer la valeur {{ v|int if v == v|int else v }} an(s) des rallonges proposées ?');">
           <input type="hidden" name="annees" value="{{ v }}">
           <button type="submit" class="lien-suppr">×</button>
         </form>
       </li>
       {% endfor %}
     </ul>
-    <form class="form-inline" method="post" action="{{ url_for('parametres_rallonges_ajouter') }}">
+    <form class="form-inline" method="post" action="{{ url_for('parametres.parametres_rallonges_ajouter') }}">
       <input type="number" step="0.5" name="annees" placeholder="ex: 2" required style="width:80px;">
       <button type="submit" class="btn btn-secondary">+</button>
     </form>
@@ -184,7 +184,7 @@
     <ul class="liste-gestion">
       {% for email in uh_emails.get(uh, []) %}
       <li>{{ email }}
-        <form method="post" action="{{ url_for('parametres_uh_emails_supprimer') }}">
+        <form method="post" action="{{ url_for('parametres.parametres_uh_emails_supprimer') }}" onsubmit="return confirm('Supprimer « {{ email }} » des destinataires d\'alerte de l\'UH {{ uh }} ?');">
           <input type="hidden" name="uh" value="{{ uh }}">
           <input type="hidden" name="email" value="{{ email }}">
           <button type="submit" class="lien-suppr">×</button>
@@ -194,7 +194,7 @@
       <li class="muted">Aucun destinataire</li>
       {% endfor %}
     </ul>
-    <form class="form-inline" method="post" action="{{ url_for('parametres_uh_emails_ajouter') }}">
+    <form class="form-inline" method="post" action="{{ url_for('parametres.parametres_uh_emails_ajouter') }}">
       <input type="hidden" name="uh" value="{{ uh }}">
       <input type="email" name="email" placeholder="adresse@spcmo.fr" required style="width:100%;">
       <button type="submit" class="btn btn-secondary">+</button>
@@ -212,16 +212,16 @@
       <span>{{ r }}</span>
       <span style="display:flex; align-items:center;">
         <span class="ordre-actions">
-          <form method="post" action="{{ url_for('parametres_raisons_fermeture_monter') }}" style="display:inline;">
+          <form method="post" action="{{ url_for('parametres.parametres_raisons_fermeture_monter') }}" style="display:inline;">
             <input type="hidden" name="nom" value="{{ r }}">
             <button type="submit" class="btn-ordre" title="Monter" {{ "disabled" if loop.first }}>▲</button>
           </form>
-          <form method="post" action="{{ url_for('parametres_raisons_fermeture_descendre') }}" style="display:inline;">
+          <form method="post" action="{{ url_for('parametres.parametres_raisons_fermeture_descendre') }}" style="display:inline;">
             <input type="hidden" name="nom" value="{{ r }}">
             <button type="submit" class="btn-ordre" title="Descendre" {{ "disabled" if loop.last }}>▼</button>
           </form>
         </span>
-        <form method="post" action="{{ url_for('parametres_raisons_fermeture_supprimer') }}" style="margin-left:.8rem;">
+        <form method="post" action="{{ url_for('parametres.parametres_raisons_fermeture_supprimer') }}" style="margin-left:.8rem;" onsubmit="return confirm('Supprimer la raison de fermeture « {{ r }} » ?');">
           <input type="hidden" name="nom" value="{{ r }}">
           <button type="submit" class="lien-suppr">supprimer</button>
         </form>
@@ -231,14 +231,14 @@
     <li class="muted">Aucune raison</li>
     {% endfor %}
   </ul>
-  <form class="form-inline" method="post" action="{{ url_for('parametres_raisons_fermeture_ajouter') }}">
+  <form class="form-inline" method="post" action="{{ url_for('parametres.parametres_raisons_fermeture_ajouter') }}">
     <input type="text" name="nom" placeholder="ex: Vandalisme" required>
     <button type="submit" class="btn btn-secondary">+ Ajouter</button>
   </form>
 </div>
 
 <h2 class="section-param">🎨 Couleurs de fond (liste des équipements et carte)</h2>
-<form class="card" method="post" action="{{ url_for('parametres_couleurs') }}" style="max-width:700px;">
+<form class="card" method="post" action="{{ url_for('parametres.parametres_couleurs') }}" style="max-width:700px;">
   <div style="display:flex; gap:1.5rem; flex-wrap:wrap; align-items:flex-end;">
     {% for cle, libelle in [("uh_11", "UH 11"), ("uh_34", "UH 34"), ("uh_66", "UH 66"), ("maintenance", "Site de maintenance")] %}
     <div>

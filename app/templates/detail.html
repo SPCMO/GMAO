@@ -21,9 +21,12 @@
     <h1>{{ equipement.nom }}</h1>
     <p>
       {% if equipement.date_retrait %}
-        <span class="badge" style="background:#f3f4f6; color:#374151;">Retiré le {{ equipement.date_retrait }}{% if equipement.raison_retrait %} — {{ equipement.raison_retrait }}{% endif %}</span>
+        <span class="badge badge-muted">Retiré le {{ equipement.date_retrait }}{% if equipement.raison_retrait %} — {{ equipement.raison_retrait }}{% endif %}</span>
       {% else %}
-        <span class="badge" style="background:#dcfce7; color:#166534;">En fonction</span>
+        <span class="badge badge-ok">En fonction</span>
+        {% if not equipement.duree_vie_ans or not equipement.rappel_ans %}
+          <span class="badge badge-purple" title="Durée de vie et/ou rappel non renseignés : aucune alerte de péremption ne surveille cet équipement">⚙️ non configuré</span>
+        {% endif %}
       {% endif %}
     </p>
 
@@ -41,7 +44,7 @@
           {% if site_geo and site_geo.lat is not none and site_geo.lon is not none %}
             {{ "%.5f"|format(site_geo.lat) }}, {{ "%.5f"|format(site_geo.lon) }}
           {% else %}
-            <span class="badge" style="background:#fef3c7; color:#92400e;">📍 non renseignée pour ce site</span>
+            <span class="badge badge-warn">📍 non renseignée pour ce site</span>
           {% endif %}
         </td>
       </tr>
@@ -49,7 +52,12 @@
         <td>
           {{ equipement.duree_vie_ans or '—' }}{% if equipement.duree_vie_ans %} an(s){% endif %}
           {% if equipement.duree_vie_effective_ans and equipement.duree_vie_ans and equipement.duree_vie_effective_ans > equipement.duree_vie_ans %}
-            <span class="badge" style="background:#dbeafe; color:#1e40af;">prolongée à {{ equipement.duree_vie_effective_ans }} ans</span>
+            <span class="badge badge-info">prolongée à {{ equipement.duree_vie_effective_ans }} ans</span>
+            {% if peut_annuler %}
+            <form method="post" action="{{ url_for('equipements.annuler_prolongation_equipement', equipement_id=equipement.id) }}" style="display:inline;" onsubmit="return confirm('Annuler cette prolongation et revenir à une durée de vie de {{ equipement.duree_vie_ans }} an(s) ?');">
+              <button type="submit" class="lien-suppr" style="font-size:.8rem;">annuler la prolongation</button>
+            </form>
+            {% endif %}
           {% endif %}
         </td>
       </tr>
@@ -57,16 +65,16 @@
       <tr><th>Rallonge</th><td>{{ equipement.rallonge_ans or '—' }}{% if equipement.rallonge_ans %} an(s){% endif %}</td></tr>
     </table>
 
-    <p style="margin-top:1rem;">
-      <a href="{{ url_for('modifier_equipement', equipement_id=equipement.id) }}" class="btn">✏️ Modifier</a>
-      <a href="{{ url_for('affecter_equipement', equipement_id=equipement.id) }}" class="btn btn-secondary">Changer l'affectation</a>
+    <p class="mt-1">
+      <a href="{{ url_for('equipements.modifier_equipement', equipement_id=equipement.id) }}" class="btn">✏️ Modifier</a>
+      <a href="{{ url_for('equipements.affecter_equipement', equipement_id=equipement.id) }}" class="btn btn-secondary">Changer l'affectation</a>
       {% if site_actuel %}
-      <a href="{{ url_for('modifier_site', nom=site_actuel.site) }}" class="btn btn-secondary">📍 Modifier la localisation du site</a>
+      <a href="{{ url_for('sites.modifier_site', nom=site_actuel.site) }}" class="btn btn-secondary">📍 Modifier la localisation du site</a>
       {% endif %}
-      <a href="{{ url_for('fiche_publique', equipement_id=equipement.id) }}" class="btn btn-secondary" target="_blank">Voir la fiche publique</a>
+      <a href="{{ url_for('equipements.fiche_publique', equipement_id=equipement.id) }}" class="btn btn-secondary" target="_blank">Voir la fiche publique</a>
     </p>
 
-    <h2 style="margin-top:2rem;">Historique des affectations</h2>
+    <h2 class="mt-2">Historique des affectations</h2>
     <table>
       <thead>
         <tr><th>Événement</th><th>Site</th><th>Début</th><th>Fin</th></tr>
@@ -92,8 +100,11 @@
     <img src="{{ url_for('etiquettes_file', filename=equipement.id ~ '.png') }}" alt="QR code {{ equipement.nom }}">
     <div class="nom">{{ equipement.nom }}</div>
     <p class="no-print">
-      <button type="button" class="btn" style="width:100%; margin-bottom:.5rem;" onclick="window.print()">🖨️ Imprimer</button>
-      <a href="{{ url_for('etiquettes_file', filename=pdf_filename) }}" class="btn btn-secondary" style="width:100%; box-sizing:border-box;">📄 Télécharger en PDF</a>
+      <button type="button" class="btn w-full" style="margin-bottom:.5rem;" onclick="window.print()">🖨️ Imprimer</button>
+      <a href="{{ url_for('etiquettes_file', filename=pdf_filename) }}" class="btn btn-secondary w-full" style="margin-bottom:.5rem;">📄 Télécharger en PDF</a>
+      <form method="post" action="{{ url_for('equipements.regenerer_etiquette', equipement_id=equipement.id) }}">
+        <button type="submit" class="btn btn-secondary w-full" title="Utile après un renommage : le QR/PDF ne se régénère pas automatiquement à chaque affichage">🔄 Régénérer l'étiquette</button>
+      </form>
     </p>
   </div>
 </div>

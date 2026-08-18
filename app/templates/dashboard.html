@@ -40,7 +40,7 @@
     </div>
     <p class="muted" id="infoFiltreCarte" style="display:none;">🗺️ Le tableau est filtré sur la zone actuellement visible de la carte. <a href="#" onclick="reinitialiserFiltreCarte(); return false;">Réinitialiser</a></p>
 
-    <form method="post" action="{{ url_for('generer_qrcodes_selection') }}" target="_blank" onsubmit="return validerSelection()">
+    <form method="post" action="{{ url_for('equipements.generer_qrcodes_selection') }}" target="_blank" onsubmit="return validerSelection()">
     <table id="tableEquipements">
       <thead>
         <tr>
@@ -67,7 +67,7 @@
             data-type="{{ e.type or '' }}" data-uh="{{ e.site_uh or '' }}"
             {% if l.couleur_fond and not e.date_retrait %}style="background-color: {{ l.couleur_fond }};"{% endif %}>
           <td><input type="checkbox" name="ids" value="{{ e.id }}" class="case-equipement"></td>
-          <td data-tri="{{ e.nom|lower }}"><a href="{{ url_for('detail_equipement', equipement_id=e.id) }}">{{ e.nom }}</a></td>
+          <td data-tri="{{ e.nom|lower }}"><a href="{{ url_for('equipements.detail_equipement', equipement_id=e.id) }}">{{ e.nom }}</a></td>
           <td data-tri="{{ e.type or '' }}">{{ e.type or '—' }}</td>
           <td data-tri="{{ e.site_actuel or '' }}">{{ e.site_actuel or '—' }}</td>
           <td data-tri="{{ e.site_uh or '' }}">{{ e.site_uh or '—' }}</td>
@@ -81,10 +81,10 @@
           </td>
           <td>
             {% if etat.active and not e.date_retrait %}
-              <a href="{{ url_for('modifier_equipement', equipement_id=e.id) }}?depuis_alerte=1" class="icone-alerte" title="Alerte en cours — cliquer pour gérer">⚠️</a>
+              <a href="{{ url_for('equipements.modifier_equipement', equipement_id=e.id) }}?depuis_alerte=1" class="icone-alerte" title="Alerte en cours — cliquer pour gérer">⚠️</a>
             {% endif %}
           </td>
-          <td class="col-actions"><a href="{{ url_for('detail_equipement', equipement_id=e.id) }}" class="muted">détail →</a></td>
+          <td class="col-actions"><a href="{{ url_for('equipements.detail_equipement', equipement_id=e.id) }}" class="muted">détail →</a></td>
         </tr>
         {% else %}
         <tr><td colspan="10" class="muted">Aucun équipement enregistré.</td></tr>

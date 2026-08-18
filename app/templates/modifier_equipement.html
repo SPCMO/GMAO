@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Modifier — {{ equipement.nom }}{% endblock %}
 {% block content %}
-<p><a href="{{ url_for('detail_equipement', equipement_id=equipement.id) }}" class="muted">← Retour à {{ equipement.nom }}</a></p>
+<p><a href="{{ url_for('equipements.detail_equipement', equipement_id=equipement.id) }}" class="muted">← Retour à {{ equipement.nom }}</a></p>
 <h1>Modifier — {{ equipement.nom }}</h1>
 
 <form class="card" method="post" style="max-width:520px;">
@@ -67,12 +67,12 @@
 
   <p style="margin-top:1.5rem;">
     <button type="submit" class="btn">Enregistrer</button>
-    <a href="{{ url_for('detail_equipement', equipement_id=equipement.id) }}" class="btn btn-secondary">Annuler</a>
+    <a href="{{ url_for('equipements.detail_equipement', equipement_id=equipement.id) }}" class="btn btn-secondary">Annuler</a>
   </p>
 </form>
 
 {% if depuis_alerte %}
-<form id="formProlonger" method="post" action="{{ url_for('prolonger_equipement', equipement_id=equipement.id) }}" style="display:none;"></form>
+<form id="formProlonger" method="post" action="{{ url_for('equipements.prolonger_equipement', equipement_id=equipement.id) }}" style="display:none;"></form>
 {% endif %}
 {% endblock %}
 {% block extra_scripts %}

@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}">
 {% endblock %}
 {% block content %}
-<p><a href="{{ url_for('gestion_sites') }}" class="muted">← Retour aux sites</a></p>
+<p><a href="{{ url_for('sites.gestion_sites') }}" class="muted">← Retour aux sites</a></p>
 <h1>Modifier — {{ site.nom }}</h1>
 
 <form class="card" method="post" style="max-width:520px;">
@@ -47,7 +47,7 @@
 
   <p style="margin-top:1.5rem;">
     <button type="submit" class="btn">Enregistrer</button>
-    <a href="{{ url_for('gestion_sites') }}" class="btn btn-secondary">Annuler</a>
+    <a href="{{ url_for('sites.gestion_sites') }}" class="btn btn-secondary">Annuler</a>
   </p>
 </form>
 {% endblock %}

@@ -3,7 +3,7 @@
 {% block content %}
 <div class="toolbar">
   <h1 style="margin:0;">Gestion des équipements</h1>
-  <a href="{{ url_for('nouveau_equipement') }}" class="btn">+ Nouvel équipement</a>
+  <a href="{{ url_for('equipements.nouveau_equipement') }}" class="btn">+ Nouvel équipement</a>
 </div>
 
 <table>
@@ -21,7 +21,7 @@
     {% for l in lignes %}
     {% set e = l.e %}
     <tr class="{{ 'equip-retire' if e.date_retrait else '' }}">
-      <td><a href="{{ url_for('detail_equipement', equipement_id=e.id) }}">{{ e.nom }}</a></td>
+      <td><a href="{{ url_for('equipements.detail_equipement', equipement_id=e.id) }}">{{ e.nom }}</a></td>
       <td>{{ e.type or '—' }}{% if e.sous_type %} / {{ e.sous_type }}{% endif %}</td>
       <td>{{ e.site_actuel or '—' }}</td>
       <td>{{ e.site_uh or '—' }}</td>
@@ -30,11 +30,13 @@
           Retiré le {{ e.date_retrait }}{% if e.raison_retrait %} ({{ e.raison_retrait }}){% endif %}
         {% elif l.etat.active %}
           ⚠️ Alerte en cours
+        {% elif not e.duree_vie_ans or not e.rappel_ans %}
+          En fonction · <span title="Durée de vie et/ou rappel non renseignés : aucune alerte de péremption ne surveille cet équipement">⚙️ non configuré</span>
         {% else %}
           En fonction
         {% endif %}
       </td>
-      <td class="col-actions"><a href="{{ url_for('modifier_equipement', equipement_id=e.id) }}" class="muted">✏️ modifier →</a></td>
+      <td class="col-actions"><a href="{{ url_for('equipements.modifier_equipement', equipement_id=e.id) }}" class="muted">✏️ modifier →</a></td>
     </tr>
     {% else %}
     <tr><td colspan="6" class="muted">Aucun équipement enregistré.</td></tr>
