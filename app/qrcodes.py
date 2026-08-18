@@ -72,9 +72,13 @@ def generate(equipement_ids=None):
     Retourne (nombre généré, chemin de la planche HTML, chemin du PDF).
     """
     os.makedirs(config.ETIQUETTES_DIR, exist_ok=True)
-    suffixe = "etiquettes" if equipement_ids is None else "selection"
-    titre = "Planche d'étiquettes — Matériel hydrométrique" if equipement_ids is None else "Planche d'étiquettes — Sélection"
-    pdf_filename = f"planche_{suffixe}.pdf"
+    if equipement_ids is None:
+        base_filename, titre = "planche_etiquettes", "Planche d'étiquettes — Matériel hydrométrique"
+    elif len(equipement_ids) == 1:
+        base_filename, titre = f"fiche_{equipement_ids[0]}", "Étiquette"
+    else:
+        base_filename, titre = "planche_selection", "Planche d'étiquettes — Sélection"
+    pdf_filename = f"{base_filename}.pdf"
     sheet_parts = [SHEET_HEAD.format(titre=titre, pdf_filename=pdf_filename)]
 
     with db.db_session() as conn:
@@ -97,7 +101,7 @@ def generate(equipement_ids=None):
             count += 1
 
     sheet_parts.append(SHEET_TAIL)
-    html_filename = f"planche_{suffixe}.html"
+    html_filename = f"{base_filename}.html"
     sheet_path = os.path.join(config.ETIQUETTES_DIR, html_filename)
     with open(sheet_path, "w", encoding="utf-8") as f:
         f.write("".join(sheet_parts))

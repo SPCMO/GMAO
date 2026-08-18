@@ -3,6 +3,30 @@ var GMAO_CENTRE_DEFAUT = [43.05, 2.35];
 var GMAO_ZOOM_DEFAUT = 9;
 
 /**
+ * Fonds de carte disponibles (plan OpenStreetMap + vue satellite Esri, gratuits, sans clé).
+ * Retourne un objet {libellé: couche} à passer à L.control.layers, la première couche
+ * de l'objet n'est pas ajoutée automatiquement : appeler .addTo(map) sur la couche par défaut.
+ */
+function creerFondsDeCarte() {
+  var plan = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19
+  });
+  var satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics',
+    maxZoom: 19
+  });
+  return { "Plan": plan, "Satellite": satellite };
+}
+
+/** Ajoute le sélecteur de fond de carte + l'échelle dynamique (bas gauche). */
+function ajouterControlesCommuns(map, fonds) {
+  fonds["Plan"].addTo(map);
+  L.control.layers(fonds, null, { position: 'topright' }).addTo(map);
+  L.control.scale({ position: 'bottomleft', imperial: false }).addTo(map);
+}
+
+/**
  * Mini-carte de pointage (formulaires nouvel équipement / modifier coordonnées).
  * Clic sur la carte OU saisie manuelle des champs -> se synchronisent l'un l'autre.
  */
@@ -14,10 +38,7 @@ function initMiniCarte(mapId, latInputId, lonInputId) {
   var startLon = hasCoords ? parseFloat(lonInput.value) : GMAO_CENTRE_DEFAUT[1];
 
   var map = L.map(mapId).setView([startLat, startLon], hasCoords ? 15 : GMAO_ZOOM_DEFAUT);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 19
-  }).addTo(map);
+  ajouterControlesCommuns(map, creerFondsDeCarte());
 
   var marker = null;
   function setMarker(lat, lon) {
@@ -67,10 +88,7 @@ function initMiniCarte(mapId, latInputId, lonInputId) {
  */
 function initDashboardCarte(mapId, equipements, onBoundsChange) {
   var map = L.map(mapId).setView(GMAO_CENTRE_DEFAUT, GMAO_ZOOM_DEFAUT);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 19
-  }).addTo(map);
+  ajouterControlesCommuns(map, creerFondsDeCarte());
 
   var group = L.featureGroup();
   equipements.forEach(function (e) {

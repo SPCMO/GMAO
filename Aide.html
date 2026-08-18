@@ -77,6 +77,7 @@
 
   <h3>Vue globale (dashboard)</h3>
   <p>Page d'accueil en deux parties : une <b>carte</b> à gauche (un marqueur par équipement dont la localisation est renseignée) et le <b>tableau</b> à droite. Le menu déroulant filtre par site, le champ de recherche filtre par nom d'équipement. Déplacer ou zoomer la carte filtre également le tableau sur la zone visible (les équipements sans coordonnées restent toujours affichés, puisqu'ils n'ont pas de position à comparer) — un bandeau <i>« Le tableau est filtré sur la zone visible de la carte »</i> apparaît, avec un lien pour réinitialiser.</p>
+  <p class="muted">La carte affiche une échelle dynamique en bas à gauche, et un sélecteur en haut à droite permet de basculer entre le fond <b>Plan</b> (OpenStreetMap) et <b>Satellite</b> (imagerie Esri) — disponible aussi sur les mini-cartes de pointage d'un nouveau site.</p>
 
   <h3>Ajouter un équipement</h3>
   <p>Bouton <b>+ Nouvel équipement</b> en haut de page : nom, site d'affectation (menu déroulant listant les sites déjà utilisés, avec une option <b>+ Nouveau site...</b> pour en créer un directement depuis le formulaire), date d'installation. Un identifiant technique unique est généré automatiquement (utilisé plus tard dans l'URL du QR code).</p>
@@ -91,8 +92,11 @@
   <h3>Changer l'affectation d'un équipement</h3>
   <p>Depuis la fiche détail d'un équipement → <b>Changer l'affectation</b> : indiquer le nouveau site et la date de transfert. L'ancienne affectation est automatiquement clôturée (date de fin renseignée) et une nouvelle ligne d'historique est créée. L'historique n'est jamais réécrit, seulement complété.</p>
 
+  <h3>QR code d'un équipement</h3>
+  <p>La fiche détail d'un équipement affiche son QR code dans un encart à droite, avec un bouton <b>🖨️ Imprimer</b> (n'imprime que l'étiquette, pas le reste de la page) et <b>📄 Télécharger en PDF</b> — pratique pour ressortir rapidement l'étiquette d'un seul équipement sans passer par le dashboard.</p>
+
   <h3>Générer les QR codes d'une sélection</h3>
-  <p>Depuis le dashboard, cochez les équipements voulus, ou utilisez les boutons <b>Tout sélectionner</b> / <b>Tout désélectionner</b> (comme la case en tête de tableau, ils ne touchent que ce qui est <i>actuellement affiché</i> — donc respectent les filtres site/recherche en cours). Cliquez ensuite sur <b>Générer les QR codes de la sélection</b> : la planche ne contiendra que ces équipements et s'ouvre directement dans un nouvel onglet, avec un bouton <b>🖨️ Imprimer</b> (impression directe) et un lien <b>📄 Télécharger en PDF</b>.</p>
+  <p>Depuis le dashboard, cochez les équipements voulus, ou utilisez les boutons <b>Tout sélectionner</b> / <b>Tout désélectionner</b> (comme la case en tête de tableau, ils ne touchent que ce qui est <i>actuellement affiché</i> — donc respectent les filtres site/recherche en cours). Cliquez ensuite sur <b>Générer les QR codes de la sélection</b> : la planche ne contiendra que ces équipements et s'ouvre directement dans un nouvel onglet, avec un bouton <b>🖨️ Imprimer</b> (impression directe) et un lien <b>📄 Télécharger en PDF</b>. Un message s'affiche si aucun équipement n'est coché.</p>
 
   <h3>Publier les fiches et générer les QR codes (tous les équipements)</h3>
   <p>Après une ou plusieurs modifications, deux scripts régénèrent le contenu à publier :</p>
@@ -272,6 +276,21 @@
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Échelle dynamique et sélecteur de fond de carte (Plan / Satellite) sur toutes les cartes — dashboard et mini-cartes de pointage d'un nouveau site.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-fix">Correctif</span> Un message d'erreur s'affiche désormais si on clique sur <b>Générer les QR codes de la sélection</b> sans avoir coché d'équipement (auparavant le message n'était visible que dans un onglet vide qui s'ouvrait silencieusement).</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> QR code affiché directement sur la fiche détail d'un équipement, avec ses propres boutons <b>🖨️ Imprimer</b> et <b>📄 Télécharger en PDF</b>.</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">18 août 2026</div>

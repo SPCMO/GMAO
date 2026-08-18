@@ -55,9 +55,10 @@ def detail_equipement(equipement_id):
         site_actuel = db.get_site_actuel(conn, equipement_id)
         historique = db.get_historique(conn, equipement_id)
         site_geo = db.get_site(conn, site_actuel["site"]) if site_actuel else None
+    _, _, pdf_path = qrcodes.generate([equipement_id])
     return render_template(
         "detail.html", equipement=equipement, site_actuel=site_actuel,
-        historique=historique, site_geo=site_geo,
+        historique=historique, site_geo=site_geo, pdf_filename=os.path.basename(pdf_path),
     )
 
 

@@ -30,7 +30,7 @@
     </div>
     <p class="muted" id="infoFiltreCarte" style="display:none;">🗺️ Le tableau est filtré sur la zone actuellement visible de la carte. <a href="#" onclick="reinitialiserFiltreCarte(); return false;">Réinitialiser</a></p>
 
-    <form method="post" action="{{ url_for('generer_qrcodes_selection') }}" target="_blank">
+    <form method="post" action="{{ url_for('generer_qrcodes_selection') }}" target="_blank" onsubmit="return validerSelection()">
     <table id="tableEquipements">
       <thead>
         <tr>
@@ -58,6 +58,7 @@
       </tbody>
     </table>
 
+    <p id="erreurSelection" class="flash" style="display:none; background:#fee2e2; color:#991b1b;">⚠️ Sélectionnez au moins un équipement avant de générer les QR codes.</p>
     <p style="margin-top:1rem;">
       <button type="button" class="btn btn-secondary" onclick="selectionnerTout(true)">Tout sélectionner</button>
       <button type="button" class="btn btn-secondary" onclick="selectionnerTout(false)">Tout désélectionner</button>
@@ -104,6 +105,12 @@ function reinitialiserFiltreCarte() {
   carteBounds = null;
   document.getElementById('infoFiltreCarte').style.display = 'none';
   filtrer();
+}
+
+function validerSelection() {
+  const auMoinsUn = document.querySelectorAll('.case-equipement:checked').length > 0;
+  document.getElementById('erreurSelection').style.display = auMoinsUn ? 'none' : 'block';
+  return auMoinsUn;
 }
 </script>
 {% endblock %}

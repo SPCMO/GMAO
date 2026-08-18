@@ -1,47 +1,74 @@
 {% extends "base.html" %}
 {% block title %}{{ equipement.nom }}{% endblock %}
+{% block extra_head %}
+<style>
+  .detail-layout { display: flex; gap: 1.5rem; align-items: flex-start; }
+  .detail-info { flex: 1; min-width: 0; }
+  .detail-qr { flex: 0 0 220px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.1); padding: 1rem; text-align: center; position: sticky; top: 1.5rem; }
+  .detail-qr img { width: 100%; max-width: 190px; }
+  .detail-qr .nom { font-weight: 700; margin: .5rem 0 1rem; }
+  @media print {
+    header, .detail-info { display: none !important; }
+    .detail-qr { box-shadow: none; position: static; }
+    .detail-qr .no-print { display: none !important; }
+  }
+</style>
+{% endblock %}
 {% block content %}
-<p><a href="{{ url_for('dashboard') }}" class="muted">← Retour à la vue globale</a></p>
-<h1>{{ equipement.nom }}</h1>
+<div class="detail-layout">
+  <div class="detail-info">
+    <p><a href="{{ url_for('dashboard') }}" class="muted">← Retour à la vue globale</a></p>
+    <h1>{{ equipement.nom }}</h1>
 
-<table>
-  <tr><th style="width:220px;">Site d'affectation actuel</th><td>{{ site_actuel.site if site_actuel else '—' }}</td></tr>
-  <tr><th>Affecté depuis</th><td>{{ site_actuel.date_debut if site_actuel else '—' }}</td></tr>
-  <tr><th>Date d'installation</th><td>{{ equipement.date_installation }}</td></tr>
-  <tr><th>Identifiant (utilisé dans le QR code)</th><td><code>{{ equipement.id }}</code></td></tr>
-  <tr>
-    <th>Localisation (héritée du site)</th>
-    <td>
-      {% if site_geo and site_geo.lat is not none and site_geo.lon is not none %}
-        {{ "%.5f"|format(site_geo.lat) }}, {{ "%.5f"|format(site_geo.lon) }}
-      {% else %}
-        <span class="badge" style="background:#fef3c7; color:#92400e;">📍 non renseignée pour ce site</span>
+    <table>
+      <tr><th style="width:220px;">Site d'affectation actuel</th><td>{{ site_actuel.site if site_actuel else '—' }}</td></tr>
+      <tr><th>Affecté depuis</th><td>{{ site_actuel.date_debut if site_actuel else '—' }}</td></tr>
+      <tr><th>Date d'installation</th><td>{{ equipement.date_installation }}</td></tr>
+      <tr><th>Identifiant (utilisé dans le QR code)</th><td><code>{{ equipement.id }}</code></td></tr>
+      <tr>
+        <th>Localisation (héritée du site)</th>
+        <td>
+          {% if site_geo and site_geo.lat is not none and site_geo.lon is not none %}
+            {{ "%.5f"|format(site_geo.lat) }}, {{ "%.5f"|format(site_geo.lon) }}
+          {% else %}
+            <span class="badge" style="background:#fef3c7; color:#92400e;">📍 non renseignée pour ce site</span>
+          {% endif %}
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin-top:1rem;">
+      <a href="{{ url_for('affecter_equipement', equipement_id=equipement.id) }}" class="btn">Changer l'affectation</a>
+      {% if site_actuel %}
+      <a href="{{ url_for('modifier_site_coordonnees', nom=site_actuel.site) }}" class="btn btn-secondary">📍 Modifier la localisation du site</a>
       {% endif %}
-    </td>
-  </tr>
-</table>
+      <a href="{{ url_for('fiche_publique', equipement_id=equipement.id) }}" class="btn btn-secondary" target="_blank">Voir la fiche publique</a>
+    </p>
 
-<p style="margin-top:1rem;">
-  <a href="{{ url_for('affecter_equipement', equipement_id=equipement.id) }}" class="btn">Changer l'affectation</a>
-  {% if site_actuel %}
-  <a href="{{ url_for('modifier_site_coordonnees', nom=site_actuel.site) }}" class="btn btn-secondary">📍 Modifier la localisation du site</a>
-  {% endif %}
-  <a href="{{ url_for('fiche_publique', equipement_id=equipement.id) }}" class="btn btn-secondary" target="_blank">Voir la fiche publique</a>
-</p>
+    <h2 style="margin-top:2rem;">Historique des affectations</h2>
+    <table>
+      <thead>
+        <tr><th>Site</th><th>Début</th><th>Fin</th></tr>
+      </thead>
+      <tbody>
+        {% for a in historique %}
+        <tr>
+          <td>{{ a.site }}</td>
+          <td>{{ a.date_debut }}</td>
+          <td>{{ a.date_fin or 'en cours' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
-<h2 style="margin-top:2rem;">Historique des affectations</h2>
-<table>
-  <thead>
-    <tr><th>Site</th><th>Début</th><th>Fin</th></tr>
-  </thead>
-  <tbody>
-    {% for a in historique %}
-    <tr>
-      <td>{{ a.site }}</td>
-      <td>{{ a.date_debut }}</td>
-      <td>{{ a.date_fin or 'en cours' }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+  <div class="detail-qr">
+    <img src="{{ url_for('etiquettes_file', filename=equipement.id ~ '.png') }}" alt="QR code {{ equipement.nom }}">
+    <div class="nom">{{ equipement.nom }}</div>
+    <p class="no-print">
+      <button type="button" class="btn" style="width:100%; margin-bottom:.5rem;" onclick="window.print()">🖨️ Imprimer</button>
+      <a href="{{ url_for('etiquettes_file', filename=pdf_filename) }}" class="btn btn-secondary" style="width:100%; box-sizing:border-box;">📄 Télécharger en PDF</a>
+    </p>
+  </div>
+</div>
 {% endblock %}
