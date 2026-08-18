@@ -17,6 +17,15 @@ def parametres():
         flash("Emplacement de la base enregistré.")
         return redirect(url_for("parametres.parametres"))
     with db.db_session() as conn:
+        tri_actuel = {
+            cle: (db.get_tri_config(conn, cle) + ["", "", ""])[:3]
+            for cle in db.TRI_COLONNES
+        }
+        tri_resume = {}
+        for cle, colonnes in tri_actuel.items():
+            libelles_par_valeur = dict(db.TRI_COLONNES[cle])
+            libelles = [libelles_par_valeur[c] for c in colonnes if c]
+            tri_resume[cle] = " → ".join(libelles) if libelles else "Ordre naturel (non configuré)"
         contexte = dict(
             db_path=app_settings.get_db_path(),
             smtp=app_settings.get_smtp_config(),
@@ -29,12 +38,11 @@ def parametres():
             uh_valeurs=db.UH_VALEURS,
             uh_emails=db.list_uh_emails_tous(conn),
             couleurs=db.list_couleurs(conn),
+            opacites=db.list_opacites(conn),
             raisons_fermeture=db.list_raisons_fermeture(conn),
             tri_colonnes=db.TRI_COLONNES,
-            tri_actuel={
-                cle: (db.get_tri_config(conn, cle) + ["", "", ""])[:3]
-                for cle in db.TRI_COLONNES
-            },
+            tri_actuel=tri_actuel,
+            tri_resume=tri_resume,
         )
     return render_template("parametres.html", **contexte)
 
@@ -235,10 +243,13 @@ def parametres_raisons_fermeture_descendre():
 @parametres_bp.route("/parametres/couleurs", methods=["POST"])
 def parametres_couleurs():
     with db.db_session() as conn:
-        for cle in ("uh_11", "uh_34", "uh_66", "maintenance"):
+        for cle in db.COULEURS_PAR_DEFAUT:
             valeur = request.form.get(cle, "").strip()
             if valeur:
                 db.set_couleur(conn, cle, valeur)
+            opacite = request.form.get(f"{cle}_opacite", "").strip()
+            if opacite.isdigit():
+                db.set_opacite(conn, cle, max(0, min(100, int(opacite))))
     flash("Couleurs enregistrées.")
     return redirect(url_for("parametres.parametres"))
 

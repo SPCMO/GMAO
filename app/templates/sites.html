@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Gestionnaire des sites{% endblock %}
+{% block extra_head %}
+<style>
+  .col-nb-equip { width: 90px; text-align: center; vertical-align: middle; }
+</style>
+{% endblock %}
 {% block content %}
 <div class="toolbar">
   <div>
@@ -12,13 +17,13 @@
 <table id="tableSites">
   <thead>
     <tr>
-      {% for libelle, idx in [("Site",0), ("Équipements actuellement affectés",1), ("UH",2), ("Maintenance",3), ("Statut",4), ("Localisation",5)] %}
-      <th class="th-triable">
+      {% for libelle, idx, classe in [("Site",0,""), ("Équipements<br>actuellement affectés",1,"col-nb-equip"), ("UH",2,""), ("Maintenance",3,""), ("Statut",4,""), ("Localisation",5,"")] %}
+      <th class="th-triable {{ classe }}">
         <span class="th-triable-inner">
-          <span class="th-libelle">{{ libelle }}</span>
+          <span class="th-libelle">{{ libelle|safe }}</span>
           <span class="ordre-actions">
-            <button type="button" class="btn-ordre" onclick="trierTable('tableSites', {{ idx }}, 1)" title="Trier {{ libelle }} croissant" data-col="{{ idx }}" data-dir="1">▲</button>
-            <button type="button" class="btn-ordre" onclick="trierTable('tableSites', {{ idx }}, -1)" title="Trier {{ libelle }} décroissant" data-col="{{ idx }}" data-dir="-1">▼</button>
+            <button type="button" class="btn-ordre" onclick="trierTable('tableSites', {{ idx }}, 1)" title="Trier {{ libelle|replace('<br>', ' ') }} croissant" data-col="{{ idx }}" data-dir="1">▲</button>
+            <button type="button" class="btn-ordre" onclick="trierTable('tableSites', {{ idx }}, -1)" title="Trier {{ libelle|replace('<br>', ' ') }} décroissant" data-col="{{ idx }}" data-dir="-1">▼</button>
           </span>
         </span>
       </th>
@@ -30,7 +35,7 @@
     {% for s in sites %}
     <tr>
       <td data-tri="{{ s.nom|lower }}">{{ s.nom }}</td>
-      <td data-tri="{{ s.nb_equipements }}">{{ s.nb_equipements }}</td>
+      <td class="col-nb-equip" data-tri="{{ s.nb_equipements }}">{{ s.nb_equipements }}</td>
       <td data-tri="{{ s.uh_gestion or '' }}">{{ s.uh_gestion or '—' }}</td>
       <td data-tri="{{ 1 if s.maintenance else 0 }}">{% if s.maintenance %}<span class="badge badge-gray">🔧 maintenance</span>{% else %}—{% endif %}</td>
       <td data-tri="{{ 1 if s.date_fermeture else 0 }}">

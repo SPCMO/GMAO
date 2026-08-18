@@ -88,33 +88,27 @@ function initMiniCarte(mapId, latInputId, lonInputId) {
  * Carte du dashboard : place une pastille colorée par SITE géolocalisé (pas par
  * équipement — plusieurs équipements peuvent partager un même site/marqueur) et notifie
  * onBoundsChange(bounds|null) à chaque déplacement/zoom (null si zoom arrière-plan par
- * défaut, pour ne pas filtrer). Couleur : voir la priorité calculée côté serveur
- * (run.py) — fermé > maintenance > sans équipement affecté (gris foncé) > UH > défaut.
+ * défaut, pour ne pas filtrer). Couleur + opacité : calculées côté serveur (run.py,
+ * _style_site) selon la priorité fermé > maintenance > sans équipement affecté > UH >
+ * sans UH configurée — réglables dans Paramètres > Couleurs.
  */
 var GMAO_COULEUR_PASTILLE_DEFAUT = '#3388ff';
 
-function creerPastille(couleur, maintenance) {
-  var fond = couleur || GMAO_COULEUR_PASTILLE_DEFAUT;
-  var contenu = maintenance ? '🔧' : '';
+/** couleur/opacite : valeurs calculées côté serveur (voir _style_site dans run.py).
+ * maintenance : affiche l'icône 🔧. ferme : croix rouge + bordure rouge (prioritaire
+ * visuellement sur maintenance si les deux sont vrais, ce qui ne devrait pas arriver
+ * côté serveur puisque _style_site les traite comme mutuellement exclusifs). */
+function creerPastille(couleur, opacite, maintenance, ferme) {
+  var fond = ferme ? (couleur || '#ffffff') : (couleur || GMAO_COULEUR_PASTILLE_DEFAUT);
+  var op = (opacite === undefined || opacite === null) ? 1 : opacite / 100;
+  var bordure = ferme ? '#dc2626' : '#fff';
+  var contenu = ferme ? '&#10005;' : (maintenance ? '🔧' : '');
+  var styleTexte = ferme ? 'font-size:13px;font-weight:700;color:#dc2626;' : 'font-size:10px;';
   return L.divIcon({
     className: 'gmao-pastille',
     html: '<div style="width:20px;height:20px;border-radius:50%;background:' + fond +
-      ';border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.5);display:flex;' +
-      'align-items:center;justify-content:center;font-size:10px;line-height:1;">' + contenu + '</div>',
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-    popupAnchor: [0, -10],
-  });
-}
-
-/** Site fermé : pastille blanche à croix rouge, semi-transparente (prioritaire sur tout le reste). */
-function creerPastilleFermee() {
-  return L.divIcon({
-    className: 'gmao-pastille',
-    html: '<div style="width:20px;height:20px;border-radius:50%;background:#fff;' +
-      'border:2px solid #dc2626;box-shadow:0 1px 3px rgba(0,0,0,.5);display:flex;' +
-      'align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#dc2626;' +
-      'line-height:1;opacity:.55;">&#10005;</div>',
+      ';border:2px solid ' + bordure + ';box-shadow:0 1px 3px rgba(0,0,0,.5);display:flex;' +
+      'align-items:center;justify-content:center;line-height:1;opacity:' + op + ';' + styleTexte + '">' + contenu + '</div>',
     iconSize: [20, 20],
     iconAnchor: [10, 10],
     popupAnchor: [0, -10],
@@ -150,7 +144,7 @@ function initDashboardCarte(mapId, sitesCarte, onBoundsChange) {
   var marqueursFermes = [];
   sitesCarte.forEach(function (s) {
     if (s.lat !== null && s.lon !== null) {
-      var icon = s.ferme ? creerPastilleFermee() : creerPastille(s.couleur, s.maintenance);
+      var icon = creerPastille(s.couleur, s.opacite, s.maintenance, s.ferme);
       var marker = L.marker([s.lat, s.lon], { icon: icon }).addTo(group).bindPopup(construirePopupSite(s));
       if (s.ferme) marqueursFermes.push(marker);
     }

@@ -24,12 +24,31 @@ COLONNE_INDEX_ACCUEIL = {
 }
 
 
+def _style_site(couleurs, opacites, uh, maintenance, ferme, vide=False):
+    """Couleur + opacité (%) d'un site selon son statut — même priorité utilisée pour la
+    carte et pour le fond des lignes du tableau accueil : fermé > maintenance > sans
+    équipement affecté (carte uniquement) > UH configurée > sans UH. Couleurs/opacités
+    réglables dans Paramètres > Couleurs (voir db.COULEURS_PAR_DEFAUT)."""
+    if ferme:
+        cle = "ferme"
+    elif maintenance:
+        cle = "maintenance"
+    elif vide:
+        cle = "site_vide"
+    elif uh in db.UH_VALEURS:
+        cle = f"uh_{uh}"
+    else:
+        cle = "sans_uh"
+    return couleurs.get(cle), opacites.get(cle, 100)
+
+
 @app.route("/")
 def dashboard():
     with db.db_session() as conn:
         equipements = db.list_equipements(conn)
         sites = db.list_sites(conn)
         couleurs = db.list_couleurs(conn)
+        opacites = db.list_opacites(conn)
         sites_geo = db.list_all_sites(conn)
         tri_defaut_accueil = [
             [COLONNE_INDEX_ACCUEIL[c], 1]
@@ -44,45 +63,37 @@ def dashboard():
         # rappel n'est pas configuré, contrairement à etat["jours_restants"]).
         peremption = alertes.date_peremption(e)
         jours_restants_vie = (peremption - aujourdhui).days if peremption and not e["date_retrait"] else None
-        if e["site_maintenance"]:
-            couleur_fond = couleurs.get("maintenance")
-        elif e["site_uh"] in db.UH_VALEURS:
-            couleur_fond = couleurs.get(f"uh_{e['site_uh']}")
-        else:
-            couleur_fond = None
+        couleur_fond, opacite_fond = _style_site(
+            couleurs, opacites, e["site_uh"], e["site_maintenance"], e["site_date_fermeture"]
+        )
         site_ferme = bool(e["site_date_fermeture"])
         lignes.append({
-            "e": e, "etat": etat, "couleur_fond": couleur_fond, "site_ferme": site_ferme,
-            "jours_restants_vie": jours_restants_vie,
+            "e": e, "etat": etat, "couleur_fond": couleur_fond, "opacite_fond": opacite_fond,
+            "site_ferme": site_ferme, "jours_restants_vie": jours_restants_vie,
         })
         if e["site_actuel"] and not e["date_retrait"]:
             equip_par_site.setdefault(e["site_actuel"], []).append({"id": e["id"], "nom": e["nom"]})
     types = sorted({l["e"]["type"] for l in lignes if l["e"]["type"]})
 
-    # Carte : un marqueur par site (pas par équipement), coloré selon — dans cet ordre de
-    # priorité — fermé (blanc/croix, géré côté JS) > maintenance > sans équipement affecté
-    # (gris foncé, pour repérer d'un coup d'œil un site désormais inutilisé) > UH > défaut.
+    # Carte : un marqueur par site (pas par équipement), coloré selon la même priorité
+    # que le fond des lignes du tableau (voir _style_site) — fermé > maintenance > sans
+    # équipement affecté (spécifique à la carte) > UH > sans UH configurée.
     sites_carte = []
     for s in sites_geo:
         if s["lat"] is None or s["lon"] is None:
             continue
         equip_ici = equip_par_site.get(s["nom"], [])
-        if s["maintenance"]:
-            couleur = couleurs.get("maintenance")
-        elif not equip_ici:
-            couleur = "#374151"
-        elif s["uh_gestion"] in db.UH_VALEURS:
-            couleur = couleurs.get(f"uh_{s['uh_gestion']}")
-        else:
-            couleur = None
+        couleur, opacite = _style_site(
+            couleurs, opacites, s["uh_gestion"], s["maintenance"], s["date_fermeture"], vide=not equip_ici
+        )
         sites_carte.append({
-            "nom": s["nom"], "lat": s["lat"], "lon": s["lon"], "couleur": couleur,
+            "nom": s["nom"], "lat": s["lat"], "lon": s["lon"], "couleur": couleur, "opacite": opacite,
             "maintenance": bool(s["maintenance"]), "ferme": bool(s["date_fermeture"]),
             "equipements": equip_ici,
         })
 
     return render_template(
-        "dashboard.html", lignes=lignes, sites=sites, couleurs=couleurs,
+        "dashboard.html", lignes=lignes, sites=sites, couleurs=couleurs, opacites=opacites,
         uh_valeurs=db.UH_VALEURS, types=types, sites_carte=sites_carte,
         tri_defaut_accueil=tri_defaut_accueil,
     )

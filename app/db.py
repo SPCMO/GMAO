@@ -65,6 +65,11 @@ CREATE TABLE IF NOT EXISTS tri_config (
     valeur TEXT
 );
 
+CREATE TABLE IF NOT EXISTS opacite_config (
+    cle TEXT PRIMARY KEY,
+    valeur INTEGER
+);
+
 CREATE INDEX IF NOT EXISTS idx_affectation_equipement ON affectation(equipement_id);
 """
 
@@ -84,7 +89,16 @@ COULEURS_PAR_DEFAUT = {
     "uh_11": "#dbeafe",
     "uh_34": "#dcfce7",
     "uh_66": "#fef3c7",
-    "maintenance": "#e5e7eb",
+    "maintenance": "#9ca3af",  # plus foncé que l'ancien gris clair : la clé 🔧 ressort mieux
+    "sans_uh": "#3388ff",
+    "site_vide": "#374151",
+    "ferme": "#ffffff",
+}
+# Opacité (%) par clé de couleur (voir COULEURS_PAR_DEFAUT) ; 100 par défaut si absente
+# de la table (voir get_opacite), donc seule une valeur qui s'écarte de 100 a besoin
+# d'être semée ici (site fermé : semi-transparent, cohérent avec la croix rouge).
+OPACITES_PAR_DEFAUT = {
+    "ferme": 55,
 }
 
 # Tri par défaut (jusqu'à 3 niveaux) appliqué au chargement de chaque liste, en plus de
@@ -188,10 +202,18 @@ def _migrate(conn):
         conn.execute("INSERT OR IGNORE INTO rappel_option (annees) VALUES (?)", (v,))
     for v in RALLONGES_PAR_DEFAUT:
         conn.execute("INSERT OR IGNORE INTO rallonge_option (annees) VALUES (?)", (v,))
+    # Assombrit l'ancien défaut "maintenance" (trop clair, l'icône 🔧 ne ressortait pas
+    # assez) — seulement si l'utilisateur ne l'a jamais personnalisé lui-même.
+    conn.execute(
+        "UPDATE couleur_config SET valeur = ? WHERE cle = 'maintenance' AND valeur = '#e5e7eb'",
+        (COULEURS_PAR_DEFAUT["maintenance"],),
+    )
     for cle, valeur in COULEURS_PAR_DEFAUT.items():
         conn.execute("INSERT OR IGNORE INTO couleur_config (cle, valeur) VALUES (?, ?)", (cle, valeur))
     for cle, valeur in TRI_PAR_DEFAUT.items():
         conn.execute("INSERT OR IGNORE INTO tri_config (cle, valeur) VALUES (?, ?)", (cle, valeur))
+    for cle, valeur in OPACITES_PAR_DEFAUT.items():
+        conn.execute("INSERT OR IGNORE INTO opacite_config (cle, valeur) VALUES (?, ?)", (cle, valeur))
     for i, nom in enumerate(RAISONS_FERMETURE_PAR_DEFAUT, start=1):
         conn.execute(
             "INSERT OR IGNORE INTO raison_fermeture_option (nom, ordre) VALUES (?, ?)", (nom, i)
@@ -659,6 +681,20 @@ def list_couleurs(conn):
 def set_couleur(conn, cle, valeur):
     conn.execute(
         "INSERT INTO couleur_config (cle, valeur) VALUES (?, ?) "
+        "ON CONFLICT(cle) DO UPDATE SET valeur = excluded.valeur",
+        (cle, valeur),
+    )
+
+
+def list_opacites(conn):
+    """Opacité (%) par clé de couleur. Une clé absente de la table vaut 100 (opaque) —
+    voir OPACITES_PAR_DEFAUT, seules les valeurs qui s'en écartent y sont semées."""
+    return {r["cle"]: r["valeur"] for r in conn.execute("SELECT cle, valeur FROM opacite_config").fetchall()}
+
+
+def set_opacite(conn, cle, valeur):
+    conn.execute(
+        "INSERT INTO opacite_config (cle, valeur) VALUES (?, ?) "
         "ON CONFLICT(cle) DO UPDATE SET valeur = excluded.valeur",
         (cle, valeur),
     )

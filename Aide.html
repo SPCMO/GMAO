@@ -290,9 +290,14 @@
 
   <h3>Listes déroulantes et couleurs (menu Paramètres)</h3>
   <p>La page <b>⚙️ Paramètres</b> est organisée en 6 onglets pour limiter le défilement : <b>🗄️ Général</b> (emplacement de la base), <b>🚨 Alertes mail</b> (SMTP + relais mail + destinataires par UH), <b>🔧 Équipements</b> (types/sous-types, durée de vie/rappel/rallonge), <b>🏢 Sites</b> (raisons de fermeture), <b>🖌️ Couleurs</b> (couleurs de fond) et <b>🔀 Tri par défaut</b> (voir ci-dessous). L'onglet ouvert est mémorisé le temps de la session : après un ajout/suppression dans une liste, on reste sur le même onglet plutôt que de revenir à « Général ». Chaque liste s'édite par simple ajout/suppression, sans toucher au code.</p>
-  <p class="muted">L'onglet <b>🔀 Tri par défaut</b> règle, pour l'accueil, le Gestionnaire des sites et le Gestionnaire des équipements, jusqu'à 3 niveaux de tri appliqués au chargement de la page (une colonne non couverte garde son ordre habituel). Ce réglage est partagé (stocké en base, comme les couleurs) — il s'applique donc à tous les utilisateurs de l'outil, pas seulement à ce poste.</p>
+  <p class="muted">L'onglet <b>🔀 Tri par défaut</b> règle, pour l'accueil, le Gestionnaire des sites et le Gestionnaire des équipements, jusqu'à 3 niveaux de tri appliqués au chargement de la page (une colonne non couverte garde son ordre habituel) — l'ordre actuellement configuré est rappelé sous le titre de chaque carte, mis à jour dès l'enregistrement. Ce réglage est partagé (stocké en base, comme les couleurs) — il s'applique donc à tous les utilisateurs de l'outil, pas seulement à ce poste.</p>
+  <p class="muted">Dans l'onglet <b>🚨 Alertes mail</b>, les trois blocs sont dans l'ordre où ils comptent le plus au quotidien : d'abord les destinataires par UH, puis le relais Apps Script (le canal privilégié sur le réseau SPCMO), puis le SMTP direct en repli si le relais échoue ou n'est pas configuré.</p>
   <p class="muted">Types et sous-types se réordonnent librement avec les boutons <b>▲▼</b> — c'est cet ordre qui s'affiche dans tous les menus déroulants de l'application. Les durées de vie/rappel/rallonge, elles, s'insèrent toujours automatiquement par ordre croissant (pas de tri manuel nécessaire).</p>
   <div class="warn">Supprimer un <b>type</b> supprime aussi tous ses sous-types. Les équipements qui utilisaient déjà une valeur retirée d'une liste conservent cette valeur affichée (elle disparaît seulement des choix proposés pour les nouvelles saisies).</div>
+
+  <h3>🖌️ Couleurs de fond (onglet Paramètres)</h3>
+  <p>7 couleurs configurables (UH 11/34/66, site de maintenance, site sans UH configurée, site sans équipement affecté, site fermé), utilisées à la fois pour la légende de la carte du dashboard et pour le fond des lignes de la liste d'accueil (« site sans équipement » ne s'applique qu'à la carte : une ligne équipement a toujours au moins son propre équipement affecté à son site). Chaque couleur a aussi un champ <b>Opacité (%)</b> pour un rendu semi-transparent — utilisé par défaut sur « site fermé » (55 %), à 100 % (opaque) pour les autres.</p>
+  <p class="muted">Priorité en cas de plusieurs statuts vrais à la fois : fermé &gt; maintenance &gt; UH configurée &gt; sans UH.</p>
 
   <h3>📧 Alertes de péremption par mail</h3>
   <p>L'envoi effectif est fait par un script autonome, à lancer une fois par jour :</p>
@@ -357,6 +362,26 @@ git config --global https.proxy http://pfrie-std.proxy.e2.rie.gouv.fr:8080</pre>
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Gestionnaire des sites : intitulé de la colonne « Équipements actuellement affectés » sur 2 lignes pour gagner de la place, valeurs centrées horizontalement et verticalement.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Paramètres &gt; Couleurs : 3 nouvelles couleurs configurables (site sans UH configurée, site sans équipement, site fermé) en plus des UH/maintenance existantes, avec un champ Opacité (%) par couleur pour un rendu semi-transparent. Couleur « site de maintenance » assombrie par défaut pour que l'icône 🔧 ressorte mieux.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Paramètres &gt; Alertes mail : blocs réordonnés (Destinataires UH, puis Relais Apps Script « privilégié », puis SMTP « si échec Apps Script ») pour suivre l'ordre réel d'utilisation.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Paramètres &gt; Tri par défaut : l'ordre actuellement configuré est désormais rappelé sous le titre de chaque carte (Accueil / Sites / Équipements), mis à jour après chaque enregistrement.</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">18 août 2026</div>

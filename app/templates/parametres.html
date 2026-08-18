@@ -39,48 +39,6 @@
 </div>
 
 <div class="onglet-contenu" data-onglet="notifications">
-  <h2 class="section-param">📧 Notifications par mail (SMTP)</h2>
-  <form class="card" method="post" action="{{ url_for('parametres.parametres_smtp') }}" style="max-width:700px;">
-    <label for="smtp_host">Serveur SMTP</label>
-    <input type="text" id="smtp_host" name="smtp_host" value="{{ smtp.smtp_host }}" placeholder="ex: smtp.gmail.com">
-
-    <label for="smtp_port">Port</label>
-    <input type="number" id="smtp_port" name="smtp_port" value="{{ smtp.smtp_port }}" placeholder="587">
-
-    <label for="smtp_user">Adresse d'expéditeur</label>
-    <input type="email" id="smtp_user" name="smtp_user" value="{{ smtp.smtp_user }}" placeholder="ex: gmao@spcmo.fr">
-
-    <label for="smtp_password">Mot de passe {% if smtp.smtp_password %}<span class="muted">(déjà enregistré — laisser vide pour ne pas le changer)</span>{% endif %}</label>
-    <input type="password" id="smtp_password" name="smtp_password" placeholder="{{ '••••••••' if smtp.smtp_password else '' }}">
-    <p class="muted" style="margin-top:.5rem;">Stocké uniquement dans <code>settings.json</code> sur ce poste, jamais publié. Utilisé par le script quotidien <code>scripts/verifier_alertes.py</code> (voir Aide.html).</p>
-
-    <p style="margin-top:1.5rem;">
-      <button type="submit" class="btn">Enregistrer</button>
-    </p>
-  </form>
-
-  <h2 class="section-param">🔗 Relais mail (Google Apps Script) — recommandé</h2>
-  <div class="card" style="max-width:700px; padding:1.5rem;">
-    <p class="muted">Le réseau SPCMO bloque le SMTP direct ci-dessus. Solution qui fonctionne : un petit script Google Apps Script (fichier <code>apps_script/gmao_mail_relay.gs</code> du dépôt) envoie le mail via Gmail côté serveur Google ; GMAO le contacte simplement en HTTPS, comme il le fait déjà pour GitHub. Voir Aide.html (onglet Paramétrage) pour les étapes de déploiement du script.</p>
-    <form method="post" action="{{ url_for('parametres.parametres_relais_mail') }}" style="margin-top:1rem;">
-      <label for="apps_script_url">URL du déploiement Apps Script</label>
-      <input type="text" id="apps_script_url" name="apps_script_url" value="{{ apps_script.apps_script_url }}" placeholder="https://script.google.com/macros/s/.../exec" style="font-family:monospace; font-size:.85rem;">
-
-      <label for="apps_script_token">Jeton secret {% if apps_script.apps_script_token %}<span class="muted">(déjà enregistré — laisser vide pour ne pas le changer)</span>{% endif %}</label>
-      <input type="password" id="apps_script_token" name="apps_script_token" placeholder="{{ '••••••••' if apps_script.apps_script_token else '' }}">
-      <p class="muted" style="margin-top:.5rem;">Doit correspondre exactement à <code>TOKEN_SECRET</code> dans le script Apps Script déployé.</p>
-
-      <p style="margin-top:1.5rem;">
-        <button type="submit" class="btn">Enregistrer</button>
-      </p>
-    </form>
-
-    <form method="post" action="{{ url_for('parametres.parametres_relais_mail_tester') }}" class="form-inline" style="margin-top:1rem; padding-top:1rem; border-top:1px solid #e5e7eb;">
-      <input type="email" name="destinataire_test" placeholder="adresse@test.fr pour un envoi test" required style="flex:1;">
-      <button type="submit" class="btn btn-secondary">✉️ Envoyer un test</button>
-    </form>
-  </div>
-
   <h2 class="section-param">📬 Destinataires des alertes par UH de gestion</h2>
   <div class="card" style="max-width:700px; padding:1.5rem; display:flex; gap:1.5rem; flex-wrap:wrap;">
     {% for uh in uh_valeurs %}
@@ -107,6 +65,48 @@
     </div>
     {% endfor %}
   </div>
+
+  <h2 class="section-param">🔗 Relais mail (Google Apps Script) — privilégié</h2>
+  <div class="card" style="max-width:700px; padding:1.5rem;">
+    <p class="muted">Le réseau SPCMO bloque le SMTP direct ci-dessous. Solution qui fonctionne : un petit script Google Apps Script (fichier <code>apps_script/gmao_mail_relay.gs</code> du dépôt) envoie le mail via Gmail côté serveur Google ; GMAO le contacte simplement en HTTPS, comme il le fait déjà pour GitHub. Voir Aide.html (onglet Paramétrage) pour les étapes de déploiement du script.</p>
+    <form method="post" action="{{ url_for('parametres.parametres_relais_mail') }}" style="margin-top:1rem;">
+      <label for="apps_script_url">URL du déploiement Apps Script</label>
+      <input type="text" id="apps_script_url" name="apps_script_url" value="{{ apps_script.apps_script_url }}" placeholder="https://script.google.com/macros/s/.../exec" style="font-family:monospace; font-size:.85rem;">
+
+      <label for="apps_script_token">Jeton secret {% if apps_script.apps_script_token %}<span class="muted">(déjà enregistré — laisser vide pour ne pas le changer)</span>{% endif %}</label>
+      <input type="password" id="apps_script_token" name="apps_script_token" placeholder="{{ '••••••••' if apps_script.apps_script_token else '' }}">
+      <p class="muted" style="margin-top:.5rem;">Doit correspondre exactement à <code>TOKEN_SECRET</code> dans le script Apps Script déployé.</p>
+
+      <p style="margin-top:1.5rem;">
+        <button type="submit" class="btn">Enregistrer</button>
+      </p>
+    </form>
+
+    <form method="post" action="{{ url_for('parametres.parametres_relais_mail_tester') }}" class="form-inline" style="margin-top:1rem; padding-top:1rem; border-top:1px solid #e5e7eb;">
+      <input type="email" name="destinataire_test" placeholder="adresse@test.fr pour un envoi test" required style="flex:1;">
+      <button type="submit" class="btn btn-secondary">✉️ Envoyer un test</button>
+    </form>
+  </div>
+
+  <h2 class="section-param">📧 Notifications par mail (SMTP) — si échec Apps Script</h2>
+  <form class="card" method="post" action="{{ url_for('parametres.parametres_smtp') }}" style="max-width:700px;">
+    <label for="smtp_host">Serveur SMTP</label>
+    <input type="text" id="smtp_host" name="smtp_host" value="{{ smtp.smtp_host }}" placeholder="ex: smtp.gmail.com">
+
+    <label for="smtp_port">Port</label>
+    <input type="number" id="smtp_port" name="smtp_port" value="{{ smtp.smtp_port }}" placeholder="587">
+
+    <label for="smtp_user">Adresse d'expéditeur</label>
+    <input type="email" id="smtp_user" name="smtp_user" value="{{ smtp.smtp_user }}" placeholder="ex: gmao@spcmo.fr">
+
+    <label for="smtp_password">Mot de passe {% if smtp.smtp_password %}<span class="muted">(déjà enregistré — laisser vide pour ne pas le changer)</span>{% endif %}</label>
+    <input type="password" id="smtp_password" name="smtp_password" placeholder="{{ '••••••••' if smtp.smtp_password else '' }}">
+    <p class="muted" style="margin-top:.5rem;">Repli utilisé si le relais Apps Script ci-dessus n'est pas configuré ou échoue. Stocké uniquement dans <code>settings.json</code> sur ce poste, jamais publié. Utilisé par le script quotidien <code>scripts/verifier_alertes.py</code> (voir Aide.html).</p>
+
+    <p style="margin-top:1.5rem;">
+      <button type="submit" class="btn">Enregistrer</button>
+    </p>
+  </form>
 </div>
 
 <div class="onglet-contenu" data-onglet="equipements">
@@ -267,16 +267,19 @@
 
 <div class="onglet-contenu" data-onglet="alertes">
   <h2 class="section-param">🎨 Couleurs de fond (liste des équipements et carte)</h2>
-  <form class="card" method="post" action="{{ url_for('parametres.parametres_couleurs') }}" style="max-width:700px;">
-    <div style="display:flex; gap:1.5rem; flex-wrap:wrap; align-items:flex-end;">
-      {% for cle, libelle in [("uh_11", "UH 11"), ("uh_34", "UH 34"), ("uh_66", "UH 66"), ("maintenance", "Site de maintenance")] %}
-      <div>
+  <p class="muted">Mêmes couleurs que la légende de la carte du dashboard, et fond des lignes de la liste des équipements. L'opacité (%) permet un rendu semi-transparent (ex : site fermé) — 100 = opaque.</p>
+  <form class="card" method="post" action="{{ url_for('parametres.parametres_couleurs') }}" style="max-width:760px;">
+    <div style="display:flex; gap:1.2rem; flex-wrap:wrap;">
+      {% for cle, libelle in [("uh_11", "UH 11"), ("uh_34", "UH 34"), ("uh_66", "UH 66"), ("maintenance", "Site de maintenance 🔧"), ("sans_uh", "Site sans UH configurée"), ("site_vide", "Site sans équipement (carte)"), ("ferme", "Site fermé")] %}
+      <div style="min-width:150px;">
         <label for="c_{{ cle }}">{{ libelle }}</label>
-        <input type="color" id="c_{{ cle }}" name="{{ cle }}" value="{{ couleurs.get(cle, '#ffffff') }}" style="width:70px; height:38px; padding:2px; margin-top:.3rem;">
+        <input type="color" id="c_{{ cle }}" name="{{ cle }}" value="{{ couleurs.get(cle, '#ffffff') }}" style="width:70px; height:38px; padding:2px; margin-top:.3rem; display:block;">
+        <label for="o_{{ cle }}" style="margin-top:.6rem; font-size:.78rem;">Opacité (%)</label>
+        <input type="number" id="o_{{ cle }}" name="{{ cle }}_opacite" min="0" max="100" value="{{ opacites.get(cle, 100) }}" style="width:70px;">
       </div>
       {% endfor %}
     </div>
-    <p class="muted" style="margin-top:1rem;">En cas de site de maintenance <b>et</b> d'UH tous deux configurés pour un équipement, la couleur « site de maintenance » est prioritaire dans la liste et sur la carte.</p>
+    <p class="muted" style="margin-top:1.2rem;">Ordre de priorité (carte et liste) : <b>site fermé</b> &gt; <b>site de maintenance</b> &gt; <b>UH configurée</b> &gt; <b>sans UH</b>. « Site sans équipement » ne s'applique qu'à la carte (pas de ligne équipement correspondante possible).</p>
     <p style="margin-top:1rem;">
       <button type="submit" class="btn">Enregistrer</button>
     </p>
@@ -289,7 +292,8 @@
   <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
     {% for cle, titre in [("accueil", "Accueil (liste des équipements)"), ("sites", "Gestionnaire des sites"), ("equipements", "Gestionnaire des équipements")] %}
     <form class="card" method="post" action="{{ url_for('parametres.parametres_tri', cle=cle) }}" style="flex:1; min-width:260px; max-width:340px;">
-      <h3 style="margin-top:0;">{{ titre }}</h3>
+      <h3 style="margin-top:0; margin-bottom:.2rem;">{{ titre }}</h3>
+      <p class="muted" style="margin:0 0 1rem;">Ordre actuel : <b>{{ tri_resume[cle] }}</b></p>
       {% for i in (1, 2, 3) %}
       <label for="tri_{{ cle }}_{{ i }}">Niveau {{ i }}</label>
       <select id="tri_{{ cle }}_{{ i }}" name="niveau{{ i }}">
