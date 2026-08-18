@@ -355,6 +355,16 @@ git config --global https.proxy http://pfrie-std.proxy.e2.rie.gouv.fr:8080</pre>
 
   <div class="changelog-entry">
     <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Dans le bandeau, à droite du bouton <b>🏠 Accueil</b> : deux indicateurs compacts montrant l'état de la connexion à la base et le dernier statut de publication GitHub, chacun avec son horodatage (survoler pour le détail).</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
+    <p><span class="tag tag-fix">Correctif</span> Accueil : colonnes <i>Affecté depuis</i> et <i>1ère mise en service</i> en police réduite pour gagner de la place, ascenseur horizontal garanti sur la liste pour les petits écrans.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">18 août 2026</div>
     <p><span class="tag tag-fix">Correctif</span> Cause racine trouvée et corrigée pour les échecs de publication automatique et de relais mail : le réseau RIE impose un proxy sortant que seul le navigateur détectait automatiquement. Adresse du proxy en dur dans <code>config.PROXY_RIE</code>, utilisée par <code>app/publication.py</code> (git) et <code>app/mail.py</code> (3 tentatives en cas de lenteur ponctuelle du proxy) — fonctionne sans configuration préalable sur le poste des collègues. Voir « Proxy sortant du réseau RIE » dans ce même onglet.</p>
   </div>
 
