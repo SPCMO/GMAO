@@ -13,6 +13,26 @@ if "%SCRIPT_DIR:~0,2%"=="\\" (
   exit /b 1
 )
 cd /d "%SCRIPT_DIR%"
+
+if not exist "%~dp0venv\Scripts\python.exe" (
+  echo Environnement Python introuvable ^(dossier venv\ absent^).
+  echo.
+  echo Lancez d'abord Test_pr_install.bat, qui le cree automatiquement,
+  echo puis relancez ce fichier.
+  pause
+  exit /b 1
+)
+
+"%~dp0venv\Scripts\python.exe" -c "import flask" >nul 2>&1
+if errorlevel 1 (
+  echo Des dependances manquent dans l'environnement Python ^(ex: Flask^).
+  echo.
+  echo Lancez d'abord Test_pr_install.bat pour les installer,
+  echo puis relancez ce fichier.
+  pause
+  exit /b 1
+)
+
 echo Demarrage de l'appli GMAO...
 echo Le navigateur va s'ouvrir automatiquement dans quelques secondes.
 echo (Fermez cette fenetre pour arreter l'appli)

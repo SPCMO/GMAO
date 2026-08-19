@@ -189,44 +189,37 @@ def proposer_installation(manquants_requis, manquants_optionnels):
         print("\n  Seuls des packages optionnels manquent. Rien à installer pour le fonctionnement de base.")
         return
 
-    proxy_auto, detecte = detecter_proxy()
-    if proxy_auto and detecte:
-        print(f"\n  Proxy détecté automatiquement : {proxy_auto}")
-        rep_proxy = input("  Utiliser ce proxy pour l'installation ? [O/n] : ").strip().lower()
-        proxy = proxy_auto if rep_proxy in ("", "o", "oui", "y", "yes") else ""
-        if not proxy:
-            proxy = input("  Entrez l'adresse du proxy, ou laisser vide : ").strip()
-    elif proxy_auto:
-        print(f"\n  Aucune variable de proxy système, mais le réseau SPCMO/RIE en impose un connu : {proxy_auto}")
-        rep_proxy = input("  Utiliser ce proxy pour l'installation ? [O/n] : ").strip().lower()
-        proxy = proxy_auto if rep_proxy in ("", "o", "oui", "y", "yes") else ""
-        if not proxy:
-            proxy = input("  Entrez l'adresse du proxy, ou laisser vide : ").strip()
+    # Installation automatique, sans confirmation à taper : c'est précisément ce que
+    # l'utilisateur est venu chercher en lançant ce script — le lui redemander n'apporte
+    # rien et est une occasion de plus de rater une réponse (voir REX installations).
+    proxy, detecte = detecter_proxy()
+    if proxy and detecte:
+        print(f"\n  Proxy détecté : {proxy}")
+    elif proxy:
+        print(f"\n  Aucun proxy système détecté ; utilisation du proxy réseau SPCMO/RIE connu : {proxy}")
     else:
-        print("\n  Aucun proxy détecté ni connu pour ce réseau.")
-        proxy = input("  Entrez l'adresse du proxy si nécessaire, ou Entrée pour ignorer : ").strip()
+        print("\n  Aucun proxy détecté ni connu pour ce réseau — tentative d'installation sans proxy.")
 
-    print()
-    reponse = input("  Voulez-vous installer les packages manquants maintenant ? [O/n] : ").strip().lower()
-    if reponse in ("", "o", "oui", "y", "yes"):
-        print()
-        for spec in tous:
-            cmd = [sys.executable, "-m", "pip", "install"]
-            if proxy:
-                cmd += ["--proxy", proxy]
-            cmd.append(spec)
-            print(f"  >> {' '.join(cmd)}")
-            result = subprocess.run(cmd, capture_output=False)
-            if result.returncode == 0:
-                ok(f"{spec} installé.")
-            else:
-                proxy_hint = f" --proxy {proxy}" if proxy else ""
-                err(f"Échec de l'installation de {spec}. Lancez manuellement : pip install{proxy_hint} {spec}")
-    else:
-        print("\n  Installation annulée. Lancez manuellement :")
-        proxy_hint = f" --proxy {proxy}" if proxy else ""
-        for spec in tous:
-            print(f"    pip install{proxy_hint} {spec}")
+    print("\n  Installation automatique en cours...\n")
+    echecs = []
+    for spec in tous:
+        cmd = [sys.executable, "-m", "pip", "install"]
+        if proxy:
+            cmd += ["--proxy", proxy]
+        cmd.append(spec)
+        print(f"  >> {' '.join(cmd)}")
+        result = subprocess.run(cmd, capture_output=False)
+        if result.returncode == 0:
+            ok(f"{spec} installé.")
+        else:
+            proxy_hint = f" --proxy {proxy}" if proxy else ""
+            err(f"Échec de l'installation de {spec}.")
+            echecs.append((spec, proxy_hint))
+
+    if echecs:
+        print("\n  Si le problème persiste (réseau différent, proxy incorrect...), lancez manuellement :")
+        for spec, proxy_hint in echecs:
+            print(f"    venv\\Scripts\\python.exe -m pip install{proxy_hint} {spec}")
 
 
 # ── 6. Bilan ────────────────────────────────────────────────────────────────
