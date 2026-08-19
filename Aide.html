@@ -365,6 +365,16 @@ git config --global https.proxy http://pfrie-std.proxy.e2.rie.gouv.fr:8080</pre>
 
   <div class="changelog-entry">
     <div class="changelog-date">19 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Gestionnaire des sites et Gestion des équipements : les listes sont désormais dans un conteneur à défilement (ascenseur vertical au-delà d'une certaine hauteur, horizontal si besoin), avec en-tête de colonnes qui reste visible en défilant — utile en particulier sur le Gestionnaire des sites depuis l'import des 195 sites du RIC 2020.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">19 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Un équipement retiré définitivement affiche désormais sa date de retrait et sa raison dans l'historique des affectations, en dernière ligne — sur la fiche détail dans l'appli, et aussi sur la fiche publique consultée en scannant le QR code.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">19 août 2026</div>
     <p><span class="tag tag-fix">Correctif</span> <code>Test_pr_install.bat</code>/<code>.py</code> rendus entièrement automatiques suite à des installations en échec chez un utilisateur (mauvais Python launcher, chemin collé avec guillemets, proxy non utilisé...) : le Python compatible déjà installé est désormais détecté et sélectionné <b>sans aucune question posée</b> (fini le choix de version qui provoquait des erreurs de recopie de chemin ou de syntaxe de drapeau <code>-3.14</code>/<code>-V:3.14</code> selon la version du launcher) ; la saisie manuelle d'un chemin ne reste proposée qu'en dernier recours, avec retrait automatique des guillemets si le chemin a été copié via « Copier en tant que chemin d'accès ». L'installation des dépendances manquantes se lance aussi automatiquement, avec le proxy RIE utilisé sans confirmation à taper. <code>Lancer_GMAO.bat</code> détecte maintenant lui-même un environnement incomplet (venv absent, ou dépendances non installées) et affiche un message clair renvoyant vers <code>Test_pr_install.bat</code>, plutôt qu'une erreur Windows ou une trace Python brute.</p>
   </div>
 
@@ -520,7 +530,7 @@ git config --global https.proxy http://pfrie-std.proxy.e2.rie.gouv.fr:8080</pre>
 
   <div class="changelog-entry">
     <div class="changelog-date">18 août 2026</div>
-    <p><span class="tag tag-feat">Nouveauté</span> Fiche détail équipement réorganisée dans l'ordre : Identifiant, Date de création, Date de 1ère mise en service, Affecté depuis, UH de gestion, Site d'affectation actuel, Localisation, Durée de vie, Rappel, Rallonge (ces deux derniers n'étaient pas affichés auparavant). L'historique des affectations affiche maintenant, du plus ancien au plus récent, la création, la 1ère mise en service puis chaque changement d'affectation.</p>
+    <p><span class="tag tag-feat">Nouveauté</span> Fiche détail équipement réorganisée dans l'ordre : Identifiant, Date de création, Date de 1ère mise en service, Affecté depuis, UH de gestion, Site d'affectation actuel, Localisation, Durée de vie, Rappel, Rallonge (ces deux derniers n'étaient pas affichés auparavant). L'historique des affectations affiche maintenant, du plus ancien au plus récent, la création, la 1ère mise en service, chaque changement d'affectation puis, le cas échéant, le retrait définitif avec sa date et sa raison.</p>
   </div>
 
   <div class="changelog-entry">

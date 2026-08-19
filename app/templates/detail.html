@@ -92,6 +92,9 @@
           <td>{{ a.date_fin or 'en cours' }}</td>
         </tr>
         {% endfor %}
+        {% if equipement.date_retrait %}
+        <tr><td>Retrait définitif{% if equipement.raison_retrait %} — {{ equipement.raison_retrait }}{% endif %}</td><td>—</td><td>{{ equipement.date_retrait }}</td><td>—</td></tr>
+        {% endif %}
       </tbody>
     </table>
   </div>
