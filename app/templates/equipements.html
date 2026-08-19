@@ -6,6 +6,7 @@
   <a href="{{ url_for('equipements.nouveau_equipement') }}" class="btn">+ Nouvel équipement</a>
 </div>
 
+<div class="table-scroll">
 <table id="tableGestionEquipements">
   <thead>
     <tr>
@@ -56,6 +57,7 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='gmao-common.js') }}"></script>

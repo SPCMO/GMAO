@@ -11,10 +11,8 @@
   .dashboard-table table { min-width: 760px; font-size: .8rem; }
   .dashboard-table th, .dashboard-table td { padding: .35rem .45rem; }
   .dashboard-table th { text-transform: none; letter-spacing: 0; font-size: .72rem; font-weight: 700; vertical-align: bottom; }
-  .table-scroll { max-height: 640px; overflow-x: auto; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 6px; }
+  .table-scroll { max-height: 640px; } /* aligne la hauteur sur celle, fixe, de la carte à côté */
   .col-date-compact { font-size: .65rem; }
-  .table-scroll table { box-shadow: none; }
-  .table-scroll thead th { position: sticky; top: 0; z-index: 5; box-shadow: 0 1px 0 #e5e7eb; }
   @media (max-width: 900px) {
     .dashboard-layout { flex-direction: column; }
     .dashboard-carte-bloc { position: static; width: 100%; flex-basis: auto; }

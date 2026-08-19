@@ -53,6 +53,15 @@
   .form-inline { display: flex; gap: .5rem; margin-top: .5rem; align-items: center; flex-wrap: wrap; }
   .form-inline input, .form-inline select { padding: .4rem .5rem; border: 1px solid #d1d5db; border-radius: 6px; }
   h3.section-param { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; }
+  /* Conteneur à défilement pour les longues listes (accueil, Gestionnaire des sites/
+     équipements) : ascenseur vertical dès que la hauteur dépasse max-height, horizontal
+     dès que le tableau est plus large que l'écran (petits écrans, beaucoup de colonnes).
+     Hauteur par défaut relative à l'écran ; le dashboard la réduit à 640px (voir son
+     propre style) pour s'aligner sur la hauteur fixe de la carte à côté. */
+  .table-scroll { max-height: 70vh; overflow-x: auto; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 6px; }
+  .table-scroll table { box-shadow: none; }
+  .table-scroll thead th { position: sticky; top: 0; z-index: 5; box-shadow: 0 1px 0 #e5e7eb; }
+
   /* En-têtes de colonne triables (accueil, Gestionnaire des sites/équipements) : deux
      petits boutons ▲▼ empilés, l'actif surligné — voir trierTable() dans gmao-common.js. */
   .th-triable { white-space: normal; }
