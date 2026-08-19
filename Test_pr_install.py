@@ -29,9 +29,12 @@ if hasattr(sys.stdout, "buffer"):
 MIN_PYTHON = (3, 9)
 
 # (nom_import, nom_pip, version_minimale_optionnelle)
+# Tenu à jour avec requirements.txt et les imports réels du code (app/, scripts/) —
+# revérifier cette liste après tout ajout de dépendance tierce dans le projet.
 REQUIRED = [
     ("sqlite3",   None,          None),          # stdlib
     ("flask",     "flask",       None),
+    ("jinja2",    "Jinja2",      None),           # génération des templates et fiches statiques
     ("qrcode",    "qrcode[pil]", None),
     ("PIL",       "pillow",      None),
     ("openpyxl",  "openpyxl",    None),
@@ -92,6 +95,8 @@ def check_packages(package_list, label="Requis"):
 def check_project_files():
     titre("3 / Vérification des fichiers du projet")
     base = os.path.dirname(os.path.abspath(__file__))
+    # Tenue à jour avec la structure réelle du projet (Blueprints Flask depuis le
+    # découpage de run.py) — revérifier après tout ajout de module dans app/ ou scripts/.
     attendus = [
         "run.py",
         "config.py",
@@ -100,9 +105,22 @@ def check_project_files():
         os.path.join("app", "db.py"),
         os.path.join("app", "settings.py"),
         os.path.join("app", "qrcodes.py"),
+        os.path.join("app", "alertes.py"),
+        os.path.join("app", "mail.py"),
+        os.path.join("app", "publication.py"),
+        os.path.join("app", "sante.py"),
+        os.path.join("app", "forms.py"),
+        os.path.join("app", "routes", "equipements.py"),
+        os.path.join("app", "routes", "sites.py"),
+        os.path.join("app", "routes", "parametres.py"),
         os.path.join("app", "templates", "base.html"),
+        os.path.join("app", "templates", "dashboard.html"),
+        os.path.join("app", "static", "gmao-common.js"),
+        os.path.join("app", "static", "leaflet", "leaflet.js"),
+        os.path.join("app", "static", "leaflet", "gmao-map.js"),
         os.path.join("scripts", "generate_site.py"),
         os.path.join("scripts", "generate_qrcodes.py"),
+        os.path.join("scripts", "verifier_alertes.py"),
     ]
     manquants = []
     for f in attendus:
@@ -124,18 +142,26 @@ def check_project_files():
 
 # ── 4. Détection du proxy ───────────────────────────────────────────────────
 def detecter_proxy():
+    """Retourne (proxy, detecte) — detecte=True si trouvé via variable d'environnement
+    ou détection système, False si c'est juste le proxy RIE connu par défaut (voir
+    config.PROXY_RIE, découvert pour git/mail — probablement valable aussi pour pip
+    sur ce même réseau, mais pas garanti)."""
     for var in ("HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy"):
         val = os.environ.get(var, "").strip()
         if val:
-            return val
+            return val, True
     try:
         proxies = urllib.request.getproxies()
         for key in ("https", "http"):
             if key in proxies and proxies[key]:
-                return proxies[key]
+                return proxies[key], True
     except Exception:
         pass
-    return ""
+    try:
+        import config
+        return config.PROXY_RIE, False
+    except Exception:
+        return "", False
 
 
 # ── 5. Proposition d'installation ──────────────────────────────────────────
@@ -163,15 +189,21 @@ def proposer_installation(manquants_requis, manquants_optionnels):
         print("\n  Seuls des packages optionnels manquent. Rien à installer pour le fonctionnement de base.")
         return
 
-    proxy_auto = detecter_proxy()
-    if proxy_auto:
+    proxy_auto, detecte = detecter_proxy()
+    if proxy_auto and detecte:
         print(f"\n  Proxy détecté automatiquement : {proxy_auto}")
         rep_proxy = input("  Utiliser ce proxy pour l'installation ? [O/n] : ").strip().lower()
         proxy = proxy_auto if rep_proxy in ("", "o", "oui", "y", "yes") else ""
         if not proxy:
             proxy = input("  Entrez l'adresse du proxy, ou laisser vide : ").strip()
+    elif proxy_auto:
+        print(f"\n  Aucune variable de proxy système, mais le réseau SPCMO/RIE en impose un connu : {proxy_auto}")
+        rep_proxy = input("  Utiliser ce proxy pour l'installation ? [O/n] : ").strip().lower()
+        proxy = proxy_auto if rep_proxy in ("", "o", "oui", "y", "yes") else ""
+        if not proxy:
+            proxy = input("  Entrez l'adresse du proxy, ou laisser vide : ").strip()
     else:
-        print("\n  Aucun proxy système détecté.")
+        print("\n  Aucun proxy détecté ni connu pour ce réseau.")
         proxy = input("  Entrez l'adresse du proxy si nécessaire, ou Entrée pour ignorer : ").strip()
 
     print()

@@ -278,7 +278,7 @@
   <p>Le dossier réseau (<code>2026_GMAO</code>) sert de copie du code et de stockage de la base partagée — il ne contient volontairement <b>pas</b> d'environnement Python (<code>venv</code>), et <code>Lancer_GMAO.bat</code> ne peut pas s'exécuter directement dessus (Windows ne supporte pas un dossier réseau <code>\\...</code> comme répertoire de travail). Pour un nouveau poste :</p>
   <ol>
     <li>Copier tout le dossier <code>GMAO</code> (depuis le réseau ou <a href="https://github.com/SPCMO/GMAO" target="_blank">GitHub</a>) sur le disque local, par exemple <code>D:\GMAO</code></li>
-    <li>Double-cliquer sur <code>Test_pr_install.bat</code> : il détecte les versions Python disponibles, crée l'environnement virtuel (<code>venv</code>) si besoin, vérifie chaque dépendance (Flask, qrcode, Pillow, openpyxl, reportlab) et propose d'installer celles qui manquent</li>
+    <li>Double-cliquer sur <code>Test_pr_install.bat</code> : il détecte les versions Python disponibles, crée l'environnement virtuel (<code>venv</code>) si besoin, vérifie chaque dépendance (Flask, Jinja2, qrcode, Pillow, openpyxl, reportlab, python-dateutil) et propose d'installer celles qui manquent (avec le proxy RIE connu proposé automatiquement si aucun n'est détecté par le système)</li>
     <li>Lancer <code>Lancer_GMAO.bat</code>, puis dans le menu <b>⚙️ Paramètres</b>, indiquer le chemin réseau de la base partagée (voir ci-dessous)</li>
   </ol>
   <p class="muted">En cas de souci, la méthode manuelle reste possible : <code>python -m venv venv</code> puis <code>venv\Scripts\python.exe -m pip install -r requirements.txt</code>.</p>
@@ -362,6 +362,11 @@ git config --global https.proxy http://pfrie-std.proxy.e2.rie.gouv.fr:8080</pre>
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">19 août 2026</div>
+    <p><span class="tag tag-fix">Correctif</span> <code>Test_pr_install.py</code> actualisé : ajout de la vérification de <b>Jinja2</b> (utilisé directement par la génération des fiches, jusque-là non testé explicitement) et de la liste des fichiers projet vérifiés (Blueprints <code>app/routes/</code>, <code>app/alertes.py</code>, <code>mail.py</code>, <code>publication.py</code>, <code>sante.py</code>, <code>forms.py</code>, <code>scripts/verifier_alertes.py</code> — absents de la liste depuis le découpage de <code>run.py</code>). Le proxy RIE connu (<code>config.PROXY_RIE</code>) est désormais proposé automatiquement pour l'installation des packages manquants si aucun proxy système n'est détecté.</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">18 août 2026</div>
