@@ -517,6 +517,45 @@ def get_historique(conn, equipement_id):
     ).fetchall()
 
 
+def get_affectation(conn, affectation_id):
+    return conn.execute("SELECT * FROM affectation WHERE id = ?", (affectation_id,)).fetchone()
+
+
+def update_affectation(conn, affectation_id, site, date_debut, date_fin):
+    """Corrige a posteriori une ligne d'affectation existante (site et/ou dates) —
+    utilisé pour rectifier une erreur de saisie, pas pour un vrai changement de site
+    (voir changer_affectation, qui clôt l'affectation en cours et en ouvre une nouvelle)."""
+    ensure_site(conn, site)
+    conn.execute(
+        "UPDATE affectation SET site = ?, date_debut = ?, date_fin = ? WHERE id = ?",
+        (site, date_debut, date_fin or None, affectation_id),
+    )
+
+
+def delete_affectation(conn, affectation_id):
+    conn.execute("DELETE FROM affectation WHERE id = ?", (affectation_id,))
+
+
+def chevauchement_affectations(conn, equipement_id, date_debut, date_fin, exclure_id=None):
+    """Liste les affectations existantes de cet équipement dont la période chevauche
+    [date_debut, date_fin[ (date_fin=None = toujours en cours, traité comme sans fin).
+    Deux affectations qui se touchent exactement (l'une finit le jour où l'autre
+    commence, transition normale — voir changer_affectation) ne comptent pas comme un
+    chevauchement. exclure_id : ignore cette ligne (celle qu'on est en train de modifier
+    ou de clôturer)."""
+    rows = conn.execute(
+        "SELECT * FROM affectation WHERE equipement_id = ?" + (" AND id != ?" if exclure_id else ""),
+        (equipement_id, exclure_id) if exclure_id else (equipement_id,),
+    ).fetchall()
+    fin_nouvelle = date_fin or "9999-12-31"
+    resultat = []
+    for r in rows:
+        fin_existante = r["date_fin"] or "9999-12-31"
+        if date_debut < fin_existante and r["date_debut"] < fin_nouvelle:
+            resultat.append(r)
+    return resultat
+
+
 # ── Listes de référence (types, sous-types, durées) ─────────────────────
 
 def list_types(conn):

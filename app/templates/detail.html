@@ -77,23 +77,29 @@
     <h2 class="mt-2">Historique des affectations</h2>
     <table>
       <thead>
-        <tr><th>Événement</th><th>Site</th><th>Début</th><th>Fin</th></tr>
+        <tr><th>Événement</th><th>Site</th><th>Début</th><th>Fin</th><th></th></tr>
       </thead>
       <tbody>
         {% if equipement.date_creation %}
-        <tr><td>Création</td><td>—</td><td>{{ equipement.date_creation }}</td><td>—</td></tr>
+        <tr><td>Création</td><td>—</td><td>{{ equipement.date_creation }}</td><td>—</td><td></td></tr>
         {% endif %}
-        <tr><td>1ère mise en service</td><td>—</td><td>{{ equipement.date_installation }}</td><td>—</td></tr>
+        <tr><td>1ère mise en service</td><td>—</td><td>{{ equipement.date_installation }}</td><td>—</td><td></td></tr>
         {% for a in historique %}
         <tr>
           <td>Affectation</td>
           <td>{{ a.site }}</td>
           <td>{{ a.date_debut }}</td>
           <td>{{ a.date_fin or 'en cours' }}</td>
+          <td style="white-space:nowrap;">
+            <a href="{{ url_for('equipements.modifier_affectation', equipement_id=equipement.id, affectation_id=a.id) }}" class="muted" style="font-size:.82rem;">modifier</a>
+            <form method="post" action="{{ url_for('equipements.supprimer_affectation', equipement_id=equipement.id, affectation_id=a.id) }}" style="display:inline;" onsubmit="return confirm('Supprimer cette ligne d\'affectation ({{ a.site }}, du {{ a.date_debut }} au {{ a.date_fin or 'en cours' }}) de l\'historique ?');">
+              <button type="submit" class="lien-suppr" style="margin-left:.5rem;">supprimer</button>
+            </form>
+          </td>
         </tr>
         {% endfor %}
         {% if equipement.date_retrait %}
-        <tr><td>Retrait définitif{% if equipement.raison_retrait %} — {{ equipement.raison_retrait }}{% endif %}</td><td>—</td><td>{{ equipement.date_retrait }}</td><td>—</td></tr>
+        <tr><td>Retrait définitif{% if equipement.raison_retrait %} — {{ equipement.raison_retrait }}{% endif %}</td><td>—</td><td>{{ equipement.date_retrait }}</td><td>—</td><td></td></tr>
         {% endif %}
       </tbody>
     </table>

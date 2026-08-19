@@ -143,6 +143,14 @@ def regenerer_etiquette(equipement_id):
     return redirect(url_for("equipements.detail_equipement", equipement_id=equipement_id))
 
 
+def _message_chevauchement(chevauchantes):
+    details = ", ".join(
+        f"{c['site']} du {c['date_debut']} au {c['date_fin'] or 'aujourd’hui'}"
+        for c in chevauchantes
+    )
+    return f"⚠️ Attention, la période saisie chevauche une affectation existante : {details}. Vérifiez les dates."
+
+
 @equipements_bp.route("/equipement/<equipement_id>/affecter", methods=["GET", "POST"])
 def affecter_equipement(equipement_id):
     with db.db_session() as conn:
@@ -155,6 +163,13 @@ def affecter_equipement(equipement_id):
             if est_nouveau_site:
                 nouveau_site = request.form.get("nouveau_site_nom", "").strip()
             date_transfert = request.form["date_transfert"]
+            # Chevauchement vérifié AVANT modification, en excluant l'affectation en
+            # cours (celle que ce changement clôt justement à cette même date — une
+            # transition normale, pas une incohérence).
+            exclure_id = site_actuel["id"] if site_actuel else None
+            chevauchantes = db.chevauchement_affectations(
+                conn, equipement_id, date_transfert, None, exclure_id=exclure_id
+            )
             db.changer_affectation(conn, equipement_id, nouveau_site, date_transfert)
             if est_nouveau_site:
                 lat = parse_coord(request.form.get("lat"))
@@ -162,12 +177,49 @@ def affecter_equipement(equipement_id):
                 uh = request.form.get("uh_gestion") or None
                 db.update_site(conn, nouveau_site, maintenance=False, lat=lat, lon=lon, uh_gestion=uh)
             publication.publier_en_tache_de_fond()
-            flash(f"« {equipement['nom']} » réaffecté à {nouveau_site}.")
+            if chevauchantes:
+                flash(_message_chevauchement(chevauchantes))
+            else:
+                flash(f"« {equipement['nom']} » réaffecté à {nouveau_site}.")
             return redirect(url_for("equipements.detail_equipement", equipement_id=equipement_id))
     return render_template(
         "affecter.html", equipement=equipement, site_actuel=site_actuel,
         sites=sites, aujourdhui=date.today().isoformat(), uh_valeurs=db.UH_VALEURS,
     )
+
+
+@equipements_bp.route("/equipement/<equipement_id>/affectation/<int:affectation_id>/modifier", methods=["GET", "POST"])
+def modifier_affectation(equipement_id, affectation_id):
+    with db.db_session() as conn:
+        equipement = db.get_equipement(conn, equipement_id)
+        affectation = db.get_affectation(conn, affectation_id)
+        sites = db.list_sites(conn)
+        if request.method == "POST":
+            site = request.form["site"].strip()
+            date_debut = request.form["date_debut"]
+            date_fin = request.form.get("date_fin", "").strip() or None
+            chevauchantes = db.chevauchement_affectations(
+                conn, equipement_id, date_debut, date_fin, exclure_id=affectation_id
+            )
+            db.update_affectation(conn, affectation_id, site, date_debut, date_fin)
+            publication.publier_en_tache_de_fond()
+            if chevauchantes:
+                flash(_message_chevauchement(chevauchantes))
+            else:
+                flash("Ligne d'affectation mise à jour.")
+            return redirect(url_for("equipements.detail_equipement", equipement_id=equipement_id))
+    return render_template(
+        "modifier_affectation.html", equipement=equipement, affectation=affectation, sites=sites,
+    )
+
+
+@equipements_bp.route("/equipement/<equipement_id>/affectation/<int:affectation_id>/supprimer", methods=["POST"])
+def supprimer_affectation(equipement_id, affectation_id):
+    with db.db_session() as conn:
+        db.delete_affectation(conn, affectation_id)
+    publication.publier_en_tache_de_fond()
+    flash("Ligne d'affectation supprimée de l'historique.")
+    return redirect(url_for("equipements.detail_equipement", equipement_id=equipement_id))
 
 
 @equipements_bp.route("/equipement/<equipement_id>/fiche")

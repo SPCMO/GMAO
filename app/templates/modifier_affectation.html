@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Modifier une affectation{% endblock %}
+{% block content %}
+<h1>Modifier une ligne d'affectation — {{ equipement.nom }}</h1>
+<p class="muted">Corrige le site et/ou les dates d'une affectation déjà enregistrée dans l'historique. Pour un vrai changement de site (nouvelle affectation), utilise plutôt <b>Changer l'affectation</b> depuis la fiche équipement.</p>
+
+<form class="card" method="post" style="max-width:480px;">
+  <label for="site">Site</label>
+  <select id="site" name="site" required>
+    {% for s in sites %}
+    <option value="{{ s }}" {{ "selected" if s == affectation.site }}>{{ s }}</option>
+    {% endfor %}
+  </select>
+
+  <label for="date_debut" style="margin-top:1rem;">Date de début</label>
+  <input type="date" id="date_debut" name="date_debut" required value="{{ affectation.date_debut }}">
+
+  <label for="date_fin" style="margin-top:1rem;">Date de fin</label>
+  <input type="date" id="date_fin" name="date_fin" value="{{ affectation.date_fin or '' }}">
+  <p class="muted" style="margin-top:.3rem;">Laisser vide si l'équipement est toujours sur ce site (affectation en cours).</p>
+
+  <p style="margin-top:1.5rem;">
+    <button type="submit" class="btn">Enregistrer</button>
+    <a href="{{ url_for('equipements.detail_equipement', equipement_id=equipement.id) }}" class="btn btn-secondary">Annuler</a>
+  </p>
+</form>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='gmao-common.js') }}"></script>
+<script>
+  validerDateCreationMiseService('date_debut', 'date_fin');
+</script>
+{% endblock %}

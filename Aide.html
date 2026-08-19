@@ -94,7 +94,8 @@
   <p class="muted">Triée par défaut par <b>Statut</b> puis <b>Site</b> (sites fermés en bas) ; chaque en-tête de colonne est triable manuellement (▲▼), et le tri par défaut se règle dans <b>⚙️ Paramètres</b> → <b>🔀 Tri par défaut</b>.</p>
 
   <h3>Changer l'affectation d'un équipement</h3>
-  <p>Depuis la fiche détail d'un équipement → <b>Changer l'affectation</b> : indiquer le nouveau site et la date de transfert. L'ancienne affectation est automatiquement clôturée (date de fin renseignée) et une nouvelle ligne d'historique est créée. L'historique n'est jamais réécrit, seulement complété.</p>
+  <p>Depuis la fiche détail d'un équipement → <b>Changer l'affectation</b> : indiquer le nouveau site et la date de transfert. L'ancienne affectation est automatiquement clôturée (date de fin renseignée) et une nouvelle ligne d'historique est créée.</p>
+  <p class="muted">Chaque ligne « Affectation » de l'historique peut aussi être corrigée après coup (liens <b>modifier</b>/<b>supprimer</b> à droite de la ligne) — utile pour une erreur de site ou de date saisie par erreur. À chaque enregistrement (nouvelle affectation ou correction d'une ligne existante), GMAO vérifie que la période saisie ne chevauche pas une autre affectation déjà connue de cet équipement ; si c'est le cas, un message d'avertissement précise laquelle — l'enregistrement se fait quand même, à charge pour vous de corriger si besoin.</p>
 
   <h3>QR code d'un équipement</h3>
   <p>La fiche détail d'un équipement affiche son QR code dans un encart à droite, avec un bouton <b>🖨️ Imprimer</b> (n'imprime que l'étiquette, pas le reste de la page) et <b>📄 Télécharger en PDF</b> — pratique pour ressortir rapidement l'étiquette d'un seul équipement sans passer par le dashboard.</p>
@@ -362,6 +363,11 @@ git config --global https.proxy http://pfrie-std.proxy.e2.rie.gouv.fr:8080</pre>
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">19 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Historique des affectations : chaque ligne « Affectation » peut désormais être modifiée (site, dates) ou supprimée directement depuis la fiche équipement, pour corriger une erreur de saisie. À chaque enregistrement (nouvelle affectation ou correction), GMAO détecte si la période saisie chevauche une autre affectation déjà connue de cet équipement et affiche un avertissement le cas échéant (une transition normale d'un site à l'autre, où la date de fin de l'un correspond à la date de début de l'autre, n'est pas considérée comme un chevauchement).</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">19 août 2026</div>
