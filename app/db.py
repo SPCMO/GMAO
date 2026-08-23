@@ -118,6 +118,7 @@ TRI_COLONNES = {
         ("site", "Site"), ("uh", "UH"), ("affecte_depuis", "Affecté depuis"),
         ("installation", "1ère mise en service"), ("statut", "Statut"),
         ("tps_restant", "Tps restant (j)"), ("duree_prolongee", "Durée de vie prolongée"),
+        ("alerte", "Alerte"),
     ],
     "sites": [
         ("site", "Site"), ("nb_equipements", "Équipements affectés"), ("uh", "UH"),
@@ -536,24 +537,23 @@ def delete_affectation(conn, affectation_id):
     conn.execute("DELETE FROM affectation WHERE id = ?", (affectation_id,))
 
 
-def chevauchement_affectations(conn, equipement_id, date_debut, date_fin, exclure_id=None):
-    """Liste les affectations existantes de cet équipement dont la période chevauche
-    [date_debut, date_fin[ (date_fin=None = toujours en cours, traité comme sans fin).
-    Deux affectations qui se touchent exactement (l'une finit le jour où l'autre
-    commence, transition normale — voir changer_affectation) ne comptent pas comme un
-    chevauchement. exclure_id : ignore cette ligne (celle qu'on est en train de modifier
-    ou de clôturer)."""
-    rows = conn.execute(
-        "SELECT * FROM affectation WHERE equipement_id = ?" + (" AND id != ?" if exclure_id else ""),
-        (equipement_id, exclure_id) if exclure_id else (equipement_id,),
-    ).fetchall()
-    fin_nouvelle = date_fin or "9999-12-31"
-    resultat = []
-    for r in rows:
-        fin_existante = r["date_fin"] or "9999-12-31"
-        if date_debut < fin_existante and r["date_debut"] < fin_nouvelle:
-            resultat.append(r)
-    return resultat
+def incoherences_historique(conn, equipement_id):
+    """Repère les ruptures de continuité dans l'historique des affectations d'un
+    équipement : deux affectations consécutives (triées par date_debut) doivent se
+    toucher exactement (la fin de l'une = le début de la suivante — transition normale,
+    voir changer_affectation), sinon c'est soit un chevauchement, soit un trou, soit une
+    affectation "en cours" (date_fin vide) qui n'est pourtant pas la dernière
+    chronologiquement. Retourne l'ensemble des id d'affectation impliqués dans une
+    rupture, à utiliser pour les surligner. Appelé après toute création/modification/
+    suppression d'affectation, et à chaque affichage de la fiche équipement."""
+    lignes = get_historique(conn, equipement_id)
+    incoherentes = set()
+    for i in range(len(lignes) - 1):
+        courante, suivante = lignes[i], lignes[i + 1]
+        if courante["date_fin"] != suivante["date_debut"]:
+            incoherentes.add(courante["id"])
+            incoherentes.add(suivante["id"])
+    return incoherentes
 
 
 # ── Listes de référence (types, sous-types, durées) ─────────────────────

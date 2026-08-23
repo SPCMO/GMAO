@@ -38,6 +38,10 @@
   form.card label { display: block; margin-top: 1rem; font-size: .85rem; font-weight: 600; color: #374151; }
   form.card input, form.card select { width: 100%; padding: .5rem; margin-top: .3rem; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
   .flash { background: #dcfce7; color: #166534; padding: .6rem 1rem; border-radius: 6px; margin-bottom: 1rem; }
+  .flash-avertissement { background: #fee2e2; color: #991b1b; }
+  .popup-avertissement-fond { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+  .popup-avertissement-boite { background: #fff; border-radius: 10px; max-width: 480px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,.3); border-top: 4px solid #b91c1c; }
+  .popup-avertissement-boite p { margin: 0 0 1.2rem; color: #374151; line-height: 1.4; }
   .badge { display: inline-block; background: #e0e7ff; color: #3730a3; padding: .15rem .5rem; border-radius: 999px; font-size: .78rem; }
   .muted { color: #6b7280; font-size: .85rem; }
   .liste-gestion { list-style: none; padding: 0; margin: .5rem 0 1rem; }
@@ -117,9 +121,11 @@
   </div>
 </header>
 <main>
-  {% with messages = get_flashed_messages() %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-      {% for m in messages %}<div class="flash">{{ m }}</div>{% endfor %}
+      {% for categorie, m in messages %}
+      <div class="flash {{ 'flash-avertissement' if categorie == 'avertissement' else '' }}">{{ m }}</div>
+      {% endfor %}
     {% endif %}
   {% endwith %}
   {% block content %}{% endblock %}
@@ -193,6 +199,27 @@
       btn.disabled = false;
     });
   };
+
+  // Avertissement bloquant (ex: incohérence de dates d'affectation) : contrairement au
+  // bandeau .flash normal (passif, peut passer inaperçu), celui-ci exige un clic de
+  // l'utilisateur pour être fermé — voir app/routes/equipements.py, catégorie "avertissement".
+  document.querySelectorAll('.flash-avertissement').forEach(function (el) {
+    var overlay = document.createElement('div');
+    overlay.className = 'popup-avertissement-fond';
+    var boite = document.createElement('div');
+    boite.className = 'popup-avertissement-boite';
+    var texte = document.createElement('p');
+    texte.textContent = el.textContent.trim();
+    var bouton = document.createElement('button');
+    bouton.type = 'button';
+    bouton.className = 'btn w-full';
+    bouton.textContent = 'Compris';
+    bouton.addEventListener('click', function () { overlay.remove(); });
+    boite.appendChild(texte);
+    boite.appendChild(bouton);
+    overlay.appendChild(boite);
+    document.body.appendChild(overlay);
+  });
 })();
 </script>
 {% block extra_scripts %}{% endblock %}

@@ -85,11 +85,12 @@
         {% endif %}
         <tr><td>1ère mise en service</td><td>—</td><td>{{ equipement.date_installation }}</td><td>—</td><td></td></tr>
         {% for a in historique %}
+        {% set en_cause = a.id in lignes_incoherentes %}
         <tr>
           <td>Affectation</td>
           <td>{{ a.site }}</td>
-          <td>{{ a.date_debut }}</td>
-          <td>{{ a.date_fin or 'en cours' }}</td>
+          <td{% if en_cause %} style="background:#fee2e2; color:#991b1b; font-weight:600;" title="Incohérence : cette date ne s'enchaîne pas exactement avec l'affectation voisine"{% endif %}>{{ a.date_debut }}</td>
+          <td{% if en_cause %} style="background:#fee2e2; color:#991b1b; font-weight:600;" title="Incohérence : cette date ne s'enchaîne pas exactement avec l'affectation voisine"{% endif %}>{{ a.date_fin or 'en cours' }}</td>
           <td style="white-space:nowrap;">
             <a href="{{ url_for('equipements.modifier_affectation', equipement_id=equipement.id, affectation_id=a.id) }}" class="muted" style="font-size:.82rem;">modifier</a>
             <form method="post" action="{{ url_for('equipements.supprimer_affectation', equipement_id=equipement.id, affectation_id=a.id) }}" style="display:inline;" onsubmit="return confirm('Supprimer cette ligne d\'affectation ({{ a.site }}, du {{ a.date_debut }} au {{ a.date_fin or 'en cours' }}) de l\'historique ?');">

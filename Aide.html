@@ -77,6 +77,7 @@
 
   <h3>Vue globale (dashboard)</h3>
   <p>Page d'accueil en deux parties : une <b>carte</b> à gauche (un marqueur par <b>site</b> géolocalisé — pas par équipement — coloré selon l'UH de gestion ou le statut du site, avec au clic le nom du site et la liste cliquable des équipements qui y sont actuellement affectés) et le <b>tableau</b> à droite. Le menu déroulant filtre par site, le champ de recherche filtre par nom d'équipement. Déplacer ou zoomer la carte filtre également le tableau sur la zone visible (les équipements sans coordonnées restent toujours affichés, puisqu'ils n'ont pas de position à comparer) — un bandeau <i>« Le tableau est filtré sur la zone visible de la carte »</i> apparaît, avec un lien pour réinitialiser.</p>
+  <p class="muted">Choisir une <b>UH</b> dans son menu déroulant restreint automatiquement le menu <b>Site</b> aux sites de cette UH (les autres options sont masquées, pas supprimées). Une case <b>« Masquer les équipements retirés du service »</b> au-dessus du tableau permet de ne voir que le matériel en fonction.</p>
   <p class="muted">Une pastille grisée avec une icône 🔧 signale un site de maintenance, une pastille gris foncé un site sans aucun équipement affecté, une pastille blanche à croix rouge semi-transparente un site fermé. Une case <b>« Masquer les sites fermés sur la carte »</b> au-dessus de la carte permet de les cacher temporairement sans les faire disparaître de la liste des sites — seule leur <b>suppression complète</b> depuis le Gestionnaire des sites les retire définitivement de la carte.</p>
   <p class="muted">La carte affiche une échelle dynamique en bas à gauche, et un sélecteur en haut à droite permet de basculer entre le fond <b>Plan</b> (OpenStreetMap) et <b>Satellite</b> (imagerie Esri) — toujours déplié (et réduit en taille) pour qu'il reste visible sans avoir à deviner qu'il est cliquable ; disponible aussi sur les mini-cartes de pointage d'un nouveau site. Une légende repliable (bouton <b>🗺️ Légende</b>) en bas à droite de la carte rappelle la signification de chaque couleur/icône.</p>
   <p class="muted">Dans le tableau, la colonne <b>Tps restant (j)</b> indique le nombre de jours restants avant la date de péremption calculée (durée de vie + date de 1ère mise en service), en rouge si déjà dépassée — triable comme les autres colonnes, y compris quand le rappel n'est pas configuré.</p>
@@ -95,7 +96,7 @@
 
   <h3>Changer l'affectation d'un équipement</h3>
   <p>Depuis la fiche détail d'un équipement → <b>Changer l'affectation</b> : indiquer le nouveau site et la date de transfert. L'ancienne affectation est automatiquement clôturée (date de fin renseignée) et une nouvelle ligne d'historique est créée.</p>
-  <p class="muted">Chaque ligne « Affectation » de l'historique peut aussi être corrigée après coup (liens <b>modifier</b>/<b>supprimer</b> à droite de la ligne) — utile pour une erreur de site ou de date saisie par erreur. À chaque enregistrement (nouvelle affectation ou correction d'une ligne existante), GMAO vérifie que la période saisie ne chevauche pas une autre affectation déjà connue de cet équipement ; si c'est le cas, un message d'avertissement précise laquelle — l'enregistrement se fait quand même, à charge pour vous de corriger si besoin.</p>
+  <p class="muted">Chaque ligne « Affectation » de l'historique peut aussi être corrigée après coup (liens <b>modifier</b>/<b>supprimer</b> à droite de la ligne) — utile pour une erreur de site ou de date saisie par erreur. Après toute création, modification ou suppression d'une ligne, GMAO vérifie que l'historique reste continu (la fin d'une affectation doit correspondre exactement au début de la suivante) ; en cas de chevauchement ou de trou entre deux dates, une <b>fenêtre pop-up</b> s'affiche et doit être fermée manuellement (bouton « Compris ») pour que ce ne soit pas manqué, et les dates concernées restent surlignées en rouge sur la fiche tant que l'incohérence n'est pas corrigée. L'enregistrement se fait quand même — à vous de corriger si besoin.</p>
 
   <h3>QR code d'un équipement</h3>
   <p>La fiche détail d'un équipement affiche son QR code dans un encart à droite, avec un bouton <b>🖨️ Imprimer</b> (n'imprime que l'étiquette, pas le reste de la page) et <b>📄 Télécharger en PDF</b> — pratique pour ressortir rapidement l'étiquette d'un seul équipement sans passer par le dashboard.</p>
@@ -363,6 +364,26 @@ git config --global https.proxy http://pfrie-std.proxy.e2.rie.gouv.fr:8080</pre>
 
 <section id="changelog">
   <h2>Correctifs &amp; nouvelles fonctionnalités</h2>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">23 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Accueil : case <b>« Masquer les équipements retirés du service »</b> au-dessus du tableau, et colonne <b>Alerte</b> désormais triable (▲▼) comme les autres.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">23 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Accueil : sélectionner une <b>UH</b> restreint automatiquement les options du menu déroulant <b>Site</b> à cette UH.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">23 août 2026</div>
+    <p><span class="tag tag-feat">Nouveauté</span> Historique des affectations : la vérification de cohérence des dates s'applique désormais aussi à la <b>suppression</b> d'une ligne (pas seulement à l'ajout/modification), et l'avertissement s'affiche en <b>pop-up bloquant</b> (à fermer manuellement) plutôt qu'en simple bandeau, pour être sûr qu'il ne passe pas inaperçu. Les dates en cause restent surlignées en rouge sur la fiche tant que l'incohérence n'est pas corrigée.</p>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="changelog-date">23 août 2026</div>
+    <p><span class="tag tag-fix">Correctif</span> La fiche publique (consultée en scannant le QR code) indique désormais au navigateur de ne pas la mettre en cache — l'URL d'un équipement ne changeant jamais, un ancien scan pouvait rester affiché après une mise à jour tant que la page n'était pas explicitement rechargée.</p>
+  </div>
 
   <div class="changelog-entry">
     <div class="changelog-date">19 août 2026</div>

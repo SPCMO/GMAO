@@ -67,6 +67,9 @@ def detail_equipement(equipement_id):
         site_actuel = db.get_site_actuel(conn, equipement_id)
         historique = db.get_historique(conn, equipement_id)
         site_geo = db.get_site(conn, site_actuel["site"]) if site_actuel else None
+        # Recalculé à chaque affichage (pas seulement juste après une modification) pour
+        # surligner en rouge toute incohérence encore présente dans l'historique.
+        lignes_incoherentes = db.incoherences_historique(conn, equipement_id)
     # Réutilise l'étiquette déjà générée si elle existe (voir qrcodes.generate) : cette route
     # est appelée à chaque consultation de la fiche, pas seulement à la création.
     _, _, pdf_path = qrcodes.generate([equipement_id])
@@ -74,7 +77,7 @@ def detail_equipement(equipement_id):
     return render_template(
         "detail.html", equipement=equipement, site_actuel=site_actuel,
         historique=historique, site_geo=site_geo, pdf_filename=os.path.basename(pdf_path),
-        peut_annuler=peut_annuler,
+        peut_annuler=peut_annuler, lignes_incoherentes=lignes_incoherentes,
     )
 
 
@@ -143,12 +146,21 @@ def regenerer_etiquette(equipement_id):
     return redirect(url_for("equipements.detail_equipement", equipement_id=equipement_id))
 
 
-def _message_chevauchement(chevauchantes):
-    details = ", ".join(
-        f"{c['site']} du {c['date_debut']} au {c['date_fin'] or 'aujourd’hui'}"
-        for c in chevauchantes
-    )
-    return f"⚠️ Attention, la période saisie chevauche une affectation existante : {details}. Vérifiez les dates."
+_MESSAGE_INCOHERENCE = (
+    "⚠️ Attention, l'historique des affectations de cet équipement n'est plus "
+    "cohérent (chevauchement ou trou entre deux dates). Les lignes concernées sont "
+    "surlignées en rouge ci-dessous — vérifiez et corrigez si besoin."
+)
+
+
+def _flash_selon_coherence(conn, equipement_id, message_ok):
+    """Après toute création/modification/suppression d'affectation : avertit (en
+    pop-up bloquant côté client — voir base.html) si l'historique n'est plus
+    cohérent, sinon confirme normalement l'action."""
+    if db.incoherences_historique(conn, equipement_id):
+        flash(_MESSAGE_INCOHERENCE, "avertissement")
+    else:
+        flash(message_ok)
 
 
 @equipements_bp.route("/equipement/<equipement_id>/affecter", methods=["GET", "POST"])
@@ -163,13 +175,6 @@ def affecter_equipement(equipement_id):
             if est_nouveau_site:
                 nouveau_site = request.form.get("nouveau_site_nom", "").strip()
             date_transfert = request.form["date_transfert"]
-            # Chevauchement vérifié AVANT modification, en excluant l'affectation en
-            # cours (celle que ce changement clôt justement à cette même date — une
-            # transition normale, pas une incohérence).
-            exclure_id = site_actuel["id"] if site_actuel else None
-            chevauchantes = db.chevauchement_affectations(
-                conn, equipement_id, date_transfert, None, exclure_id=exclure_id
-            )
             db.changer_affectation(conn, equipement_id, nouveau_site, date_transfert)
             if est_nouveau_site:
                 lat = parse_coord(request.form.get("lat"))
@@ -177,10 +182,7 @@ def affecter_equipement(equipement_id):
                 uh = request.form.get("uh_gestion") or None
                 db.update_site(conn, nouveau_site, maintenance=False, lat=lat, lon=lon, uh_gestion=uh)
             publication.publier_en_tache_de_fond()
-            if chevauchantes:
-                flash(_message_chevauchement(chevauchantes))
-            else:
-                flash(f"« {equipement['nom']} » réaffecté à {nouveau_site}.")
+            _flash_selon_coherence(conn, equipement_id, f"« {equipement['nom']} » réaffecté à {nouveau_site}.")
             return redirect(url_for("equipements.detail_equipement", equipement_id=equipement_id))
     return render_template(
         "affecter.html", equipement=equipement, site_actuel=site_actuel,
@@ -198,15 +200,9 @@ def modifier_affectation(equipement_id, affectation_id):
             site = request.form["site"].strip()
             date_debut = request.form["date_debut"]
             date_fin = request.form.get("date_fin", "").strip() or None
-            chevauchantes = db.chevauchement_affectations(
-                conn, equipement_id, date_debut, date_fin, exclure_id=affectation_id
-            )
             db.update_affectation(conn, affectation_id, site, date_debut, date_fin)
             publication.publier_en_tache_de_fond()
-            if chevauchantes:
-                flash(_message_chevauchement(chevauchantes))
-            else:
-                flash("Ligne d'affectation mise à jour.")
+            _flash_selon_coherence(conn, equipement_id, "Ligne d'affectation mise à jour.")
             return redirect(url_for("equipements.detail_equipement", equipement_id=equipement_id))
     return render_template(
         "modifier_affectation.html", equipement=equipement, affectation=affectation, sites=sites,
@@ -217,8 +213,8 @@ def modifier_affectation(equipement_id, affectation_id):
 def supprimer_affectation(equipement_id, affectation_id):
     with db.db_session() as conn:
         db.delete_affectation(conn, affectation_id)
-    publication.publier_en_tache_de_fond()
-    flash("Ligne d'affectation supprimée de l'historique.")
+        publication.publier_en_tache_de_fond()
+        _flash_selon_coherence(conn, equipement_id, "Ligne d'affectation supprimée de l'historique.")
     return redirect(url_for("equipements.detail_equipement", equipement_id=equipement_id))
 
 

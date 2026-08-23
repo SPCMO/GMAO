@@ -21,6 +21,7 @@ app.register_blueprint(parametres_bp)
 COLONNE_INDEX_ACCUEIL = {
     "equipement": 1, "type": 2, "sous_type": 3, "site": 4, "uh": 5,
     "affecte_depuis": 6, "installation": 7, "statut": 8, "tps_restant": 9, "duree_prolongee": 10,
+    "alerte": 11,
 }
 
 
@@ -46,7 +47,6 @@ def _style_site(couleurs, opacites, uh, maintenance, ferme, vide=False):
 def dashboard():
     with db.db_session() as conn:
         equipements = db.list_equipements(conn)
-        sites = db.list_sites(conn)
         couleurs = db.list_couleurs(conn)
         opacites = db.list_opacites(conn)
         sites_geo = db.list_all_sites(conn)
@@ -93,7 +93,7 @@ def dashboard():
         })
 
     return render_template(
-        "dashboard.html", lignes=lignes, sites=sites, couleurs=couleurs, opacites=opacites,
+        "dashboard.html", lignes=lignes, sites_geo=sites_geo, couleurs=couleurs, opacites=opacites,
         uh_valeurs=db.UH_VALEURS, types=types, sites_carte=sites_carte,
         tri_defaut_accueil=tri_defaut_accueil,
     )

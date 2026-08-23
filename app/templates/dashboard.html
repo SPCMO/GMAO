@@ -59,20 +59,24 @@
       <div class="filtres-groupe">
         <select id="filtreSite" onchange="filtrer()">
           <option value="">Tous les sites ({{ lignes|length }})</option>
-          {% for site in sites %}
-            <option value="{{ site }}">{{ site }}</option>
+          {% for s in sites_geo %}
+            <option value="{{ s.nom }}" data-uh="{{ s.uh_gestion or '' }}">{{ s.nom }}</option>
           {% endfor %}
         </select>
         <select id="filtreType" onchange="filtrer()">
           <option value="">Tous les types</option>
           {% for t in types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
         </select>
-        <select id="filtreUh" onchange="filtrer()">
+        <select id="filtreUh" onchange="filtrerSiteParUh(); filtrer();">
           <option value="">Toutes les UH</option>
           {% for uh in uh_valeurs %}<option value="{{ uh }}">UH {{ uh }}</option>{% endfor %}
         </select>
       </div>
     </div>
+    <label class="muted" style="display:flex; align-items:center; gap:.4rem; margin:.6rem 0;">
+      <input type="checkbox" id="masquerRetires" onchange="filtrer()">
+      Masquer les équipements retirés du service
+    </label>
     <p class="muted" id="infoFiltreCarte" style="display:none;">🗺️ Le tableau est filtré sur la zone actuellement visible de la carte. <a href="#" onclick="reinitialiserFiltreCarte(); return false;">Réinitialiser</a></p>
 
     <form method="post" action="{{ url_for('equipements.generer_qrcodes_selection') }}" target="_blank" onsubmit="return validerSelection()">
@@ -92,7 +96,15 @@
             </span>
           </th>
           {% endfor %}
-          <th>Alerte</th>
+          <th class="th-triable">
+            <span class="th-triable-inner">
+              <span class="th-libelle">Alerte</span>
+              <span class="ordre-actions">
+                <button type="button" class="btn-ordre" onclick="trierPar(11, 1)" title="Trier Alerte croissant" data-col="11" data-dir="1">▲</button>
+                <button type="button" class="btn-ordre" onclick="trierPar(11, -1)" title="Trier Alerte décroissant" data-col="11" data-dir="-1">▼</button>
+              </span>
+            </span>
+          </th>
           <th></th>
         </tr>
       </thead>
@@ -122,7 +134,7 @@
           <td data-tri="{{ e.duree_vie_effective_ans if (e.duree_vie_effective_ans and e.duree_vie_ans and e.duree_vie_effective_ans > e.duree_vie_ans) else '' }}">
             {% if e.duree_vie_effective_ans and e.duree_vie_ans and e.duree_vie_effective_ans > e.duree_vie_ans %}{{ e.duree_vie_effective_ans }} ans{% else %}—{% endif %}
           </td>
-          <td>
+          <td data-tri="{{ 2 if (etat.active and not e.date_retrait) else (1 if (not e.date_retrait and (not e.duree_vie_ans or not e.rappel_ans)) else 0) }}">
             {% if etat.active and not e.date_retrait %}
               <a href="{{ url_for('equipements.modifier_equipement', equipement_id=e.id) }}?depuis_alerte=1" class="icone-alerte" title="Alerte en cours — cliquer pour gérer">⚠️</a>
             {% elif not e.date_retrait and (not e.duree_vie_ans or not e.rappel_ans) %}
@@ -157,19 +169,36 @@ function filtrer() {
   const type = document.getElementById('filtreType').value;
   const uh = document.getElementById('filtreUh').value;
   const recherche = document.getElementById('recherche').value.toLowerCase();
+  const masquerRetires = document.getElementById('masquerRetires').checked;
   document.querySelectorAll('#tableEquipements tbody tr').forEach(function(tr) {
     if (!tr.dataset.nom) return;
     const matchSite = !site || tr.dataset.site === site;
     const matchType = !type || tr.dataset.type === type;
     const matchUh = !uh || tr.dataset.uh === uh;
     const matchRecherche = !recherche || tr.dataset.nom.includes(recherche);
+    const matchRetire = !masquerRetires || !tr.classList.contains('equip-retire');
     let matchCarte = true;
     if (carteBounds && tr.dataset.lat && tr.dataset.lon) {
       matchCarte = carteBounds.contains([parseFloat(tr.dataset.lat), parseFloat(tr.dataset.lon)]);
     }
-    tr.style.display = (matchSite && matchType && matchUh && matchRecherche && matchCarte) ? '' : 'none';
+    tr.style.display = (matchSite && matchType && matchUh && matchRecherche && matchRetire && matchCarte) ? '' : 'none';
   });
   document.getElementById('toutSelectionner').checked = false;
+}
+
+/** Restreint le menu déroulant Site aux sites de l'UH choisie (les autres options sont
+ * masquées, pas supprimées). Réinitialise la sélection de site si elle devient invalide. */
+function filtrerSiteParUh() {
+  const uh = document.getElementById('filtreUh').value;
+  const selectSite = document.getElementById('filtreSite');
+  let selectionMasquee = false;
+  Array.from(selectSite.options).forEach(function(opt) {
+    if (!opt.value) return; // "Tous les sites" toujours visible
+    const correspond = !uh || opt.dataset.uh === uh;
+    opt.hidden = !correspond;
+    if (opt.selected && !correspond) selectionMasquee = true;
+  });
+  if (selectionMasquee) selectSite.value = '';
 }
 
 function toggleTout(master) {
