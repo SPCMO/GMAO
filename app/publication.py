@@ -51,13 +51,19 @@ def _regenerer_fiches():
     env = Environment(loader=FileSystemLoader(os.path.join(config.BASE_DIR, "app", "templates")))
     template = env.get_template("fiche.html")
     os.makedirs(os.path.join(config.DOCS_DIR, "e"), exist_ok=True)
+    # Horodatage commun à cette passe de régénération : sert de paramètre de version
+    # dans l'URL (voir fiche.html) pour contourner le cache navigateur d'un téléphone
+    # qui aurait déjà scanné ce même QR code — l'URL du QR code, elle, ne change jamais.
+    genere_le = datetime.now().strftime("%Y%m%d%H%M%S")
     with db.db_session() as conn:
         equipements = db.list_equipements(conn)
         for e in equipements:
             equipement = db.get_equipement(conn, e["id"])
             site_actuel = db.get_site_actuel(conn, e["id"])
             historique = db.get_historique(conn, e["id"])
-            html = template.render(equipement=equipement, site_actuel=site_actuel, historique=historique)
+            html = template.render(
+                equipement=equipement, site_actuel=site_actuel, historique=historique, genere_le=genere_le
+            )
             out_path = os.path.join(config.DOCS_DIR, "e", f"{e['id']}.html")
             with open(out_path, "w", encoding="utf-8") as f:
                 f.write(html)

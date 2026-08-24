@@ -381,6 +381,11 @@ git config --global https.proxy http://pfrie-std.proxy.e2.rie.gouv.fr:8080</pre>
   </div>
 
   <div class="changelog-entry">
+    <div class="changelog-date">24 août 2026</div>
+    <p><span class="tag tag-fix">Correctif</span> Les balises anti-cache seules ne suffisaient pas sur certains navigateurs mobiles (un ancien scan restait parfois affiché malgré une synchro forcée). La fiche publique redirige désormais automatiquement, avant tout affichage, vers une URL portant l'horodatage de sa dernière régénération — une URL jamais vue ne peut pas venir du cache. L'URL du QR code imprimé sur l'étiquette, elle, ne change jamais.</p>
+  </div>
+
+  <div class="changelog-entry">
     <div class="changelog-date">23 août 2026</div>
     <p><span class="tag tag-fix">Correctif</span> La fiche publique (consultée en scannant le QR code) indique désormais au navigateur de ne pas la mettre en cache — l'URL d'un équipement ne changeant jamais, un ancien scan pouvait rester affiché après une mise à jour tant que la page n'était pas explicitement rechargée.</p>
   </div>
