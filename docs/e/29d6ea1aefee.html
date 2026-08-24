@@ -9,6 +9,21 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+<script>
+  // Les balises no-cache ci-dessus ne suffisent pas sur tous les navigateurs mobiles
+  // (un ancien scan du même QR code peut rester affiché) : redirige, avant tout rendu,
+  // vers une URL portant l'horodatage de la dernière régénération — une URL jamais vue
+  // ne peut pas venir du cache. L'URL du QR code imprimé, elle, ne change jamais.
+  
+  (function () {
+    if (location.search.indexOf('_v=') === -1) {
+      var url = new URL(location.href);
+      url.searchParams.set('_v', '20260824134530');
+      location.replace(url.toString());
+    }
+  })();
+  
+</script>
 <title>Sonde 26 — Fiche matériel</title>
 <style>
   :root { color-scheme: light dark; }
